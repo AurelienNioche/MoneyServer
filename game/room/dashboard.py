@@ -6,7 +6,7 @@ import os
 import subprocess
 import pickle
 
-from game.models import Room
+from game.models import Room, Choice, User
 from parameters import parameters
 
 from . import state
@@ -24,22 +24,41 @@ def create(data):
 
     Room.objects.select_for_update().all()
 
+    x0 = int(data["x0"])
+    x1 = int(data["x1"])
+    x2 = int(data["x2"])
     trial = bool(data['trial'])
     ending_t = int(data["ending_t"])
+    opened = bool(data["opened"])
+
+    n_user = sum([x0, x1, x2])
+
+    rm = Room(
+        x0=x0,
+        x1=x1,
+        x2=x2,
+        trial=trial,
+        ending_t=ending_t,
+        t=0,
+        opened=opened,
+        n_user=n_user
+    )
+
+    rm.save()
+
+    Choice.objects.bulk_create([
+        Choice(room_id=rm.id, user_id=None, good_in_hand=None, desired_good=None, t=t)
+        for _ in range(n_user) for t in range(ending_t)
+    ])
 
 
 def get_list():
 
     rooms = Room.objects.all().order_by("id")
-    users = User.objects.filter(registered=True)
-
     rooms_list = []
 
     for rm in rooms:
-
-        users_room = [i for i in users.filter(room_id=rm.id)]
-
-        dic = {"att": rm, "connected_players": users_room}
+        dic = {"att": rm}
         rooms_list.append(dic)
 
     return rooms_list
@@ -105,8 +124,7 @@ def flush_db():
         settings.DATABASES["default"]["NAME"]
     ), shell=True)
 
-    for table in (Room, RoomComposition, Round, RoundComposition, Round, FirmPrice, FirmPosition, FirmProfit,
-                  ConsumerChoice):
+    for table in (None):
 
         entries = table.objects.all()
         entries.delete()

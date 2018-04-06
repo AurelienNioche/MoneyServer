@@ -14,7 +14,6 @@ from . forms import RoomForm
 from parameters import parameters
 
 import game.room.dashboard
-import game.user.dashboard
 
 
 class LoginView(TemplateView):
@@ -41,7 +40,7 @@ class LoginView(TemplateView):
             return redirect("/room_management/")
 
         else:
-            return render(request, cls.template_name, {"fail": 1})
+            return render(request, cls.template_name, {"fail": True})
 
     @classmethod
     def logout(cls, request):
@@ -98,15 +97,8 @@ class RoomManagementView(TemplateView):
         context = super().get_context_data(**kwargs)
         context.update({'subtitle': "Room list"})
 
-        # check connected users
-        game.user.dashboard.check_connected_users()
-
         # Get list of existing rooms and players
         rooms_list = game.room.dashboard.get_list()
-
-        room_info = game.room.dashboard.get_rooms()
-
-        context["room_info"] = room_info
 
         context.update({"rooms": rooms_list})
 
@@ -116,7 +108,6 @@ class RoomManagementView(TemplateView):
 
         if "delete" in request.POST:
             room_id = request.POST["delete"]
-            # utils.log("Delete room {}.".format(room_id), f=self.post)
 
             # Delete room
             game.room.dashboard.delete(room_id=room_id)

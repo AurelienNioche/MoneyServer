@@ -2,7 +2,9 @@
 {%  load staticfiles %}
 
 {% block basecontent %}
+
 <div id="wrapper">
+
         <a class="navbar-brand" href="/" style="color: #abb9d3;">
             Money Experiment</a>
         <br>
@@ -19,10 +21,16 @@
                     <br>
                     <br>
                     <br>
+                    <br>
                     <li>
-                    <li>
-                        <a href="{% url 'admin:index' %}"><i class="fa fa-table fa-fw"></i> Index</a>
+                       <a id="room_management_tab" href="{% url 'dashboard:room_management' %}">
+                       <i class="fa fa-group fa-fw"></i> Room management</a>
                     </li>
+
+                    <li>
+                        <a href="{% url 'admin:index' %}"><i class="fa fa-table fa-fw"></i>Tables</a>
+                    </li>
+
                     <li>
                         <a href="{% url 'dashboard:data' %}"><i class="fa fa-line-chart fa-fw"></i> Data</a>
                     </li>
@@ -36,7 +44,7 @@
 </div>
 
     <!-- Page Content -->
-    <div id="page-wrapper">
+    <div id="page-wrapper" style="min-height: 100%">
     <div class="fadeIn">
         {% block page_content %}
         {% endblock page_content %}

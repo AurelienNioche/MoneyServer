@@ -84,23 +84,18 @@
                                                 <br>
                                                 <strong> Missing players: </strong>{{ room.att.missing_players }}
                                                 <br>
-                                                <strong> Field of view radius: </strong>{{ room.att.radius }}
-                                                <br>
                                                 {% if room.att.trial %}
                                                     <strong> Trial: </strong> <img src="/static/admin/img/icon-yes.svg" alt="True">
                                                 {% else %}
                                                     <strong> Trial: </strong> <img src="/static/admin/img/icon-no.svg" alt="False">
                                                 {% endif %}
                                                 <br>
-                                                {% if room.att.display_opponent_score %}
-                                                    <strong> Display opponent score: </strong><img src="/static/admin/img/icon-yes.svg" alt="True">
-                                                {% else %}
-                                                    <strong> Display opponent score: </strong> <img src="/static/admin/img/icon-no.svg" alt="False">
-                                                {% endif %}
                                                 <br>
                                                 <strong> State: </strong>{{ room.att.state }}
                                                 <br>
+                                                <strong> Ending t: </strong>{{ room.att.ending_t }}
                                                 <br>
+                                                <strong> Current t: </strong>{{ room.att.t }}
                                             </li>
                                             <li class="list-group-item">
                                                 <h4>Connected players</h4>
@@ -133,7 +128,6 @@
                                                 <input type="text" style="display: none;" name= "delete" value="{{ room.att.id }}">
                                             </form>
                                             <button onclick="showModal({{ room.att.id }})" class="btn btn-danger">Delete room {{ room.att.id }}</button>
-
                                     </div>
                                     </div>
                                     </div>

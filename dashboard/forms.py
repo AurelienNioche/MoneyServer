@@ -11,9 +11,21 @@ class ParametersForm(forms.Form):
 
     error_css_class = 'has-error'
 
-    nb_of_room = forms.IntegerField(
-        label="Number of room",
-        initial=1,
+    x0 = forms.IntegerField(
+        label="x0",
+        initial=30,
+        required=True
+    )
+
+    x1 = forms.IntegerField(
+        label="x1",
+        initial=15,
+        required=True
+    )
+
+    x2 = forms.IntegerField(
+        label="x2",
+        initial=15,
         required=True
     )
 
@@ -23,27 +35,15 @@ class ParametersForm(forms.Form):
         initial=25,
     )
 
-    radius = forms.ChoiceField(
-        widget=forms.Select,
-        choices=[
-            (0.25, '0.25'),
-            (0.5, '0.50'),
-            (0.75, '0.75'),
-            (1., '1.00'),
-        ],
-        label="Field of view radius for consumers",
-        required=True
-    )
-
     trial = forms.BooleanField(
         label="Trial",
         initial=False,
         required=False,
     )
 
-    display_opponent_score = forms.BooleanField(
-        label="Display opponent score",
-        initial=False,
+    opened = forms.BooleanField(
+        label="Opened",
+        initial=True,
         required=False
     )
 
@@ -76,6 +76,14 @@ class RoomForm(ParametersForm):
         self.cleaned_data = super().clean()
 
         cleaned_data = self.cleaned_data.copy()
+
+        if cleaned_data.get("trial") is None:
+            self.cleaned_data["trial"] = False
+            self.cleaned_data["opened"] = False
+
+        else:
+            cleaned_data.pop("trial")
+            cleaned_data.pop("opened")
 
         if not all(cleaned_data.get(field) for field in cleaned_data.keys()):
 
