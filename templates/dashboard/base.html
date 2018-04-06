@@ -1,0 +1,47 @@
+{% extends "layout/base.html" %}
+{%  load staticfiles %}
+
+{% block basecontent %}
+<div id="wrapper">
+        <a class="navbar-brand" href="/" style="color: #abb9d3;">
+            Money Experiment</a>
+        <br>
+        <br>
+
+        <!-- /.navbar-top-links -->
+
+        <div class="navbar-default sidebar" role="navigation" style="background-color: #343A40; border-color: #343A40;">
+            <div class="sidebar-nav navbar-collapse">
+                <ul class="nav" id="side-menu">
+                    <img src="{% static 'img/heidegger.jpg' %}"
+                         class="img-responsive" style="border: 2px solid #d4d4d4; width:
+                         140px;margin-left: 50px;margin-top: 40px;" >
+                    <br>
+                    <br>
+                    <br>
+                    <li>
+                    <li>
+                        <a href="{% url 'admin:index' %}"><i class="fa fa-table fa-fw"></i> Index</a>
+                    </li>
+                    <li>
+                        <a href="{% url 'dashboard:data' %}"><i class="fa fa-line-chart fa-fw"></i> Data</a>
+                    </li>
+                    <li>
+                        <a href="{% url 'dashboard:logs' %}"><i class="fa fa-file-text fa-fw"></i> Logs</a>
+                    </li>
+                </ul>
+            </div>
+            <!-- /.sidebar-collapse -->
+        </div>
+</div>
+
+    <!-- Page Content -->
+    <div id="page-wrapper">
+    <div class="fadeIn">
+        {% block page_content %}
+        {% endblock page_content %}
+    </div>
+    </div>
+    <!-- /#page-wrapper -->
+
+{% endblock basecontent %}
