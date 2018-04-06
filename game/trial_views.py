@@ -9,7 +9,9 @@ def init(request):
         "score": 0,
         "good": 0,
         "desired_good": 1,
-        "t": 0
+        "t": 0,
+        "pseudo": "Michel",
+        "userId": 0
     }
 
 

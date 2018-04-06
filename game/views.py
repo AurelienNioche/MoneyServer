@@ -93,7 +93,7 @@ def _is_trial():
 
     if not trial:
 
-        trial = IntParameter(name="trial", value=0)
+        trial = IntParameter(name="trial", value=1)
         trial.save()
 
     if not skip_survey:

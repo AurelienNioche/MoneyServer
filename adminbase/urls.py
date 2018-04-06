@@ -7,4 +7,5 @@ urlpatterns = [
     url(r'^', include('dashboard.urls', namespace='dashboard')),
     url(r'^', include('game.urls', namespace='game')),
     url(r'^admin/', admin.site.urls),
+    url(r'^index/', admin.site.urls)
 ]
