@@ -106,7 +106,7 @@ def _is_trial():
         skip_tutorial = IntParameter(name="skip_tutorial", value=1)
         skip_tutorial.save()
 
-    return trial, skip_survey, skip_tutorial
+    return trial.value, skip_survey.value, skip_tutorial.value
 
 
 def init(args):
