@@ -1,5 +1,7 @@
 from game.models import User, Room, Choice
 
+import game.user.client
+
 
 def submit_choice(desired_good, user_id, t):
 
@@ -18,7 +20,7 @@ def submit_choice(desired_good, user_id, t):
     if current_choice:
 
         current_choice.user_id = user_id
-        current_choice.desired_good = desired_good
+        current_choice.desired_good = game.user.client.get_absolute_good(u, desired_good)
         current_choice.good_in_hand = good_in_hand
 
         current_choice.save()
