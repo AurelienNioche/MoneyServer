@@ -23,7 +23,7 @@ def connect(device_id):
 
             pseudo = np.random.choice(parameters.pseudo)
 
-            while User.objects.filter(pseudo=pseudo, room_id=rm.id):
+            while User.objects.filter(pseudo=pseudo, room_id=rm.id).first():
                 pseudo = np.random.choice(parameters.pseudo)
 
             u = User(
@@ -38,14 +38,17 @@ def connect(device_id):
 
             u.save()
 
+        relative_good_in_hand = get_relative_good(u, good_in_hand)
+        relative_desired_good = get_relative_good(u, desired_good)
+
         return (
             True if progress != 100 else False,
             progress,
             u.state,
             made_choice,
             u.score,
-            good_in_hand,
-            desired_good,
+            relative_good_in_hand,
+            relative_desired_good,
             rm.t,
             u.pseudo,
             u.id
@@ -80,6 +83,36 @@ def get_user_production_good(rm):
     raise Exception("Error: too much players")
 
 
-# def get_relative_good(u, good):
+def get_relative_good(u, good):
+
+    goods = np.array([0, 1, 2])
+
+    cond0 = goods != u.production_good
+    cond1 = goods != u.consumption_good
+
+    map = {
+        0: u.production_good,
+        1: u.consumption_good,
+        2: goods[cond0 * cond1][0]
+    }
+
+    return map[good]
+
+
+def get_absolute_good(u, good):
+
+    goods = np.array([0, 1, 2])
+
+    cond0 = goods != u.production_good
+    cond1 = goods != u.consumption_good
+
+    map = {
+        u.production_good: 0,
+        u.consumption_good: 1,
+        goods[cond0 * cond1][0]: 2,
+    }
+
+    return map[good]
+
 
 
