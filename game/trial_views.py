@@ -2,8 +2,8 @@
 
 def init(request):
     return {
-        "wait": 0,
-        "progress": 100,
+        "wait": True,
+        "progress": 50,
         "state": "survey",
         "choice_made": 0,
         "score": 0,
