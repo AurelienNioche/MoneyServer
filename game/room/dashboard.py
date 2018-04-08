@@ -17,7 +17,10 @@ def delete(room_id):
     rm = Room.objects.filter(id=room_id).first()
 
     if rm:
+
+        choices = Choice.objects.filter(room_id=rm.id)
         rm.delete()
+        choices.delete()
 
 
 def create(data):
@@ -47,7 +50,7 @@ def create(data):
     rm.save()
 
     Choice.objects.bulk_create([
-        Choice(room_id=rm.id, user_id=None, good_in_hand=None, desired_good=None, t=t)
+        Choice(room_id=rm.id, user_id=None, good_in_hand=None, desired_good=None, t=t, success=None)
         for _ in range(n_user) for t in range(ending_t)
     ])
 

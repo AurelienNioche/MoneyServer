@@ -10,6 +10,7 @@ import game.trial_views
 
 import game.user.client
 import game.room.client
+import game.room.state
 
 
 @csrf_exempt
@@ -46,17 +47,19 @@ def client_request(request):
             # Get function from trial script
             func = getattr(game.trial_views, demand)
 
-        args = treat_args(request)
+        args = _treat_args(request)
 
         to_reply = func(args)
-        to_reply["demand"] = demand
-        to_reply["skip_tutorial"] = skip_tutorial
-        to_reply["skip_survey"] = skip_survey
 
     except KeyError:
         raise Exception("Bad demand")
 
+    to_reply["demand"] = demand
+    to_reply["skip_tutorial"] = skip_tutorial
+    to_reply["skip_survey"] = skip_survey
+
     response = JsonResponse(to_reply)
+
     response["Access-Control-Allow-Credentials"] = "true"
     response["Access-Control-Allow-Headers"] = "Accept, X-Access-Token, X-Application-Name, X-Request-Sent-Time"
     response["Access-Control-Allow-Methods"] = "GET, POST, OPTIONS"
@@ -65,7 +68,7 @@ def client_request(request):
     return response
 
 
-def treat_args(request):
+def _treat_args(request):
 
     Args = namedtuple(
         "Args",
@@ -129,13 +132,42 @@ def init(args):
     return to_reply
 
 
+def survey(args):
+
+    game.user.client.submit_survey(
+        user_id=args.user_id,
+        gender=args.gender,
+        age=args.age,
+    )
+
+    has_to_wait, progress = \
+        game.room.client.get_progression(user_id=args.user_id, t=args.t)
+
+    to_reply = {
+        "wait": has_to_wait,
+        "progress": progress
+    }
+
+    return to_reply
+
+
 def choice(args):
 
-    game.room.client.submit_choice(
+    success = game.room.client.submit_choice(
         user_id=args.user_id,
         desired_good=args.choice,
         t=args.t
     )
 
+    has_to_wait, progress, choice_progress = \
+        game.room.client.get_progression(user_id=args.user_id, t=args.t)
 
+    to_reply = {
+        "wait": has_to_wait,
+        "progress": progress,
+        "choice_progress": choice_progress,
+        "success": success
+    }
+
+    return to_reply
 

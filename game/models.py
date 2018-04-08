@@ -31,6 +31,7 @@ class Choice(models.Model):
     good_in_hand = models.IntegerField(null=True)
     desired_good = models.IntegerField(null=True)
     t = models.IntegerField()
+    success = models.NullBooleanField(null=True)
 
 
 class IntParameter(models.Model):

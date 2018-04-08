@@ -30,7 +30,7 @@ def connect(device_id):
                 device_id=device_id,
                 pseudo=pseudo,
                 room_id=rm.id,
-                state=game.room.state.welcome,
+                state=game.room.state.states.welcome,
                 production_good=good_in_hand,
                 consumption_good=consumption_good,
                 tutorial_progression=0
@@ -55,6 +55,19 @@ def connect(device_id):
         )
 
 
+def submit_survey(user_id, age, gender):
+
+    u = User.objects.filter(id=user_id).first()
+
+    if u:
+        u.age = age
+        u.gender = gender
+        u.save(update_fields=["age", "gender"])
+
+    else:
+        raise Exception("Error: User tries to submit survey but does not exit in database.")
+
+
 def get_user_choice(u, rm):
 
     choice = Choice.objects.filter(
@@ -63,11 +76,14 @@ def get_user_choice(u, rm):
         t=rm.t
     ).first()
 
-    if choice.desired_good:
-        return True, choice.desired_good, choice.good_in_hand
+    if choice:
+        if choice.desired_good:
+            return True, choice.desired_good, choice.good_in_hand
 
+        else:
+            return False, 0, get_user_production_good(rm)
     else:
-        return False, 0, get_user_production_good(rm)
+        raise Exception("Error: choice entry does not exit.")
 
 
 def get_user_production_good(rm):
@@ -89,14 +105,15 @@ def get_relative_good(u, good):
 
     cond0 = goods != u.production_good
     cond1 = goods != u.consumption_good
+    medium_good = goods[cond0 * cond1][0]
 
-    map = {
+    mapping = {
         0: u.production_good,
         1: u.consumption_good,
-        2: goods[cond0 * cond1][0]
+        2: medium_good
     }
 
-    return map[good]
+    return mapping[good]
 
 
 def get_absolute_good(u, good):
@@ -105,14 +122,12 @@ def get_absolute_good(u, good):
 
     cond0 = goods != u.production_good
     cond1 = goods != u.consumption_good
+    medium_good = goods[cond0 * cond1][0]
 
-    map = {
+    mapping = {
         u.production_good: 0,
         u.consumption_good: 1,
-        goods[cond0 * cond1][0]: 2,
+        medium_good: 2,
     }
 
-    return map[good]
-
-
-
+    return mapping[good]
