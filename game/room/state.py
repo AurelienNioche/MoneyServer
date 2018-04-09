@@ -40,19 +40,23 @@ def get_progress_for_current_state(rm):
 
     # ---- Check if progress == 100, if true then go to next state ----- #
     if progress == 100:
-        next_state(rm)
+        _next_state(rm)
 
     return progress
 
 
 def get_progress_for_choices(rm, t):
 
-    n_choices = Choice.objects.filter(room_id=rm.id, t=t).exclude(desired_good=None).count()
+    n_choices = Choice.objects.filter(room_id=rm.id, t=t).exclude(user_id=None).count()
+    progress = round(n_choices / rm.n_user * 100)
 
-    return round(n_choices / rm.n_user * 100)
+    if progress == 100:
+        _increment_timestep(rm)
+
+    return progress
 
 
-def next_state(rm):
+def _next_state(rm):
 
     try:
 
@@ -63,3 +67,8 @@ def next_state(rm):
     except IndexError:
 
         raise Exception("Error in 'game.room.state': Going to next state is impossible, state does not exist.")
+
+
+def _increment_timestep(rm):
+    rm.t += 1
+    rm.save(update_fields=['t'])

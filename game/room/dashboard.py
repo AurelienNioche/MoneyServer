@@ -7,9 +7,8 @@ import subprocess
 import pickle
 
 from game.models import Room, Choice, User
-from parameters import parameters
 
-from . import state
+import game.room.state
 
 
 def delete(room_id):
@@ -43,6 +42,7 @@ def create(data):
         trial=trial,
         ending_t=ending_t,
         t=0,
+        state=game.room.state.states.welcome,
         opened=opened,
         n_user=n_user
     )

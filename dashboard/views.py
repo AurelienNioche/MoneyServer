@@ -3,17 +3,17 @@ from django.contrib.auth.decorators import login_required
 from django.views.decorators.gzip import gzip_page
 from django.db import transaction
 from django.shortcuts import redirect, render
-from django.http import JsonResponse
+from django.http import JsonResponse, HttpResponse
 from django.utils.decorators import method_decorator
 from django.views.generic import TemplateView
 import os
 
 from . forms import RoomForm
-# from utils import utils
 
 from parameters import parameters
 
 import game.room.dashboard
+import game.params.dashboard
 
 
 class LoginView(TemplateView):
@@ -190,8 +190,29 @@ class LogsView(TemplateView):
         f = parameters.logs_path + filename
         if os.path.exists(f):
             with open(parameters.logs_path + filename, "r") as f:
-                # if n_lines:
                 logs = "".join(f.readlines()[-500:])
-                # else:
-                #     logs = f.read()
             return logs
+
+
+@method_decorator(login_required, name='dispatch')
+class SettingsView(TemplateView):
+    template_name = "components/settings.html"
+
+    def get_context_data(self, **kwargs):
+
+        context = super().get_context_data(**kwargs)
+        context.update({"subtitle": "Settings"})
+
+        # Get values for parameters
+        params = game.params.dashboard.get_parameters()
+        context.update({"params": params})
+
+        return context
+
+    def post(self, request, *args, **kwargs):
+
+        for k, v in request.POST.items():
+            value = True if v == "on" else False
+            game.params.dashboard.set_parameter(k, value)
+
+        return HttpResponse("Ok")

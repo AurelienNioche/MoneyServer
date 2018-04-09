@@ -17,12 +17,12 @@ class User(models.Model):
     room_id = models.IntegerField()
     device_id = models.TextField()
     pseudo = models.TextField()
-    state = models.IntegerField()
-    age = models.IntegerField()
-    gender = models.IntegerField()
+    age = models.IntegerField(null=True)
+    gender = models.IntegerField(null=True)
     tutorial_progression = models.IntegerField()
     production_good = models.IntegerField()
     consumption_good = models.IntegerField()
+    score = models.IntegerField(default=0)
 
 
 class Choice(models.Model):
@@ -34,6 +34,6 @@ class Choice(models.Model):
     success = models.NullBooleanField(null=True)
 
 
-class IntParameter(models.Model):
+class BoolParameter(models.Model):
     name = models.TextField()
-    value = models.IntegerField()
+    value = models.BooleanField()

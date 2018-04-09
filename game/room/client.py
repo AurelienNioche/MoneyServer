@@ -8,45 +8,30 @@ import game.room.state
 
 def get_progression(user_id, t):
 
-    u = User.objects.get(id=user_id)
-    rm = Room.objects.get(id=u.room_id)
+    u = User.objects.filter(id=user_id).first()
+    rm = Room.objects.filter(id=u.room_id).first()
 
-    progress = game.room.state.get_progress_for_current_state(rm)
-    has_to_wait = True if progress != 100 else False
+    if not u or not rm:
+        raise Exception("Error: Room is {} and user is {}".format(rm, u))
 
     if rm.state == game.room.state.states.game:
-        choice_progress = game.room.state.get_progress_for_choices(rm, t)
-    else:
-        choice_progress = None
+        progress = game.room.state.get_progress_for_choices(rm, t)
+        has_to_wait = True if progress != 100 else False
+        return has_to_wait, progress, rm.state == game.room.state.states.end
 
-    return progress, has_to_wait, choice_progress
+    else:
+        progress = game.room.state.get_progress_for_current_state(rm)
+        has_to_wait = True if progress != 100 else False
+        return has_to_wait, progress
 
 
 def submit_choice(desired_good, user_id, t):
 
-    u = User.objects.get(id=user_id)
-    rm = Room.objects.get(id=u.room_id)
+    u = User.objects.filter(id=user_id).first()
+    rm = Room.objects.filter(id=u.room_id).first()
 
-    # ------ Get user good in hand -------- #
-    last_choice = Choice.objects.filter(t=t-1, user_id=user_id).first()
-
-    if last_choice:
-
-        if last_choice.desired_good == u.consumption_good and last_choice.success:
-            good_in_hand = u.production_good
-
-        elif last_choice.success:
-            good_in_hand = last_choice.desired_good
-
-        else:
-            good_in_hand = last_choice.good_in_hand
-
-    # if t == 0
-    else:
-
-        good_in_hand = u.production_good
-
-    # ------------------------------------- #
+    if not u or not rm:
+        raise Exception("Error: Room is {} and user is {}".format(rm, u))
 
     # ------- Check if current choice has been set or not ------ #
 
@@ -56,13 +41,11 @@ def submit_choice(desired_good, user_id, t):
 
         # If matching has been done
         if current_choice and current_choice.success is not None:
-
-            return current_choice.success
+            return current_choice.success, u.score
 
         else:
-
             _matching(rm, t)
-            return None
+            return None, u.score
 
     # If choice entry is not filled for this t
     else:
@@ -71,11 +54,11 @@ def submit_choice(desired_good, user_id, t):
 
         current_choice.user_id = user_id
         current_choice.desired_good = game.user.client.get_absolute_good(u, desired_good)
-        current_choice.good_in_hand = good_in_hand
+        current_choice.good_in_hand = game.user.client.get_user_last_known_goods(rm, u, t-1)["good_in_hand"]
 
         current_choice.save(update_fields=["user_id", "desired_good", "good_in_hand"])
 
-        return None
+        return None, u.score
 
 
 def _matching(rm, t):
@@ -84,12 +67,12 @@ def _matching(rm, t):
     markets = (0, 1), (1, 2), (2, 0)
 
     # Get choices for room and time
-    choices = Choice.objects.filter(room_id=rm.id, t=t)
+    choices = Choice.objects.filter(room_id=rm.id, t=t, success=None)
 
     for g1, g2 in markets:
 
-        pool1 = choices.filter(Q(desired_good=g1) | Q(good_in_hand=g2)).only('success')
-        pool2 = choices.filter(Q(desired_good=g2) | Q(good_in_hand=g1)).only('success')
+        pool1 = choices.filter(Q(desired_good=g1) | Q(good_in_hand=g2)).only('success', 'user_id')
+        pool2 = choices.filter(Q(desired_good=g2) | Q(good_in_hand=g1)).only('success', 'user_id')
 
         pools = [pool1, pool2]
 
@@ -107,7 +90,16 @@ def _matching(rm, t):
             c1.save(update_fields=["success"])
             c2.save(update_fields=["success"])
 
+            for i in (c1.user_id, c2.user_id, ):
+                u = User.objects.filter(id=i).first()
+                if u:
+                    u.score += 1
+                    u.save(update_fields=["score"])
+                else:
+                    raise Exception("Error in _'matching': Users are not found for that exchange.")
+
         # The lasts fail
         for c in max_pool.exclude(success=True):
             c.success = False
             c.save(update_fields=["success"])
+

@@ -79,16 +79,16 @@ DATABASES = {
 }
 
 # # Keep the default database when testing
-# if 'test' in sys.argv:
-#     DATABASES['default'] = {
-#         'ENGINE': 'django.db.backends.postgresql',
-#         'NAME': 'DuopolyRefactor',
-#         'USER': 'dasein',
-#         'PASSWORD': '',
-#         'HOST': '',
-#         'PORT': '5432',
-#         # 'ATOMIC_REQUESTS': True,
-#     }
+if 'test' in sys.argv:
+    DATABASES['default'] = {
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': 'MoneyServer',
+        'USER': 'dasein',
+        'PASSWORD': '',
+        'HOST': '',
+        'PORT': '5432',
+        # 'ATOMIC_REQUESTS': True,
+    }
 
 # https://docs.djangoproject.com/en/1.8/topics/i18n/
 LANGUAGE_CODE = 'en-us'

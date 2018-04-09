@@ -145,13 +145,10 @@ select {
   width: 50px;
   height: 24px;
 }
-.switch p{
+.switch p {
     position: relative;
-    content: "Auto reply";
-    margin-right: 110px;
-    color: #abb9d3;
-    font-size: 11px;
-    /*width: 10%;*/
+    right: 200%;
+    color: #383C4A;
 }
 
 /* Hide default HTML checkbox */

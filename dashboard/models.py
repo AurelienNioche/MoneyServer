@@ -6,3 +6,4 @@ class IntParameter(models.Model):
     name = models.TextField()
     value = models.IntegerField()
     unit = models.TextField()
+

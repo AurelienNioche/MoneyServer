@@ -99,17 +99,10 @@ def get_rooms():
     print()
 
 
-def flush_db():
+def delete_users():
 
-    os.makedirs("dumps", exist_ok=True)
+    users = User.objects.all()
+    users.delete()
 
-    subprocess.call("pg_dump -U dasein {} > dumps/dump_$(date +%F).sql".format(
-        settings.DATABASES["default"]["NAME"]
-    ), shell=True)
 
-    for table in (Room, RoomComposition, Round, RoundComposition, Round, FirmPrice, FirmPosition, FirmProfit,
-                  ConsumerChoice):
-
-        entries = table.objects.all()
-        entries.delete()
-
+delete_users()

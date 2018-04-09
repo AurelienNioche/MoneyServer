@@ -11,4 +11,5 @@ urlpatterns = [
     url(r'^new_room/$', views.NewRoomView.as_view(), name="new_room"),
     url(r'^data/$', views.DataView.as_view(), name="data"),
     url(r'^logs/$', views.LogsView.as_view(), name="logs"),
+    url(r'^settings/$', views.SettingsView.as_view(), name="settings"),
 ]

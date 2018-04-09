@@ -11,7 +11,8 @@ def init(request):
         "desired_good": 1,
         "t": 0,
         "pseudo": "Michel",
-        "userId": 0
+        "user_id": 0,
+        "t_max": 25
     }
 
 

@@ -26,16 +26,19 @@
                        <a id="room_management_tab" href="{% url 'dashboard:room_management' %}">
                        <i class="fa fa-group fa-fw"></i> Room management</a>
                     </li>
+                    <li>
+                        <a href="{% url 'dashboard:settings' %}"><i class="fa fa-cog fa-fw"></i>Settings</a>
+                    </li>
 
                     <li>
                         <a href="{% url 'admin:index' %}"><i class="fa fa-table fa-fw"></i>Tables</a>
                     </li>
 
                     <li>
-                        <a href="{% url 'dashboard:data' %}"><i class="fa fa-line-chart fa-fw"></i> Data</a>
+                        <a href="{% url 'dashboard:data' %}"><i class="fa fa-line-chart fa-fw"></i>Data</a>
                     </li>
                     <li>
-                        <a href="{% url 'dashboard:logs' %}"><i class="fa fa-file-text fa-fw"></i> Logs</a>
+                        <a href="{% url 'dashboard:logs' %}"><i class="fa fa-file-text fa-fw"></i>Logs</a>
                     </li>
                 </ul>
             </div>
