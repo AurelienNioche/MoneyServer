@@ -26,7 +26,7 @@ def get_progress_for_current_state(rm):
 
     elif rm.state == states.tutorial:
 
-        n_user = User.objects.filter(room_id=rm.id, tutorial_progression=100).count()
+        n_user = User.objects.filter(room_id=rm.id, tutorial_done=True).count()
 
         progress = round(n_user / rm.n_user * 100)
 

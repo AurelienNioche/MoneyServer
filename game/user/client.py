@@ -71,10 +71,9 @@ def _create_new_user(rm, device_id):
         device_id=device_id,
         pseudo=pseudo,
         room_id=rm.id,
-        state=game.room.state.states.welcome,
         production_good=good_in_hand,
         consumption_good=consumption_good,
-        tutorial_progression=0,
+        tutorial_done=False,
         score=0,
     )
 
@@ -174,7 +173,7 @@ def get_relative_good(u, good):
         2: medium_good
     }
 
-    return mapping.get(good)
+    return int(mapping.get(good))
 
 
 def get_absolute_good(u, good):
@@ -191,16 +190,16 @@ def get_absolute_good(u, good):
         medium_good: 2,
     }
 
-    return mapping.get(good)
+    return int(mapping.get(good))
 
 
-def submit_tutorial_progression(user_id, progress):
+def submit_tutorial_done(user_id):
 
     u = User.objects.filter(id=user_id).first()
 
     if not u:
         raise Exception("Error in 'submit_tutorial_progression': User not found.")
 
-    u.tutorial_progression = progress
+    u.tutorial_done = True
 
-    u.save(update_fields=["tutorial_progression"])
+    u.save(update_fields=["tutorial_done"])

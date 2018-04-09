@@ -17,7 +17,7 @@ def get_progression(user_id, t):
     if rm.state == game.room.state.states.game:
         progress = game.room.state.get_progress_for_choices(rm, t)
         has_to_wait = True if progress != 100 else False
-        return has_to_wait, progress, rm.state == game.room.state.states.end
+        return has_to_wait, progress, rm.state == game.room.state.states.end, rm.t
 
     else:
         progress = game.room.state.get_progress_for_current_state(rm)

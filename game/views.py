@@ -153,10 +153,7 @@ def survey(args):
 
 def tutorial(args):
 
-    game.user.client.submit_tutorial_progression(
-        user_id=args.user_id,
-        progress=args.progress
-    )
+    game.user.client.submit_tutorial_done(user_id=args.user_id)
 
     has_to_wait, progress = \
         game.room.client.get_progression(user_id=args.user_id, t=args.t)
@@ -177,7 +174,7 @@ def choice(args):
         t=args.t
     )
 
-    has_to_wait, choice_progress, end = \
+    has_to_wait, choice_progress, end, t = \
         game.room.client.get_progression(user_id=args.user_id, t=args.t)
 
     to_reply = {
@@ -186,7 +183,7 @@ def choice(args):
         "success": success,
         "end": end,
         "score": score,
-        "t": args.t + int(not has_to_wait)
+        "t": t
     }
 
     return to_reply

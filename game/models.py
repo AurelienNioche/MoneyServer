@@ -18,11 +18,11 @@ class User(models.Model):
     device_id = models.TextField()
     pseudo = models.TextField()
     age = models.IntegerField(null=True)
-    gender = models.IntegerField(null=True)
-    tutorial_progression = models.IntegerField()
+    gender = models.TextField(null=True)
     production_good = models.IntegerField()
     consumption_good = models.IntegerField()
     score = models.IntegerField(default=0)
+    tutorial_done = models.NullBooleanField()
 
 
 class Choice(models.Model):
