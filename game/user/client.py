@@ -205,7 +205,7 @@ def submit_tutorial_choice(desired_good, user_id, t):
 
     if not choice:
 
-        u = User.objects.filter(user_id=user_id).first()
+        u = User.objects.filter(id=user_id).first()
         rm = Room.objects.filter(id=u.room_id).first()
 
         if not u or not rm:
