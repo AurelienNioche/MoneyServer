@@ -5,7 +5,7 @@ def init(request):
         "wait": True,
         "progress": 50,
         "state": "survey",
-        "choice_made": 0,
+        "choice_made": False,
         "score": 0,
         "good": 0,
         "tuto_good": 0,
@@ -22,31 +22,32 @@ def init(request):
 
 def survey(request):
     return {
-       "wait": 0,
+       "wait": False,
        "progress": 100,
     }
 
 
 def tutorial_done(request):
     return {
-        "wait": 0,
+        "wait": False,
         "progress": 100
     }
 
 
 def tutorial_choice(request):
     return {
-        "wait": 0,
+        "wait": False,
         "progress": 100,
-        "success": 1,
+        "success": True,
         "t": 1,
+        "end": False,
     }
 
 
 def choice(request):
     return {
-        "wait": 0,
+        "wait": False,
         "progress": 100,
-        "success": 1,
+        "success": True,
         "t": 1,
     }

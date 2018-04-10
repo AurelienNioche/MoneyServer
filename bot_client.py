@@ -62,6 +62,10 @@ class BotClient:
         self.desired_good = None
         self.made_choice = None
         self.wait = None
+        self.tuto_good = None
+        self.tuto_t = None
+        self.tuto_desired_good = None
+        self.tuto_t_max = None
 
         self.game_state = "welcome"
 
@@ -98,7 +102,12 @@ class BotClient:
         self.good_in_hand = args["good"]
         self.desired_good = args["desired_good"] if args["desired_good"] else 1
         self.t = args["t"]
-        self.made_choice = args["made_choice"]
+        self.choice_made = args["choice_made"]
+        self.tuto_t = args["tuto_t"]
+        self.tuto_good = args["tuto_good"]
+        self.tuto_desired_good = args["tuto_desired_good"]
+        self.tuto_t_max = args["tuto_t_max"]
+        self.game_state = args["state"]
 
         return True, args["wait"]
 
@@ -176,7 +185,8 @@ class BotProcess(ml.Process):
             self._wait()
             wait = f()
 
-        self.b.state = next_state
+        if not self.b.state:
+            self.b.state = next_state
 
     def init(self):
 

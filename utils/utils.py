@@ -3,6 +3,7 @@ import datetime
 import pytz
 import click
 
+
 def get_class_that_defined_method(meth):
     # meth must be a bound method
     if not inspect.ismethod(meth):
@@ -11,6 +12,10 @@ def get_class_that_defined_method(meth):
         if cls.__dict__.get(meth.__name__) is meth:
             return cls
     return None  # not required since None would have been implicitly returned anyway
+
+
+def fname():
+    return inspect.stack()[0][3]
 
 
 def log(msg, f, level=1):

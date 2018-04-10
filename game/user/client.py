@@ -17,12 +17,12 @@ def connect(device_id):
 
         if not u:
 
-            u, made_choice, good_in_hand, desired_good = _create_new_user(rm, device_id)
+            u, choice_made, good_in_hand, desired_good = _create_new_user(rm, device_id)
 
         else:
 
             goods = get_user_last_known_goods(u, rm, rm.t)
-            made_choice = goods["made_choice"]
+            choice_made = goods["choice_made"]
             good_in_hand = goods["good_in_hand"]
             desired_good = goods["desired_good"]
 
@@ -40,7 +40,7 @@ def connect(device_id):
             "wait": has_to_wait,
             "progress": progress,
             "state": rm.state,
-            "made_choice": made_choice,
+            "choice_made": choice_made,
             "score": u.score,
             "good_in_hand": relative_good_in_hand,
             "desired_good": relative_desired_good,
@@ -74,13 +74,13 @@ def get_user_last_known_goods(u, rm, t, tuto=False):
 
     if choice:
         # Choice has been made, return choice data
-        goods["made_choice"] = True
+        goods["choice_made"] = True
         goods["good_in_hand"] = choice.good_in_hand
         goods["desired_good"] = choice.desired_good
 
     else:
         # Choice has not been made, return last time choice
-        goods["made_choice"] = False
+        goods["choice_made"] = False
         goods["desired_good"] = None
 
         last_choice = table.objects.filter(user_id=u.id, room_id=rm.id, t=t-1).first()

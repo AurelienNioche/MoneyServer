@@ -47,5 +47,5 @@ class Choice(models.Model):
 
 
 class BoolParameter(models.Model):
-    name = models.TextField()
+    name = models.TextField(unique=True)
     value = models.BooleanField()

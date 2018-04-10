@@ -30,7 +30,6 @@ def create(data):
     trial = bool(data['trial'])
     t_max = int(data["t_max"])
     tutorial_t_max = int(data["tutorial_t_max"])
-    opened = bool(data["opened"])
 
     n_user = sum([x0, x1, x2])
 
@@ -44,7 +43,7 @@ def create(data):
         t=0,
         tutorial_t=0,
         state=game.room.state.states.welcome,
-        opened=opened,
+        opened=True,
         n_user=n_user
     )
 

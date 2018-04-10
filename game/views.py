@@ -1,8 +1,8 @@
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
+from django.db import transaction
 
 from collections import namedtuple
-import numpy as np
 
 from utils import utils
 
@@ -91,26 +91,28 @@ def _treat_args(request):
 
 def _is_trial():
 
-    trial = BoolParameter.objects.filter(name="trial").first()
-    skip_survey = BoolParameter.objects.filter(name="skip_survey").first()
-    skip_tutorial = BoolParameter.objects.filter(name="skip_tutorial").first()
+    with transaction.atomic():
 
-    if not trial:
+        trial = BoolParameter.objects.filter(name="trial").first()
+        skip_survey = BoolParameter.objects.filter(name="skip_survey").first()
+        skip_tutorial = BoolParameter.objects.filter(name="skip_tutorial").first()
 
-        trial = BoolParameter(name="trial", value=True)
-        trial.save()
+        if not trial:
 
-    if not skip_survey:
+            trial = BoolParameter(name="trial", value=True)
+            trial.save()
 
-        skip_survey = BoolParameter(name="skip_survey", value=True)
-        skip_survey.save()
+        if not skip_survey:
 
-    if not skip_tutorial:
+            skip_survey = BoolParameter(name="skip_survey", value=True)
+            skip_survey.save()
 
-        skip_tutorial = BoolParameter(name="skip_tutorial", value=True)
-        skip_tutorial.save()
+        if not skip_tutorial:
 
-    return trial.value, skip_survey.value, skip_tutorial.value
+            skip_tutorial = BoolParameter(name="skip_tutorial", value=True)
+            skip_tutorial.save()
+
+        return trial.value, skip_survey.value, skip_tutorial.value
 
 
 def init(args):
@@ -121,7 +123,7 @@ def init(args):
         "wait": info["wait"],
         "progress": info["progress"],
         "state": info["state"],
-        "made_choice": info["made_choice"],
+        "choice_made": info["choice_made"],
         "score": info["score"],
         "good": info["good_in_hand"],
         "desired_good": info["desired_good"],
@@ -142,7 +144,7 @@ def survey(args):
     )
 
     wait, progress,  = \
-        game.room.client.get_progression(user_id=args.user_id, t=args.t)
+        game.room.client.get_progression(user_id=args.user_id, t=args.t, user_demand=utils.fname())
 
     to_reply = {
         "wait": wait,
@@ -160,7 +162,7 @@ def tutorial_choice(args):
         t=args.t
     )
     wait, choice_progress, t, end = \
-        game.room.client.get_progression(user_id=args.user_id, t=args.t)
+        game.room.client.get_progression(user_id=args.user_id, t=args.t, user_demand=utils.fname())
 
     to_reply = {
         "wait": wait,
@@ -179,7 +181,7 @@ def tutorial_done(args):
     game.user.client.submit_tutorial_done(user_id=args.user_id)
 
     wait, progress, = \
-        game.room.client.get_progression(user_id=args.user_id, t=args.t)
+        game.room.client.get_progression(user_id=args.user_id, t=args.t, user_demand=utils.fname())
 
     to_reply = {
         "wait": wait,
@@ -198,7 +200,7 @@ def choice(args):
     )
 
     wait, choice_progress, t, end = \
-        game.room.client.get_progression(user_id=args.user_id, t=args.t, user_demand=utils.)
+        game.room.client.get_progression(user_id=args.user_id, t=args.t, user_demand=utils.fname())
 
     to_reply = {
         "wait": wait,
