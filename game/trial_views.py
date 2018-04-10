@@ -42,6 +42,7 @@ def tutorial_choice(request):
         "success": True,
         "t": 1,
         "end": False,
+        "score": 0,
     }
 
 
@@ -52,4 +53,5 @@ def choice(request):
         "success": True,
         "t": 1,
         "end": False,
+        "score": 0,
     }
