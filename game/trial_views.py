@@ -2,7 +2,7 @@
 
 def init(request):
     return {
-        "wait": True,
+        "wait": False,
         "progress": 50,
         "state": "survey",
         "choice_made": False,
@@ -16,7 +16,7 @@ def init(request):
         "t_max": 25,
         "tuto_t": 0,
         "tuto_t_max": 5,
-        "pseudo": "Michel",
+        "pseudo": "Méchel",
         "user_id": 0,
     }
 

@@ -158,6 +158,7 @@ def get_relative_good(u, good):
         2: medium_good
     }
 
+    # np.int64 is not json serializable
     return int(mapping[good])
 
 
@@ -175,6 +176,7 @@ def get_absolute_good(u, good):
         medium_good: 2,
     }
 
+    # np.int64 is not json serializable
     return int(mapping[good])
 
 

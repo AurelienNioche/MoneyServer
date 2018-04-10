@@ -123,18 +123,18 @@ def init(args):
         "wait": info["wait"],
         "progress": info["progress"],
         "state": info["state"],
-        "choice_made": info["choice_made"],
-        "tuto_choice_made": info["tuto_choice_made"],
+        "choiceMade": info["choice_made"],
+        "tutoChoiceMade": info["tuto_choice_made"],
         "score": info["score"],
         "good": info["good_in_hand"],
-        "tuto_good": info["tuto_good_in_hand"],
-        "desired_good": info["desired_good"],
-        "tuto_desired_good": info["tuto_desired_good"],
+        "tutoGood": info["tuto_good_in_hand"],
+        "desiredGood": info["desired_good"],
+        "tutoDesiredGood": info["tuto_desired_good"],
         "t": info["t"],
-        "t_max": info["t_max"],
-        "tuto_t": info["tuto_t"],
-        "tuto_t_max": info["tuto_t_max"],
-        "user_id": info["user_id"],
+        "tMax": info["t_max"],
+        "tutoT": info["tuto_t"],
+        "tutoTMax": info["tuto_t_max"],
+        "userId": info["user_id"],
         "pseudo": info["pseudo"],
     }
 
@@ -172,11 +172,11 @@ def tutorial_choice(args):
 
     to_reply = {
         "wait": wait,
-        "success": success,
-        "score": score,
-        "progress": choice_progress,
-        "t": t,
-        "end": end
+        "tutoSuccess": success,
+        "tutoScore": score,
+        "tutoProgress": choice_progress,
+        "tutoT": t,
+        "tutoEnd": end
     }
 
     return to_reply

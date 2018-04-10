@@ -84,7 +84,7 @@ class BotClient:
             return func(args)
 
         except Exception as e:
-            print("Error while treating request: {}".format(e))
+            print("Error while treating request: {}".format(e.with_traceback(e.__traceback__)))
 
     def _increment_time_step(self):
         self.t += 1
@@ -143,6 +143,8 @@ class BotClient:
     @print_reply
     def reply_tutorial(self, args):
 
+        self.tuto_t = args["tutoT"]
+
         return True, args["wait"], args["end"]
 
     # --------------------- choice ------------------------------------ #
@@ -158,8 +160,8 @@ class BotClient:
 
     @print_reply
     def reply_choice(self, args):
-        self._increment_time_step()
-        return True, not args["end"]
+        self.t = args["t"]
+        return True, args["wait"], not args["end"]
 
 
 class BotProcess:
@@ -173,39 +175,41 @@ class BotProcess:
 
         time.sleep(self.delay)
 
-    def while_true(self, f, next_state):
+    def wait_for_a_response(self, f):
 
         self._wait()
 
         r = f()
 
-        if r and len(r) > 1:
-            success, wait = r
-        else:
-            success, wait = False, True
-
-        while not success or wait:
+        while not r:
             self._wait()
-            wait = f()
+            r = f()
 
-        if not self.b.state:
-            self.b.state = next_state
+        return r[1:]
 
     def init(self):
 
-        self.while_true(f=self.b.init, next_state="survey")
+        wait = self.wait_for_a_response(f=self.b.init)
+        while wait:
+            wait = self.wait_for_a_response(f=self.b.init)
 
     def survey(self):
 
-        self.while_true(f=self.b.survey, next_state="tutorial")
+        wait = self.wait_for_a_response(f=self.b.init)
+        while wait:
+            wait = self.wait_for_a_response(f=self.b.init)
 
     def tutorial(self):
 
-        self.while_true(f=self.b.tutorial, next_state="game")
+        wait, end = self.wait_for_a_response(f=self.b.tutorial)
+        while not end:
+            wait, end = self.wait_for_a_response(f=self.b.tutorial)
 
     def game(self):
 
-        self.while_true(f=self.b.choice, next_state="end")
+        wait, end = self.wait_for_a_response(f=self.b.tutorial)
+        while not end:
+            wait, end = self.wait_for_a_response(f=self.b.tutorial)
 
     def end(self):
 
@@ -225,9 +229,9 @@ class BotProcess:
 
         idx = methods.index(getattr(self, self.b.game_state))
 
-        for method in methods[idx:]:
+        for i, method in enumerate(methods[idx:]):
             method()
-            input("Next state? Press a key.")
+            input("Go to state {}? Press a key.".format(methods[i + 1].__name__))
 
 
 def main():

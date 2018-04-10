@@ -17,8 +17,8 @@ class Room(models.Model):
 
 class User(models.Model):
     room_id = models.IntegerField()
-    device_id = models.TextField(unique=True)
-    pseudo = models.TextField(unique=True)
+    device_id = models.TextField()
+    pseudo = models.TextField()
     age = models.IntegerField(null=True)
     gender = models.TextField(null=True)
     production_good = models.IntegerField()
@@ -26,6 +26,9 @@ class User(models.Model):
     score = models.IntegerField(default=0)
     tutorial_done = models.NullBooleanField()
     tutorial_score = models.IntegerField()
+
+    class Meta:
+        unique_together = [('room_id', 'device_id'), ('room_id', 'pseudo')]
 
 
 class TutorialChoice(models.Model):

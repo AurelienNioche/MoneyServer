@@ -15,9 +15,9 @@ def delete(room_id):
     rm = Room.objects.filter(id=room_id).first()
 
     if rm:
-        choices = Choice.objects.filter(room_id=rm.id)
+        Choice.objects.filter(room_id=rm.id).delete()
+        TutorialChoice.objects.filter(room_id=rm.id).delete()
         rm.delete()
-        choices.delete()
 
 
 def create(data):

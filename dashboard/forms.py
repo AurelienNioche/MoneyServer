@@ -13,19 +13,19 @@ class ParametersForm(forms.Form):
 
     x0 = forms.IntegerField(
         label="x0",
-        initial=30,
+        initial=1,
         required=True
     )
 
     x1 = forms.IntegerField(
         label="x1",
-        initial=10,
+        initial=1,
         required=True
     )
 
     x2 = forms.IntegerField(
         label="x2",
-        initial=10,
+        initial=1,
         required=True
     )
 
