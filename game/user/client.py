@@ -17,34 +17,56 @@ def connect(device_id):
 
         if not u:
 
-            u, choice_made, good_in_hand, desired_good = _create_new_user(rm, device_id)
+            u, good_in_hand = _create_new_user(rm, device_id)
+
+            choice_made = None
+            desired_good = None
+
+            tuto_choice_made = None
+            tuto_good_in_hand = None
+            tuto_desired_good = None
 
         else:
 
             goods = get_user_last_known_goods(u, rm, rm.t)
+
             choice_made = goods["choice_made"]
             good_in_hand = goods["good_in_hand"]
             desired_good = goods["desired_good"]
+
+            tuto_goods = get_user_last_known_goods(u, rm, rm.t, tuto=True)
+
+            tuto_choice_made = tuto_goods["choice_made"]
+            tuto_good_in_hand = tuto_goods["good_in_hand"]
+            tuto_desired_good = tuto_goods["desired_good"]
 
         progress = game.room.state.get_progress_for_current_state(rm)
         has_to_wait = True if progress != 100 and rm.state == game.room.state.states.welcome else False
 
         # Get relative good_in_hand
         relative_good_in_hand = get_relative_good(u, good_in_hand)
+        relative_tuto_good_in_hand = get_relative_good(u, tuto_good_in_hand)
 
         # only get desired good if it exists
         # (meaning it is a reconnection and not a first connection)
         relative_desired_good = get_relative_good(u, desired_good) if desired_good else None
+        relative_tuto_desired_good = get_relative_good(u, tuto_desired_good) if tuto_desired_good else None
 
         return {
             "wait": has_to_wait,
             "progress": progress,
             "state": rm.state,
             "choice_made": choice_made,
+            "tuto_choice_made": tuto_choice_made,
             "score": u.score,
             "good_in_hand": relative_good_in_hand,
+            "tuto_good_in_hand": relative_tuto_good_in_hand,
             "desired_good": relative_desired_good,
+            "tuto_desired_good": relative_tuto_desired_good,
             "t": rm.t,
+            "t_max": rm.t_max,
+            "tuto_t_max": rm.tutorial_t_max,
+            "tuto_t": rm.tutorial_t,
             "pseudo": u.pseudo,
             "user_id": u.id
         }
@@ -192,6 +214,7 @@ def submit_tutorial_choice(desired_good, user_id, t):
 
 
 def _create_new_user(rm, device_id):
+
     """
     Creates a new user and returns goods he is carrying
     :param rm:
@@ -200,8 +223,6 @@ def _create_new_user(rm, device_id):
     choice_made (bool), good_in_hand, desired_good
     """
 
-    made_choice = False
-    desired_good = None
     good_in_hand = _get_user_production_good(rm)
     consumption_good = (good_in_hand + 1) % 2
 
@@ -225,7 +246,7 @@ def _create_new_user(rm, device_id):
 
         u.save()
 
-    return u, made_choice, good_in_hand, desired_good
+    return u, good_in_hand
 
 
 def _get_user_production_good(rm):

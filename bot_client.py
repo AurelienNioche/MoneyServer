@@ -1,7 +1,7 @@
 import requests
 import json
 import multiprocessing as ml
-import numpy as np
+import time
 
 
 # --------------- Init ----------------- #
@@ -160,7 +160,7 @@ class BotClient:
 
 class BotProcess(ml.Process):
 
-    def __init__(self, url, start_event, delay=1, device_id="1"):
+    def __init__(self, url, start_event, delay=3, device_id="1"):
         super().__init__()
         self.start_event = start_event
         self.b = BotClient(url=url, device_id=device_id)
@@ -221,6 +221,8 @@ def main():
     start_event = ml.Event()
 
     for n in range(n_accounts):
+
+        time.sleep(3)
 
         device_id = "bot{}".format(n)
 

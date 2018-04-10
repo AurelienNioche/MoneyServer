@@ -6,6 +6,7 @@ def init(request):
         "progress": 50,
         "state": "survey",
         "choice_made": False,
+        "tuto_choice_made": False,
         "score": 0,
         "good": 0,
         "tuto_good": 0,
