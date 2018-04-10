@@ -51,4 +51,5 @@ def choice(request):
         "progress": 100,
         "success": True,
         "t": 1,
+        "end": False,
     }

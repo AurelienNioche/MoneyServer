@@ -128,7 +128,7 @@ class BotClient:
 
     # --------------------- tuto  ------------------------------------ #
 
-    def tutorial(self):
+    def tutorial_choice(self):
 
         return self._request({
             KeyTuto.demand: "tutorial",
@@ -137,7 +137,7 @@ class BotClient:
         })
 
     @print_reply
-    def reply_tutorial(self, args):
+    def reply_tutorial_choice(self, args):
 
         return True, args["wait"]
 
@@ -196,9 +196,9 @@ class BotProcess(ml.Process):
 
         self.while_true(f=self.b.survey, next_state="tutorial")
 
-    def tutorial(self):
+    def tutorial_choice(self):
 
-        self.while_true(f=self.b.tutorial, next_state="game")
+        self.while_true(f=self.b.tutorial_choice, next_state="game")
 
     def game(self):
 
@@ -208,7 +208,7 @@ class BotProcess(ml.Process):
 
         self.init()
         self.survey()
-        self.tutorial()
+        self.tutorial_choice()
         self.game()
 
 
