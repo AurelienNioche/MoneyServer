@@ -2,6 +2,7 @@ from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 
 from collections import namedtuple
+import numpy as np
 
 from utils import utils
 
@@ -72,7 +73,7 @@ def _treat_args(request):
 
     Args = namedtuple(
         "Args",
-        ["device_id", "user_id", "progress", "age", "gender", "choice", "t"]
+        ["device_id", "user_id", "progress", "age", "gender", "desired_good", "t"]
     )
 
     args = Args(
@@ -81,7 +82,7 @@ def _treat_args(request):
         progress=request.POST.get("progress"),
         age=request.POST.get("age"),
         gender=request.POST.get("gender"),
-        choice=request.POST.get("choice"),
+        desired_good=request.POST.get("desired_good"),
         t=request.POST.get("t")
     )
 
@@ -140,26 +141,48 @@ def survey(args):
         age=args.age,
     )
 
-    has_to_wait, state_progress = \
+    wait, progress,  = \
         game.room.client.get_progression(user_id=args.user_id, t=args.t)
 
     to_reply = {
-        "wait": has_to_wait,
-        "progress": state_progress
+        "wait": wait,
+        "progress": progress
     }
 
     return to_reply
 
 
-def tutorial(args):
+def tutorial_choice(args):
 
-    game.user.client.submit_tutorial_done(user_id=args.user_id)
-
-    has_to_wait, progress = \
+    success, score = game.user.client.submit_tutorial_choice(
+        user_id=args.user_id,
+        desired_good=args.desired_good,
+        t=args.t
+    )
+    wait, choice_progress, t, end = \
         game.room.client.get_progression(user_id=args.user_id, t=args.t)
 
     to_reply = {
-        "wait": has_to_wait,
+        "wait": wait,
+        "success": success,
+        "score": score,
+        "progress": choice_progress,
+        "t": t,
+        "end": end
+    }
+
+    return to_reply
+
+
+def tutorial_done(args):
+
+    game.user.client.submit_tutorial_done(user_id=args.user_id)
+
+    wait, progress, = \
+        game.room.client.get_progression(user_id=args.user_id, t=args.t)
+
+    to_reply = {
+        "wait": wait,
         "progress": progress
     }
 
@@ -170,15 +193,15 @@ def choice(args):
 
     success, score = game.room.client.submit_choice(
         user_id=args.user_id,
-        desired_good=args.choice,
+        desired_good=args.desired_good,
         t=args.t
     )
 
-    has_to_wait, choice_progress, end, t = \
-        game.room.client.get_progression(user_id=args.user_id, t=args.t)
+    wait, choice_progress, t, end = \
+        game.room.client.get_progression(user_id=args.user_id, t=args.t, user_demand=utils.)
 
     to_reply = {
-        "wait": has_to_wait,
+        "wait": wait,
         "progress": choice_progress,
         "success": success,
         "end": end,

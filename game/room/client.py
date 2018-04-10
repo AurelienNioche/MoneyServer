@@ -6,7 +6,7 @@ import game.user.client
 import game.room.state
 
 
-def get_progression(user_id, t):
+def get_progression(user_id, t, user_demand):
 
     u = User.objects.filter(id=user_id).first()
     rm = Room.objects.filter(id=u.room_id).first()
@@ -14,15 +14,28 @@ def get_progression(user_id, t):
     if not u or not rm:
         raise Exception("Error: Room is {} and user is {}".format(rm, u))
 
-    if rm.state == game.room.state.states.game:
-        progress = game.room.state.get_progress_for_choices(rm, t)
-        has_to_wait = True if progress != 100 else False
-        return has_to_wait, progress, rm.state == game.room.state.states.end, rm.t
+    is_valid = game.room.state.verify_rm_state_and_u_demand_compatibility(rm, user_demand)
+
+    # if rm.state and user demand do not match
+    # tell client to pass to the next state
+    if not is_valid:
+        # return wait, progress
+        return False, game.room.state.get_progress_for_current_state(rm)
+
+    if rm.state in (game.room.state.states.game, game.room.state.states.tutorial):
+
+        state_progress = game.room.state.get_progress_for_current_state(rm)
+        choice_progress, t = game.room.state.get_progress_for_choices(rm, t)
+
+        # return wait, progress, end, t
+        return choice_progress != 100, choice_progress, state_progress != 100, t
 
     else:
+
         progress = game.room.state.get_progress_for_current_state(rm)
-        has_to_wait = True if progress != 100 else False
-        return has_to_wait, progress
+
+        # return wait, progress
+        return progress != 100, progress
 
 
 def submit_choice(desired_good, user_id, t):
@@ -71,10 +84,10 @@ def _matching(rm, t):
 
     for g1, g2 in markets:
 
-        pool1 = choices.filter(Q(desired_good=g1) | Q(good_in_hand=g2)).only('success', 'user_id')
-        pool2 = choices.filter(Q(desired_good=g2) | Q(good_in_hand=g1)).only('success', 'user_id')
-
-        pools = [pool1, pool2]
+        pools = [
+            choices.filter(Q(desired_good=g1) | Q(good_in_hand=g2)).only('success', 'user_id'),
+            choices.filter(Q(desired_good=g2) | Q(good_in_hand=g1)).only('success', 'user_id')
+        ]
 
         # We sort pools in order to get the shortest pool first
         idx = np.argsort([p.count() for p in pools])
@@ -90,16 +103,23 @@ def _matching(rm, t):
             c1.save(update_fields=["success"])
             c2.save(update_fields=["success"])
 
-            for i in (c1.user_id, c2.user_id, ):
-                u = User.objects.filter(id=i).first()
-                if u:
-                    u.score += 1
-                    u.save(update_fields=["score"])
-                else:
-                    raise Exception("Error in _'matching': Users are not found for that exchange.")
+            _compute_score(u1=c1.user_id, u2=c2.user_id)
 
         # The lasts fail
         for c in max_pool.exclude(success=True):
             c.success = False
             c.save(update_fields=["success"])
 
+
+def _compute_score(u1, u2):
+
+    for i in (u1, u2):
+
+        u = User.objects.filter(id=i).first()
+
+        if u:
+            u.score += 1
+            u.save(update_fields=["score"])
+
+        else:
+            raise Exception("Error in '_matching': Users are not found for that exchange.")

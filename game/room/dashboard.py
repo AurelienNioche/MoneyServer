@@ -1,4 +1,3 @@
-import numpy as np
 from django.utils import timezone
 from adminbase import settings
 
@@ -6,7 +5,7 @@ import os
 import subprocess
 import pickle
 
-from game.models import Room, Choice, User
+from game.models import Room, Choice, TutorialChoice
 
 import game.room.state
 
@@ -16,7 +15,6 @@ def delete(room_id):
     rm = Room.objects.filter(id=room_id).first()
 
     if rm:
-
         choices = Choice.objects.filter(room_id=rm.id)
         rm.delete()
         choices.delete()
@@ -30,7 +28,8 @@ def create(data):
     x1 = int(data["x1"])
     x2 = int(data["x2"])
     trial = bool(data['trial'])
-    ending_t = int(data["ending_t"])
+    t_max = int(data["t_max"])
+    tutorial_t_max = int(data["tutorial_t_max"])
     opened = bool(data["opened"])
 
     n_user = sum([x0, x1, x2])
@@ -40,8 +39,10 @@ def create(data):
         x1=x1,
         x2=x2,
         trial=trial,
-        ending_t=ending_t,
+        t_max=t_max,
+        tutorial_t_max=tutorial_t_max,
         t=0,
+        tutorial_t=0,
         state=game.room.state.states.welcome,
         opened=opened,
         n_user=n_user
@@ -50,8 +51,27 @@ def create(data):
     rm.save()
 
     Choice.objects.bulk_create([
-        Choice(room_id=rm.id, user_id=None, good_in_hand=None, desired_good=None, t=t, success=None)
-        for _ in range(n_user) for t in range(ending_t)
+        Choice(
+            room_id=rm.id,
+            t=t,
+            user_id=None,
+            good_in_hand=None,
+            desired_good=None,
+            success=None
+        )
+        for _ in range(n_user) for t in range(t_max)
+    ])
+
+    TutorialChoice.objects.bulk_create([
+        TutorialChoice(
+            room_id=rm.id,
+            t=t,
+            user_id=None,
+            good_in_hand=None,
+            desired_good=None,
+            success=None
+        )
+        for _ in range(n_user) for t in range(tutorial_t_max)
     ])
 
 
@@ -131,27 +151,3 @@ def flush_db():
 
         entries = table.objects.all()
         entries.delete()
-
-
-def get_rooms():
-
-    room_info = dict()
-
-    room_info["room_25_opp_score"] = "{} / {}".format(
-        Room.objects.filter(display_opponent_score=True, opened=True, missing_players=2, radius=0.25).count(),
-        Room.objects.filter(display_opponent_score=True, state="end", radius=0.25).count()
-    )
-    room_info["room_25_no_opp_score"] = "{} / {}".format(
-        Room.objects.filter(display_opponent_score=True, opened=True, missing_players=2, radius=0.25).count(),
-        Room.objects.filter(display_opponent_score=True, state="end", radius=0.25).count()
-    )
-    room_info["room_50_opp_score"] = "{} / {}".format(
-        Room.objects.filter(display_opponent_score=True, opened=True, missing_players=2, radius=0.50).count(),
-        Room.objects.filter(display_opponent_score=True, state="end", radius=0.50).count()
-    )
-    room_info["room_50_no_opp_score"] = "{} / {}".format(
-        Room.objects.filter(display_opponent_score=True, opened=True, missing_players=2, radius=0.50).count(),
-        Room.objects.filter(display_opponent_score=True, state="end", radius=0.50).count()
-    )
-
-    return room_info

@@ -29,8 +29,14 @@ class ParametersForm(forms.Form):
         required=True
     )
 
-    ending_t = forms.IntegerField(
+    t_max = forms.IntegerField(
         label="Duration",
+        required=True,
+        initial=25,
+    )
+
+    tutorial_t_max = forms.IntegerField(
+        label="Tutorial Duration",
         required=True,
         initial=25,
     )
@@ -39,12 +45,6 @@ class ParametersForm(forms.Form):
         label="Trial",
         initial=False,
         required=False,
-    )
-
-    opened = forms.BooleanField(
-        label="Opened",
-        initial=True,
-        required=False
     )
 
 
@@ -79,11 +79,9 @@ class RoomForm(ParametersForm):
 
         if cleaned_data.get("trial") is None:
             self.cleaned_data["trial"] = False
-            self.cleaned_data["opened"] = False
 
         else:
             cleaned_data.pop("trial")
-            cleaned_data.pop("opened")
 
         if not all(cleaned_data.get(field) for field in cleaned_data.keys()):
 
