@@ -79,9 +79,8 @@ def _treat_args(request):
     args = Args(
         user_id=request.POST.get("user_id"),
         device_id=request.POST.get("device_id"),
-        progress=request.POST.get("progress"),
         age=request.POST.get("age"),
-        gender=request.POST.get("gender"),
+        gender=request.POST.get("sex"),
         desired_good=request.POST.get("desired_good"),
         t=request.POST.get("t")
     )
