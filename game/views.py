@@ -73,7 +73,7 @@ def _treat_args(request):
 
     Args = namedtuple(
         "Args",
-        ["device_id", "user_id", "progress", "age", "gender", "desired_good", "t"]
+        ["device_id", "user_id", "age", "gender", "desired_good", "t"]
     )
 
     args = Args(
