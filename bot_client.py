@@ -162,17 +162,16 @@ class BotClient:
         return True, not args["end"]
 
 
-class BotProcess():
+class BotProcess:
 
-    def __init__(self, url, start_event, delay=0.5, device_id="1"):
+    def __init__(self, url, delay=0.5, device_id="1"):
         super().__init__()
-        self.start_event = start_event
         self.b = BotClient(url=url, device_id=device_id)
         self.delay = delay
 
     def _wait(self):
 
-        ml.Event().wait(timeout=self.delay)
+        time.sleep(self.delay)
 
     def while_true(self, f, next_state):
 
@@ -235,21 +234,15 @@ def main():
 
     url = "http://127.0.0.1:8000/client_request/"
 
-    n_accounts = 1
+    n = input("Bot id? > ")
+    device_id = "bot{}".format(n)
 
-    start_event = ml.Event()
+    b = BotProcess(
+        url=url,
+        device_id=device_id
+    )
 
-    for n in range(n_accounts):
-
-        device_id = "bot{}".format(n)
-
-        b = BotProcess(
-            url=url,
-            start_event=start_event,
-            device_id=device_id
-        )
-
-        b.run()
+    b.run()
 
 
 if __name__ == "__main__":
