@@ -23,7 +23,7 @@ def connect(device_id):
             desired_good = None
 
             tuto_choice_made = None
-            tuto_good_in_hand = None
+            tuto_good_in_hand = u.production_good
             tuto_desired_good = None
 
         else:
@@ -70,6 +70,9 @@ def connect(device_id):
             "pseudo": u.pseudo,
             "user_id": u.id
         }
+
+    else:
+        raise Exception("Error: No room found.")
 
 
 def get_user_last_known_goods(u, rm, t, tuto=False):
@@ -188,6 +191,15 @@ def submit_tutorial_done(user_id):
 
 
 def submit_tutorial_choice(desired_good, user_id, t):
+
+    """
+    TODO: Increase indirect exchange prob of success
+    In order to make those two kind of strategy equivalent
+    :param desired_good:
+    :param user_id:
+    :param t:
+    :return:
+    """
 
     choice = TutorialChoice.objects.filter(user_id=user_id, t=t).first()
 

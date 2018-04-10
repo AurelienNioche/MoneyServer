@@ -2,6 +2,7 @@ import requests
 import json
 import multiprocessing as ml
 import time
+import numpy as np
 
 
 # --------------- Init ----------------- #
@@ -27,6 +28,7 @@ class KeyTuto:
     demand = "demand"
     user_id = "user_id"
     progress = "progress"
+    choice = "choice"
 
 # -------------- Play -------------------- #
 
@@ -66,6 +68,7 @@ class BotClient:
         self.tuto_t = None
         self.tuto_desired_good = None
         self.tuto_t_max = None
+        self.choice_made = None
 
         self.game_state = "welcome"
 
@@ -128,18 +131,19 @@ class BotClient:
 
     # --------------------- tuto  ------------------------------------ #
 
-    def tutorial_choice(self):
+    def tutorial(self):
 
         return self._request({
-            KeyTuto.demand: "tutorial",
+            KeyTuto.demand: "tutorial_choice",
             KeyTuto.progress: 100,
             KeyTuto.user_id: self.user_id,
+            KeyTuto.choice: np.random.randint(3),
         })
 
     @print_reply
-    def reply_tutorial_choice(self, args):
+    def reply_tutorial(self, args):
 
-        return True, args["wait"]
+        return True, args["wait"], args["end"]
 
     # --------------------- choice ------------------------------------ #
 
@@ -158,9 +162,9 @@ class BotClient:
         return True, not args["end"]
 
 
-class BotProcess(ml.Process):
+class BotProcess():
 
-    def __init__(self, url, start_event, delay=3, device_id="1"):
+    def __init__(self, url, start_event, delay=0.5, device_id="1"):
         super().__init__()
         self.start_event = start_event
         self.b = BotClient(url=url, device_id=device_id)
@@ -196,33 +200,46 @@ class BotProcess(ml.Process):
 
         self.while_true(f=self.b.survey, next_state="tutorial")
 
-    def tutorial_choice(self):
+    def tutorial(self):
 
-        self.while_true(f=self.b.tutorial_choice, next_state="game")
+        self.while_true(f=self.b.tutorial, next_state="game")
 
     def game(self):
 
         self.while_true(f=self.b.choice, next_state="end")
 
+    def end(self):
+
+        print("It is the end, my only friend, the end.")
+
     def run(self):
 
+        input("Run? Press a key.")
         self.init()
-        self.survey()
-        self.tutorial_choice()
-        self.game()
+
+        methods = [
+            self.survey,
+            self.tutorial,
+            self.game,
+            self.end
+        ]
+
+        idx = methods.index(getattr(self, self.b.game_state))
+
+        for method in methods[idx:]:
+            method()
+            input("Next state? Press a key.")
 
 
 def main():
 
     url = "http://127.0.0.1:8000/client_request/"
 
-    n_accounts = 50
+    n_accounts = 1
 
     start_event = ml.Event()
 
     for n in range(n_accounts):
-
-        time.sleep(3)
 
         device_id = "bot{}".format(n)
 
@@ -232,7 +249,7 @@ def main():
             device_id=device_id
         )
 
-        b.start()
+        b.run()
 
 
 if __name__ == "__main__":
