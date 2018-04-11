@@ -44,6 +44,7 @@ def get_progress_for_current_state(rm, u):
 
 def next_state(u, state):
     u.state = state
-    utils.log("User {} goes to state {}".format(u.pseudo, u.state), f=next_state)
+    # utils.log("User {} goes to state {}".format(u.pseudo, u.state), f=next_state)
     u.save(update_fields=['state'])
+    return u
 

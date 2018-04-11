@@ -72,7 +72,7 @@ def init(args):
 
     progress = game.room.client.get_progression(u=u, rm=rm, t=args.t)
 
-    wait = game.room.client.state_verification(
+    wait, state = game.room.client.state_verification(
         u=u, rm=rm, t=args.t, progress=progress, demand=init.__name__
     )
 
@@ -81,7 +81,7 @@ def init(args):
         "wait": wait if u.state in ("welcome", ) else False,
         "progress": progress,
 
-        "step": info["state"],
+        "step": state,
         "score": info["score"],
 
         "t": info["t"],
@@ -117,12 +117,12 @@ def survey(args):
 
     progress = game.room.client.get_progression(u=u, rm=rm, t=args.t)
 
-    wait = game.room.client.state_verification(
+    wait, state = game.room.client.state_verification(
         u=u, rm=rm, t=args.t, progress=progress, demand=survey.__name__
     )
 
     to_reply = {
-        "wait": wait if u.state in ("survey", ) else False,
+        "wait": wait if state in ("survey", ) else False,
         "progress": progress
     }
 
@@ -168,12 +168,12 @@ def tutorial_done(args):
 
     progress = game.room.client.get_progression(u=u, rm=rm, t=args.t)
 
-    wait = game.room.client.state_verification(
+    wait, state = game.room.client.state_verification(
         u=u, rm=rm, t=args.t, progress=progress, demand=tutorial_done.__name__
     )
 
     to_reply = {
-        "wait": wait if u.state in ("tutorial", ) else False,
+        "wait": wait if state in ("tutorial", ) else False,
         "progress": progress
     }
 

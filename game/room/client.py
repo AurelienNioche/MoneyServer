@@ -20,7 +20,7 @@ def get_room(room_id):
 
 def get_progression(u, rm, t, tuto=False):
 
-    if u.state in (game.room.state.states.game, game.room.state.states.tutorial):
+    if u.state in (game.room.state.states.game, ):
 
         return game.room.state.get_progress_for_choices(rm=rm, t=t, tuto=tuto)
 
@@ -33,11 +33,9 @@ def state_verification(u, rm, progress, t, demand):
 
     if demand in ('tutorial_choice', ):
 
-        t = t + 1 if progress == 100 else t
-        rm = game.room.state.set_rm_timestep(rm=rm, t=t, tuto=True)
-        wait = False if progress == 100 else True
-
-        end = rm.tutorial_t == rm.tutorial_t_max
+        t += 1
+        wait = False
+        end = t == rm.tutorial_t_max
 
         return wait, t, end
 
@@ -65,7 +63,7 @@ def state_verification(u, rm, progress, t, demand):
 
         return wait, t, end
 
-    elif demand in ('init', 'survey', 'tutorial_done'):
+    elif demand in ('init', ):
 
         if progress == 100:
 
@@ -74,40 +72,62 @@ def state_verification(u, rm, progress, t, demand):
                     rm=rm,
                     state=game.room.state.states.survey
                 )
+
             if u.state in (game.room.state.states.welcome, ):
-                game.user.state.next_state(
+                u = game.user.state.next_state(
                     u=u,
                     state=game.room.state.states.survey
                 )
+
+            return False, u.state
+
+        else:
+
+            return True, u.state
+
+    elif demand in ('survey', ):
+
+        if progress == 100:
 
             if rm.state in (game.room.state.states.survey, ):
                 game.room.state.next_state(
                     rm=rm,
                     state=game.room.state.states.tutorial
                 )
+
             if u.state in (game.room.state.states.survey, ):
-                game.user.state.next_state(
+                u = game.user.state.next_state(
                     u=u,
                     state=game.room.state.states.tutorial,
                 )
 
+            return False, u.state
+
+        else:
+
+            return True, u.state
+
+    elif demand in ('tutorial_done', ):
+
+        if progress == 100:
+
             if rm.state in (game.room.state.states.tutorial, ):
+
                 game.room.state.next_state(
                     rm=rm,
                     state=game.room.state.states.game
                 )
 
             if u.state in (game.room.state.states.tutorial, ):
-                game.user.state.next_state(
+                u = game.user.state.next_state(
                     u=u,
                     state=game.room.state.states.game
                 )
 
-            return False
+            return False, u.state
 
         else:
-
-            return True
+            return True, u.state
 
 
 def submit_choice(rm, u, desired_good, t):

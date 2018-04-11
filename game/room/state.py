@@ -25,7 +25,7 @@ def next_state(rm, state):
     if state == states.end:
         rm.opened = False
 
-    utils.log("Room {} goes to state {}".format(rm.id, rm.state), f=next_state)
+    # utils.log("Room {} goes to state {}".format(rm.id, rm.state), f=next_state)
     rm.save(update_fields=['state'])
 
 

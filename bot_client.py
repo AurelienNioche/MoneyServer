@@ -109,7 +109,7 @@ class BotClient:
         self.tuto_good = args["tutoGood"]
         self.tuto_desired_good = args["tutoGoodDesired"]
         self.tuto_t_max = args["tutoTMax"]
-        self.game_state = args["step"]
+        self.game_state = args["step"] + "_choice" if args["step"] in ('tutorial', ) else args["step"]
 
         return True, args["wait"]
 
@@ -210,16 +210,18 @@ class BotProcess:
         while wait:
             wait, = self.wait_for_a_response(f=self.b.survey)
 
-    def tutorial(self):
+    def tutorial_choice(self):
 
         wait, end = self.wait_for_a_response(f=self.b.tutorial)
         while not end:
             print("Tutorial: t = {}".format(self.b.tuto_t))
             wait, end = self.wait_for_a_response(f=self.b.tutorial)
 
+    def tutorial_done(self):
+
         wait, = self.wait_for_a_response(f=self.b.tutorial_done)
         while wait:
-            wait, self.wait_for_a_response(f=self.b.tutorial_done)
+            wait, = self.wait_for_a_response(f=self.b.tutorial_done)
 
     def game(self):
 
@@ -236,18 +238,20 @@ class BotProcess:
 
         input("Run? Press a key.")
 
-        methods = iter([
+        methods = [
             self.welcome,
             self.survey,
-            self.tutorial,
+            self.tutorial_choice,
+            self.tutorial_done,
             self.game,
             self.end
-        ])
+        ]
 
         mapping = {
             "welcome": self.welcome,
             "survey": self.survey,
-            "tutorial": self.tutorial,
+            "tutorial_choice": self.tutorial_choice,
+            "tutorial_done": self.tutorial_done,
             "game": self.game,
             "end": self.end
         }
@@ -255,10 +259,14 @@ class BotProcess:
         self.welcome()
 
         next_method = mapping[self.b.game_state]
+        idx = methods.index(next_method)
+
+        input("Go to state {}? Press a key.".format(next_method.__name__))
 
         while True:
             next_method()
-            next_method = next(methods)
+            idx += 1
+            next_method = methods[idx]
 
             if next_method.__name__ == "end":
                 self.end()
@@ -269,7 +277,7 @@ class BotProcess:
 
 def main():
 
-    url = "http://money.getz.fr/client_request/"
+    url = "http://127.0.0.1:8000/client_request/"
 
     n = input("Bot id? > ")
     device_id = "bot{}".format(n)
