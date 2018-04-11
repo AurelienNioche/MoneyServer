@@ -1,20 +1,21 @@
 
 
 def init(request):
+
     return {
         "wait": False,
         "progress": 50,
-        "step": "survey",
+        "step": "tutorial",
         "choiceMade": False,
-        "tutoChoiceMade": False,
-        "tutoScore": 0,
         "score": 0,
         "goodInHand": 0,
-        "tutoGoodInHand": 0,
-        "desiredGood": 1,
-        "tutoDesiredGood": 1,
+        "goodDesired": 1,
         "t": 0,
         "tMax": 25,
+        "tutoGoodInHand": 0,
+        "tutoGoodDesired": 1,
+        "tutoChoiceMade": False,
+        "tutoScore": 0,
         "tutoT": 0,
         "tutoTMax": 5,
         "pseudo": "Méchel",
@@ -42,7 +43,7 @@ def tutorial_choice(request):
         "progress": 100,
         "tutoSuccess": True,
         "tutoT": 1,
-        "tutoEnd": False,
+        "tutoEnd": True,
         "tutoScore": 0,
     }
 
