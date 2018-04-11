@@ -228,7 +228,7 @@ def _treat_args(request):
             device_id=form.cleaned_data.get("device_id"),
             age=form.cleaned_data.get("age"),
             gender=form.cleaned_data.get("sex"),
-            desired_good=form.cleaned_data.get("desired_good"),
+            desired_good=form.cleaned_data.get("good"),
             t=form.cleaned_data.get("t")
         )
 
