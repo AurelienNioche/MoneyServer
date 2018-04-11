@@ -57,7 +57,7 @@ def client_request(request):
     to_reply = func(args)
 
     # Log
-    utils.log("I reply: {}".format(list(to_reply.items())), f=client_request)
+    # utils.log("I reply: {}".format(list(to_reply.items())), f=client_request)
 
     to_reply["demand"] = demand
     to_reply["skipTutorial"] = skip_tutorial

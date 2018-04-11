@@ -269,7 +269,7 @@ class BotProcess:
 
 def main():
 
-    url = "http://127.0.0.1:8000/client_request/"
+    url = "http:/money.getz.fr/client_request/"
 
     n = input("Bot id? > ")
     device_id = "bot{}".format(n)
