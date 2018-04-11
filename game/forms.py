@@ -8,7 +8,7 @@ class ParametersForm(forms.Form):
 
     user_id = forms.IntegerField(required=False)
     t = forms.IntegerField(required=False)
-    desired_good = forms.IntegerField(required=False)
+    good = forms.IntegerField(required=False)
     sex = forms.CharField(required=False)
     age = forms.CharField(required=False)
     device_id = forms.CharField(required=False)
