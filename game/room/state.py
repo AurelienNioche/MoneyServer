@@ -18,23 +18,16 @@ def get_progress_for_choices(rm, t, tuto=False):
     return progress
 
 
-def next_state(rm):
+def next_state(rm, state):
 
-    try:
-
-        # A bit hacky/dirty, TODO: find another solution
-        rm.state = states[states.index(rm.state) + 1]
-        utils.log("Room {} goes to state {}".format(rm.id, rm.state), f=next_state)
-        rm.save(update_fields=['state'])
-
-    except IndexError:
-
-        raise Exception("Error in 'game.room.state': Going to next state is impossible, state does not exist.")
+    rm.state = state
+    utils.log("Room {} goes to state {}".format(rm.id, rm.state), f=next_state)
+    rm.save(update_fields=['state'])
 
 
-def set_rm_timestep(rm, t):
+def set_rm_timestep(rm, t, tuto):
 
-    if rm.state == states.tutorial:
+    if tuto:
         rm.tutorial_t = t
         rm.save(update_fields=['tutorial_t'])
 

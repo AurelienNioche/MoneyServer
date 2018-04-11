@@ -184,6 +184,8 @@ def submit_tutorial_done(u):
 
     u.save(update_fields=["tutorial_done"])
 
+    return u
+
 
 def submit_tutorial_choice(u, rm, desired_good, t):
 

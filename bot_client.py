@@ -147,6 +147,18 @@ class BotClient:
 
         return True, args["wait"], args["tutoEnd"]
 
+    def tutorial_done(self):
+
+        return self._request({
+            "demand": "tutorial_done",
+            "user_id": self.user_id
+        })
+
+    @print_reply
+    def reply_tutorial_done(self, args):
+
+        return True, args["wait"]
+
     # --------------------- choice ------------------------------------ #
 
     def choice(self):
@@ -205,6 +217,10 @@ class BotProcess:
         while not end:
             print("Tutorial: t = {}".format(self.b.tuto_t))
             wait, end = self.wait_for_a_response(f=self.b.tutorial)
+
+        wait, = self.wait_for_a_response(f=self.b.tutorial_done)
+        while wait:
+            wait, self.wait_for_a_response(f=self.b.tutorial_done)
 
     def game(self):
 

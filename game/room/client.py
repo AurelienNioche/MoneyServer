@@ -29,38 +29,79 @@ def get_progression(u, rm, t, tuto=False):
         return game.user.state.get_progress_for_current_state(u=u, rm=rm)
 
 
-def state_verification(u, rm, progress, t):
+def state_verification(u, rm, progress, t, demand):
 
-    if u.state in (game.room.state.states.game, game.room.state.states.tutorial):
+    if demand in ('tutorial_choice', ):
 
-            t = t + 1 if progress == 100 else t
+        t = t + 1 if progress == 100 else t
+        rm = game.room.state.set_rm_timestep(rm=rm, t=t, tuto=True)
+        wait = False if progress == 100 else True
 
-            rm = game.room.state.set_rm_timestep(rm=rm, t=t)
+        end = rm.tutorial_t == rm.tutorial_t_max
 
-            wait = False if progress == 100 else True
+        return wait, t, end
 
-            if u.state == game.room.state.states.game:
-                end = t == rm.t_max
-            else:
-                end = t == rm.tutorial_t_max
+    elif demand in ('choice', ):
 
-            if end:
+        t = t + 1 if progress == 100 else t
+        rm = game.room.state.set_rm_timestep(rm=rm, t=t, tuto=False)
+        wait = False if progress == 100 else True
 
-                if u.state == rm.state:
-                    game.room.state.next_state(rm=rm)
+        end = rm.t == rm.t_max
 
-                game.user.state.next_state(u=u)
+        if end:
 
-            return wait, t, end
+            if rm.state in (game.room.state.states.game, ):
+                game.room.state.next_state(
+                    rm=rm,
+                    state=game.room.state.states.end
+                )
 
-    else:
+            if u.state in (game.room.state.states.game, ):
+                game.user.state.next_state(
+                    u=u,
+                    state=game.room.state.states.end
+                )
+
+        return wait, t, end
+
+    elif demand in ('init', 'survey', 'tutorial_done'):
 
         if progress == 100:
 
-            if u.state == rm.state:
-                game.room.state.next_state(rm=rm)
+            if rm.state in (game.room.state.states.welcome, ):
+                game.room.state.next_state(
+                    rm=rm,
+                    state=game.room.state.states.survey
+                )
+            if u.state in (game.room.state.states.welcome, ):
+                game.user.state.next_state(
+                    u=u,
+                    state=game.room.state.states.survey
+                )
 
-            game.user.state.next_state(u=u)
+            if rm.state in (game.room.state.states.survey, ):
+                game.room.state.next_state(
+                    rm=rm,
+                    state=game.room.state.states.tutorial
+                )
+            if u.state in (game.room.state.states.survey, ):
+                game.user.state.next_state(
+                    u=u,
+                    state=game.room.state.states.tutorial,
+                )
+
+            if rm.state in (game.room.state.states.tutorial, ):
+                game.room.state.next_state(
+                    rm=rm,
+                    state=game.room.state.states.game
+                )
+
+            if u.state in (game.room.state.states.tutorial, ):
+                game.user.state.next_state(
+                    u=u,
+                    state=game.room.state.states.game
+                )
 
             return False
 

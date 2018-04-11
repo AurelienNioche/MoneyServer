@@ -40,7 +40,7 @@ def tutorial_choice(request):
     return {
         "wait": False,
         "progress": 100,
-        "success": True,
+        "tutoSuccess": True,
         "tutoT": 1,
         "tutoEnd": False,
         "tutoScore": 0,
