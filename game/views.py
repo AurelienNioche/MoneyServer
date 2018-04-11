@@ -99,6 +99,7 @@ def init(args):
         "tutoGoodDesired": info["tuto_desired_good"],
         "tutoT": info["tuto_t"],
         "tutoTMax": info["tuto_t_max"],
+        "tutoScore": info["tuto_score"]
     }
 
     return to_reply

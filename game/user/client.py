@@ -65,7 +65,8 @@ def connect(device_id):
             "tuto_t_max": rm.tutorial_t_max,
             "tuto_t": rm.tutorial_t,
             "pseudo": u.pseudo,
-            "user_id": u.id
+            "user_id": u.id,
+            "tuto_score": u.tutorial_score
         }, u, rm
 
     else:
