@@ -88,13 +88,13 @@ def init(args):
         "tMax": info["t_max"],
 
         "choiceMade": info["choice_made"],
-        "good": info["good_in_hand"],
+        "goodInHand": info["good_in_hand"],
         "goodDesired": info["desired_good"],
 
         "userId": info["user_id"],
         "pseudo": info["pseudo"],
 
-        "tutoGood": info["tuto_good_in_hand"],
+        "tutoGoodInHand": info["tuto_good_in_hand"],
         "tutoChoiceMade": info["tuto_choice_made"],
         "tutoGoodDesired": info["tuto_desired_good"],
         "tutoT": info["tuto_t"],
