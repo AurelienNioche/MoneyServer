@@ -60,8 +60,6 @@ def client_request(request):
     # utils.log("I reply: {}".format(list(to_reply.items())), f=client_request)
 
     to_reply["demand"] = demand
-    to_reply["skipTutorial"] = skip_tutorial
-    to_reply["skipSurvey"] = skip_survey
 
     response = JsonResponse(to_reply)
 
