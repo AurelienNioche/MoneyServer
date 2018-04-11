@@ -52,6 +52,11 @@ class Choice(models.Model):
     t = models.IntegerField()
     success = models.NullBooleanField(null=True)
 
+    class Meta:
+        unique_together = [
+            ('user_id', 't'),
+        ]
+
 
 class BoolParameter(models.Model):
     name = models.TextField(unique=True)

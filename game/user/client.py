@@ -119,11 +119,11 @@ def get_user_last_known_goods(u, rm, t, tuto=False):
 
             # If exchange was a success, return desired good as good in hand.
             if last_choice.success:
-                goods["good_in_hand"] = choice.desired_good
+                goods["good_in_hand"] = last_choice.desired_good
 
             # Else return last good in hand
             else:
-                goods["good_in_hand"] = choice.good_in_hand
+                goods["good_in_hand"] = last_choice.good_in_hand
 
         # If last_choice is not found, it means it means that t <= 1
         # and user has in hand production good
@@ -185,40 +185,42 @@ def submit_tutorial_done(u):
     u.save(update_fields=["tutorial_done"])
 
 
-def submit_tutorial_choice(desired_good, user_id, t):
+def submit_tutorial_choice(u, rm, desired_good, t):
 
     """
     TODO: Increase indirect exchange prob of success
     In order to make those two kind of strategy equivalent
     :param desired_good:
-    :param user_id:
+    :param u:
+    :param rm:
+    :param desired_good:
     :param t:
     :return:
     """
 
-    choice = TutorialChoice.objects.filter(user_id=user_id, t=t).first()
-    u = User.objects.filter(id=user_id).first()
-    rm = Room.objects.filter(id=u.room_id).first()
-
-    if not u or not rm:
-            raise Exception("Error in 'submit_tutorial_choice': User is {}, Room is {}.".format(u, rm))
+    choice = TutorialChoice.objects.filter(user_id=u.id, t=t).first()
 
     if not choice:
 
-        choice = TutorialChoice.objects.filter(room_id=u.room_id, user_id=None, t=t).first()
+        with transaction.atomic():
 
-        if not choice:
-            raise Exception("Error in 'submit_tutorial_choice': Did not found an empty choice entry.")
+            choice = TutorialChoice.objects.select_for_update()\
+                    .filter(room_id=u.room_id, user_id=None, t=t).first()
 
-        choice.user_id = u.id
-        choice.desired_good = get_absolute_good(good=desired_good, u=u)
-        choice.good_in_hand = get_user_last_known_goods(u=u, rm=rm, t=t, tuto=True)["good_in_hand"]
-        choice.success = np.random.choice([False, True])
-        u.score += choice.success
-        choice.save(update_fields=['user_id', 'success', 'good_in_hand', 'desired_good'])
-        u.save(update_fields=["score"])
+            if not choice:
+                raise Exception("Error in 'submit_tutorial_choice': Did not found an empty choice entry.")
 
-    return choice.success, u.score
+            choice.user_id = u.id
+            choice.desired_good = get_absolute_good(good=desired_good, u=u)
+            choice.good_in_hand = get_user_last_known_goods(u=u, rm=rm, t=t, tuto=True)["good_in_hand"]
+            choice.success = np.random.choice([False, True])
+            u.score += choice.success
+            choice.save(update_fields=['user_id', 'success', 'good_in_hand', 'desired_good'])
+            u.save(update_fields=["score"])
+
+            return choice.success, u.score
+    else:
+        return choice.success, u.score
 
 
 def _create_new_user(rm, device_id):

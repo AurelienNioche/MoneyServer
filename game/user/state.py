@@ -25,7 +25,7 @@ def get_progress_for_current_state(rm, u):
 
         return round(rm.tutorial_t / rm.tutorial_t_max * 100)
 
-    elif u.state == states.game:
+    elif u.state in (states.game, states.end, ):
 
         return round(rm.t / rm.t_max * 100)
 

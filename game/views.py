@@ -73,8 +73,11 @@ def init(args):
 
     wait = game.room.client.state_verification(u=u, rm=rm, t=args.t, progress=progress)
 
+    print(wait)
+    print("State: {}".format(u.state))
+
     to_reply = {
-        "wait": wait,
+        "wait": wait if u.state in ("welcome", ) else False,
         "progress": progress,
         "state": info["state"],
         "choiceMade": info["choice_made"],
@@ -110,9 +113,8 @@ def survey(args):
 
     wait = game.room.client.state_verification(u=u, rm=rm, t=args.t, progress=progress)
 
-
     to_reply = {
-        "wait": wait,
+        "wait": wait if u.state in ("survey", ) else False,
         "progress": progress
     }
 
@@ -125,12 +127,13 @@ def tutorial_choice(args):
     rm = game.room.client.get_room(room_id=u.room_id)
 
     success, score = game.user.client.submit_tutorial_choice(
-        user_id=args.user_id,
+        u=u,
+        rm=rm,
         desired_good=args.desired_good,
         t=args.t
     )
 
-    progress = game.room.client.get_progression(u=u, rm=rm, t=args.t)
+    progress = game.room.client.get_progression(u=u, rm=rm, t=args.t, tuto=True)
 
     wait, t, end = game.room.client.state_verification(rm=rm, u=u, t=args.t, progress=progress)
 
@@ -142,8 +145,6 @@ def tutorial_choice(args):
         "tutoT": t,
         "tutoEnd": end
     }
-
-    print(to_reply)
 
     return to_reply
 
@@ -173,8 +174,9 @@ def choice(args):
     u = game.user.client.get_user(user_id=args.user_id)
     rm = game.room.client.get_room(room_id=u.room_id)
 
-    success, score = game.user.client.submit_tutorial_choice(
-        user_id=args.user_id,
+    success, score = game.room.client.submit_choice(
+        u=u,
+        rm=rm,
         desired_good=args.desired_good,
         t=args.t
     )

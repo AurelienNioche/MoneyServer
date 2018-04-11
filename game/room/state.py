@@ -41,3 +41,5 @@ def set_rm_timestep(rm, t):
     else:
         rm.t = t
         rm.save(update_fields=['t'])
+
+    return rm

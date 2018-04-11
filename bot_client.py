@@ -18,7 +18,7 @@ class KeySurvey:
     demand = "demand"
     user_id = "user_id"
     age = "age"
-    gender = "gender"
+    sex = "sex"
 
 # -------------- tuto ----------------- #
 
@@ -70,7 +70,7 @@ class BotClient:
         self.tuto_t_max = None
         self.choice_made = None
 
-        self.game_state = "welcome"
+        self.game_state = None
 
     def _request(self, data):
 
@@ -119,7 +119,7 @@ class BotClient:
         return self._request({
             KeySurvey.demand: "survey",
             KeySurvey.age: 31,
-            KeySurvey.gender: "female",
+            KeySurvey.sex: "female",
             KeySurvey.user_id: self.user_id,
         })
 
@@ -137,7 +137,7 @@ class BotClient:
             KeyTuto.progress: 100,
             KeyTuto.user_id: self.user_id,
             KeyTuto.desired_good: np.random.randint(3),
-            KeyTuto.t: self.t,
+            KeyTuto.t: self.tuto_t,
         })
 
     @print_reply
@@ -161,7 +161,7 @@ class BotClient:
     @print_reply
     def reply_choice(self, args):
         self.t = args["t"]
-        return True, args["wait"], not args["end"]
+        return True, args["wait"], args["end"]
 
 
 class BotProcess:
@@ -201,17 +201,17 @@ class BotProcess:
 
     def tutorial(self):
 
-        print("Tutorial: t = {}".format(self.b.tuto_t))
         wait, end = self.wait_for_a_response(f=self.b.tutorial)
         while not end:
+            print("Tutorial: t = {}".format(self.b.tuto_t))
             wait, end = self.wait_for_a_response(f=self.b.tutorial)
 
     def game(self):
 
-        print("Game: t = {}".format(self.b.t))
-        wait, end = self.wait_for_a_response(f=self.b.tutorial)
+        wait, end = self.wait_for_a_response(f=self.b.choice)
         while not end:
-            wait, end = self.wait_for_a_response(f=self.b.tutorial)
+            print("Game: t = {}".format(self.b.t))
+            wait, end = self.wait_for_a_response(f=self.b.choice)
 
     def end(self):
 
@@ -221,22 +221,35 @@ class BotProcess:
 
         input("Run? Press a key.")
 
-        methods = [
+        methods = iter([
             self.welcome,
             self.survey,
             self.tutorial,
             self.game,
             self.end
-        ]
+        ])
 
-        idx = 0
-        while methods[idx] == self.welcome:
-            self.welcome()
-            idx = methods.index(getattr(self, self.b.game_state))
+        mapping = {
+            "welcome": self.welcome,
+            "survey": self.survey,
+            "tutorial": self.tutorial,
+            "game": self.game,
+            "end": self.end
+        }
 
-        for i, method in enumerate(methods[idx:]):
-            method()
-            input("Go to state {}? Press a key.".format(methods[i + 1].__name__))
+        self.welcome()
+
+        next_method = mapping[self.b.game_state]
+
+        while True:
+            next_method()
+            next_method = next(methods)
+
+            if next_method.__name__ == "end":
+                self.end()
+                break
+
+            # input("Go to state {}? Press a key.".format(next_method.__name__))
 
 
 def main():

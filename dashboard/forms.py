@@ -32,13 +32,13 @@ class ParametersForm(forms.Form):
     t_max = forms.IntegerField(
         label="Duration",
         required=True,
-        initial=25,
+        initial=10,
     )
 
     tutorial_t_max = forms.IntegerField(
         label="Tutorial Duration",
         required=True,
-        initial=25,
+        initial=5,
     )
 
     trial = forms.BooleanField(
