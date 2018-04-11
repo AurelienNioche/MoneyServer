@@ -215,7 +215,7 @@ def submit_tutorial_choice(u, rm, desired_good, t):
             choice.user_id = u.id
             choice.desired_good = get_absolute_good(good=desired_good, u=u)
             choice.good_in_hand = get_user_last_known_goods(u=u, rm=rm, t=t, tuto=True)["good_in_hand"]
-            choice.success = np.random.choice([False, True])
+            choice.success = bool(np.random.choice([False, True]))
             u.score += choice.success
             choice.save(update_fields=['user_id', 'success', 'good_in_hand', 'desired_good'])
             u.save(update_fields=["score"])

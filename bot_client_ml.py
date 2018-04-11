@@ -2,6 +2,7 @@ import requests
 import json
 import time
 import numpy as np
+import multiprocessing as ml
 
 
 # --------------- Init ----------------- #
@@ -175,16 +176,16 @@ class BotClient:
         return True, args["wait"], args["end"]
 
 
-class BotProcess:
+class BotProcess(ml.Process):
 
-    def __init__(self, url, delay=0.5, device_id="1"):
+    def __init__(self, url, delay=2, device_id="1"):
         super().__init__()
         self.b = BotClient(url=url, device_id=device_id)
         self.delay = delay
 
     def _wait(self):
 
-        time.sleep(self.delay)
+        ml.Event().wait(self.delay)
 
     def wait_for_a_response(self, f):
 
@@ -234,7 +235,7 @@ class BotProcess:
 
     def run(self):
 
-        input("Run? Press a key.")
+        # input("Run? Press a key.")
 
         methods = iter([
             self.welcome,
@@ -264,22 +265,25 @@ class BotProcess:
                 self.end()
                 break
 
-            input("Go to state {}? Press a key.".format(next_method.__name__))
+            # input("Go to state {}? Press a key.".format(next_method.__name__))
 
 
 def main():
 
     url = "http://127.0.0.1:8000/client_request/"
 
-    n = input("Bot id? > ")
-    device_id = "bot{}".format(n)
+    n_agent = 30
 
-    b = BotProcess(
-        url=url,
-        device_id=device_id
-    )
+    for n in range(n_agent):
 
-    b.run()
+        device_id = "bot{}".format(n)
+
+        b = BotProcess(
+            url=url,
+            device_id=device_id
+        )
+
+        b.start()
 
 
 if __name__ == "__main__":

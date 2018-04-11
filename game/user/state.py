@@ -31,7 +31,7 @@ def get_progress_for_current_state(rm, u):
 
         else:
 
-            return round(rm.tutorial_t / rm.tutorial_t_max * 100)
+            return 100
 
     elif u.state in (states.game, states.end, ):
 
