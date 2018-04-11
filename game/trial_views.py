@@ -7,6 +7,7 @@ def init(request):
         "step": "survey",
         "choiceMade": False,
         "tutoChoiceMade": False,
+        "tutoScore": 0,
         "score": 0,
         "good": 0,
         "tutoGood": 0,

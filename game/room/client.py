@@ -33,22 +33,25 @@ def state_verification(u, rm, progress, t):
 
     if u.state in (game.room.state.states.game, game.room.state.states.tutorial):
 
-        t = t + 1 if progress == 100 else t
+            t = t + 1 if progress == 100 else t
 
-        rm = game.room.state.set_rm_timestep(rm=rm, t=t)
+            rm = game.room.state.set_rm_timestep(rm=rm, t=t)
 
-        wait = False if progress == 100 else True
+            wait = False if progress == 100 else True
 
-        end = game.user.state.get_progress_for_current_state(u=u, rm=rm) == 100
+            if u.state == game.room.state.states.game:
+                end = t == rm.t_max
+            else:
+                end = t == rm.tutorial_t_max
 
-        if end:
+            if end:
 
-            if u.state == rm.state:
-                game.room.state.next_state(rm=rm)
+                if u.state == rm.state:
+                    game.room.state.next_state(rm=rm)
 
-            game.user.state.next_state(u=u)
+                game.user.state.next_state(u=u)
 
-        return wait, t, end
+            return wait, t, end
 
     else:
 

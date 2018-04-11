@@ -198,7 +198,7 @@ def submit_tutorial_choice(u, rm, desired_good, t):
     :return:
     """
 
-    choice = TutorialChoice.objects.filter(user_id=u.id, t=t).first()
+    choice = TutorialChoice.objects.filter(room_id=rm.id, user_id=u.id, t=t).first()
 
     if not choice:
 
