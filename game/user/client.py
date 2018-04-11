@@ -204,14 +204,13 @@ def submit_tutorial_choice(desired_good, user_id, t):
     """
 
     choice = TutorialChoice.objects.filter(user_id=user_id, t=t).first()
+    u = User.objects.filter(id=user_id).first()
+    rm = Room.objects.filter(id=u.room_id).first()
+
+    if not u or not rm:
+            raise Exception("Error in 'submit_tutorial_choice': User is {}, Room is {}.".format(u, rm))
 
     if not choice:
-
-        u = User.objects.filter(id=user_id).first()
-        rm = Room.objects.filter(id=u.room_id).first()
-
-        if not u or not rm:
-            raise Exception("Error in 'submit_tutorial_choice': User is {}, Room is {}.".format(u, rm))
 
         choice = TutorialChoice.objects.filter(room_id=u.room_id, user_id=None, t=t).first()
 
@@ -219,12 +218,14 @@ def submit_tutorial_choice(desired_good, user_id, t):
             raise Exception("Error in 'submit_tutorial_choice': Did not found an empty choice entry.")
 
         choice.user_id = u.id
-        choice.desired_good = get_absolute_good(desired_good, u)
+        choice.desired_good = get_absolute_good(good=desired_good, u=u)
         choice.good_in_hand = get_user_last_known_goods(u=u, rm=rm, t=t, tuto=True)["good_in_hand"]
         choice.success = np.random.choice([False, True])
         u.score += choice.success
-        choice.save(update_fields=['user_id'])
+        choice.save(update_fields=['user_id', 'success', 'good_in_hand', 'desired_good'])
         u.save(update_fields=["score"])
+
+    return choice.success, u.score
 
 
 def _create_new_user(rm, device_id):
@@ -256,6 +257,7 @@ def _create_new_user(rm, device_id):
             tutorial_done=False,
             score=0,
             tutorial_score=0,
+            state=game.room.state.states.survey
         )
 
         u.save()

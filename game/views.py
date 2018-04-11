@@ -1,16 +1,16 @@
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
-from django.db import transaction
 
 from collections import namedtuple
 
 from utils import utils
 
-from game.models import BoolParameter
-import game.trial_views
+from game.forms import ClientRequestForm
 
+import game.trial_views
 import game.user.client
 import game.room.client
+import game.params.client
 import game.room.state
 
 
@@ -28,32 +28,33 @@ def client_request(request):
     utils.log("Post request: {}".format(list(request.POST.items())), f=client_request)
 
     demand = request.POST["demand"]
-    trial, skip_survey, skip_tutorial = _is_trial()
+    trial, skip_survey, skip_tutorial = game.params.client.is_trial()
 
-    try:
+    if not trial:
 
-        if not trial:
+        # Retrieve functions in current script
+        functions = {
+            f_name: f for f_name, f in globals().items()
+            if not f_name.startswith("_")
+        }
 
-            # Retrieve functions in current script
-            functions = {
-                f_name: f for f_name, f in globals().items()
-                if not f_name.startswith("_")
-            }
-
-            # Retrieve demanded function
+        try:
+            # Retrieve demanded function from current script
             func = functions[demand]
+        except KeyError:
+            raise Exception("Bad demand.")
 
-        else:
+    else:
 
+        try:
             # Get function from trial script
             func = getattr(game.trial_views, demand)
+        except AttributeError:
+            raise Exception("Bad demand.")
 
-        args = _treat_args(request)
+    args = _treat_args(request)
 
-        to_reply = func(args)
-
-    except (KeyError, AttributeError):
-        raise Exception("Bad demand")
+    to_reply = func(args)
 
     to_reply["demand"] = demand
     to_reply["skip_tutorial"] = skip_tutorial
@@ -61,57 +62,7 @@ def client_request(request):
 
     response = JsonResponse(to_reply)
 
-    response["Access-Control-Allow-Credentials"] = "true"
-    response["Access-Control-Allow-Headers"] = "Accept, X-Access-Token, X-Application-Name, X-Request-Sent-Time"
-    response["Access-Control-Allow-Methods"] = "GET, POST, OPTIONS"
-    response["Access-Control-Allow-Origin"] = "*"
-
-    return response
-
-
-def _treat_args(request):
-
-    Args = namedtuple(
-        "Args",
-        ["device_id", "user_id", "age", "gender", "desired_good", "t"]
-    )
-
-    args = Args(
-        user_id=request.POST.get("user_id"),
-        device_id=request.POST.get("device_id"),
-        age=request.POST.get("age"),
-        gender=request.POST.get("sex"),
-        desired_good=request.POST.get("desired_good"),
-        t=request.POST.get("t")
-    )
-
-    return args
-
-
-def _is_trial():
-
-    with transaction.atomic():
-
-        trial = BoolParameter.objects.filter(name="trial").first()
-        skip_survey = BoolParameter.objects.filter(name="skip_survey").first()
-        skip_tutorial = BoolParameter.objects.filter(name="skip_tutorial").first()
-
-        if not trial:
-
-            trial = BoolParameter(name="trial", value=True)
-            trial.save()
-
-        if not skip_survey:
-
-            skip_survey = BoolParameter(name="skip_survey", value=True)
-            skip_survey.save()
-
-        if not skip_tutorial:
-
-            skip_tutorial = BoolParameter(name="skip_tutorial", value=True)
-            skip_tutorial.save()
-
-        return trial.value, skip_survey.value, skip_tutorial.value
+    return _set_headers(response)
 
 
 def init(args):
@@ -149,7 +100,7 @@ def survey(args):
     )
 
     wait, progress,  = \
-        game.room.client.get_progression(user_id=args.user_id, t=args.t, user_demand=utils.fname())
+        game.room.client.get_progression(user_id=args.user_id, t=args.t, user_demand=args.demand)
 
     to_reply = {
         "wait": wait,
@@ -166,8 +117,11 @@ def tutorial_choice(args):
         desired_good=args.desired_good,
         t=args.t
     )
-    wait, choice_progress, t, end = \
-        game.room.client.get_progression(user_id=args.user_id, t=args.t, user_demand=utils.fname())
+
+    rm, choice_progress = \
+        game.room.client.get_progression(user_id=args.user_id, t=args.t, tuto=True)
+
+    wait, t, end = game.room.client.state_verification(rm=rm, t=args.t)
 
     to_reply = {
         "wait": wait,
@@ -186,7 +140,7 @@ def tutorial_done(args):
     game.user.client.submit_tutorial_done(user_id=args.user_id)
 
     wait, progress, = \
-        game.room.client.get_progression(user_id=args.user_id, t=args.t, user_demand=utils.fname())
+        game.room.client.get_progression(user_id=args.user_id, t=args.t, user_demand=args.demand)
 
     to_reply = {
         "wait": wait,
@@ -204,8 +158,8 @@ def choice(args):
         t=args.t
     )
 
-    wait, choice_progress, t, end = \
-        game.room.client.get_progression(user_id=args.user_id, t=args.t, user_demand=utils.fname())
+    wait, choice_progress, end, t = \
+        game.room.client.get_progression(user_id=args.user_id, t=args.t, user_demand=args.demand)
 
     to_reply = {
         "wait": wait,
@@ -217,4 +171,41 @@ def choice(args):
     }
 
     return to_reply
+
+
+def _treat_args(request):
+
+    form = ClientRequestForm(request.POST)
+
+    if form.is_valid():
+
+        Args = namedtuple(
+            "Args",
+            ["demand", "device_id", "user_id", "age", "gender", "desired_good", "t"]
+        )
+
+        args = Args(
+            demand=form.cleaned_data.get("demand"),
+            user_id=form.cleaned_data.get("user_id"),
+            device_id=form.cleaned_data.get("device_id"),
+            age=form.cleaned_data.get("age"),
+            gender=form.cleaned_data.get("sex"),
+            desired_good=form.cleaned_data.get("desired_good"),
+            t=form.cleaned_data.get("t")
+        )
+
+        return args
+
+    else:
+        raise Exception('Error while treating POST arguments.')
+
+
+def _set_headers(response):
+
+    response["Access-Control-Allow-Credentials"] = "true"
+    response["Access-Control-Allow-Headers"] = "Accept, X-Access-Token, X-Application-Name, X-Request-Sent-Time"
+    response["Access-Control-Allow-Methods"] = "GET, POST, OPTIONS"
+    response["Access-Control-Allow-Origin"] = "*"
+
+    return response
 

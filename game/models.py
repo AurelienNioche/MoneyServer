@@ -26,9 +26,13 @@ class User(models.Model):
     score = models.IntegerField(default=0)
     tutorial_done = models.NullBooleanField()
     tutorial_score = models.IntegerField()
+    state = models.TextField(null=True)
 
     class Meta:
-        unique_together = [('room_id', 'device_id'), ('room_id', 'pseudo')]
+        unique_together = [
+            ('room_id', 'device_id'),
+            ('room_id', 'pseudo')
+        ]
 
 
 class TutorialChoice(models.Model):

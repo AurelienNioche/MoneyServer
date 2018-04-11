@@ -6,36 +6,53 @@ import game.user.client
 import game.room.state
 
 
-def get_progression(user_id, t, user_demand):
+def get_progression(user_id, t, tuto=False):
 
-    u = User.objects.filter(id=user_id).first()
-    rm = Room.objects.filter(id=u.room_id).first()
+    u = User.objects.select_for_update().filter(id=user_id).first()I
 
-    if not u or not rm:
-        raise Exception("Error: Room is {} and user is {}".format(rm, u))
+    if not u:
+        raise Exception("Error: User not found.")
 
-    is_valid = game.room.state.verify_rm_state_and_u_demand_compatibility(rm, user_demand)
+    rm = Room.objects.select_for_update().filter(id=u.room_id).first()
 
-    # if rm.state and user demand do not match
-    # tell client to pass to the next state
-    if not is_valid:
-        # return wait, progress
-        return False, game.room.state.get_progress_for_current_state(rm)
+    if not rm:
+        raise Exception("Error: Room not found.")
 
-    if rm.state in (game.room.state.states.game, game.room.state.states.tutorial):
+    if u.state in (game.room.state.states.game, game.room.state.states.tutorial):
 
-        state_progress = game.room.state.get_progress_for_current_state(rm)
-        choice_progress, t = game.room.state.get_progress_for_choices(rm, t)
-
-        # return wait, progress, end, t
-        return choice_progress != 100, choice_progress, state_progress != 100, t
+        return u, rm, game.room.state.get_progress_for_choices(rm=rm, t=t, tuto=tuto)
 
     else:
 
-        progress = game.room.state.get_progress_for_current_state(rm)
+        return u, rm, game.user.state.get_progress_for_current_state(u=u, rm=rm)
 
-        # return wait, progress
-        return progress != 100, progress
+
+def state_verification(u, rm, progress, t):
+
+    if u.state in (game.room.state.states.game, game.room.state.states.tutorial):
+
+        if progress == 100:
+
+            t += 1
+
+        rm = game.room.state.set_rm_timestep(rm=rm, t=t)
+
+        end = game.user.state.get_progress_for_current_state(u=u, rm=rm) == 100
+
+        if end:
+
+            game.room.state.next_state(rm)
+            game.user.state.next_state(u)
+
+        return end, t
+
+    else:
+
+        if progress == 100:
+
+            game.room.state.next_state(rm=rm)
+
+            return False
 
 
 def submit_choice(desired_good, user_id, t):
@@ -63,11 +80,16 @@ def submit_choice(desired_good, user_id, t):
     # If choice entry is not filled for this t
     else:
 
-        current_choice = Choice.objects.filter(room_id=rm.id, t=t, user_id=None).first()
+        current_choice = Choice.objects.select_for_update()\
+            .filter(room_id=rm.id, t=t, user_id=None).first()
 
         current_choice.user_id = user_id
-        current_choice.desired_good = game.user.client.get_absolute_good(u, desired_good)
-        current_choice.good_in_hand = game.user.client.get_user_last_known_goods(rm, u, t-1)["good_in_hand"]
+
+        current_choice.desired_good = \
+            game.user.client.get_absolute_good(u=u, good=desired_good)
+
+        current_choice.good_in_hand = \
+            game.user.client.get_user_last_known_goods(rm=rm, u=u, t=t-1)["good_in_hand"]
 
         current_choice.save(update_fields=["user_id", "desired_good", "good_in_hand"])
 
@@ -80,7 +102,7 @@ def _matching(rm, t):
     markets = (0, 1), (1, 2), (2, 0)
 
     # Get choices for room and time
-    choices = Choice.objects.filter(room_id=rm.id, t=t, success=None)
+    choices = Choice.objects.select_for_update().filter(room_id=rm.id, t=t, success=None)
 
     for g1, g2 in markets:
 
@@ -98,6 +120,7 @@ def _matching(rm, t):
 
         # The firsts succeed
         for c1, c2 in zip(min_pool, max_pool):
+
             c1.success = True
             c2.success = True
             c1.save(update_fields=["success"])
@@ -107,6 +130,7 @@ def _matching(rm, t):
 
         # The lasts fail
         for c in max_pool.exclude(success=True):
+
             c.success = False
             c.save(update_fields=["success"])
 
@@ -118,6 +142,7 @@ def _compute_score(u1, u2):
         u = User.objects.filter(id=i).first()
 
         if u:
+
             u.score += 1
             u.save(update_fields=["score"])
 

@@ -19,7 +19,6 @@ class KeySurvey:
     user_id = "user_id"
     age = "age"
     gender = "gender"
-    t = "t"
 
 # -------------- tuto ----------------- #
 
@@ -28,14 +27,15 @@ class KeyTuto:
     demand = "demand"
     user_id = "user_id"
     progress = "progress"
-    choice = "choice"
+    desired_good = "desired_good"
+    t = "t"
 
 # -------------- Play -------------------- #
 
 
 class KeyChoice:
     demand = "demand"
-    choice = "choice"
+    desired_good = "desired_good"
     t = "t"
     user_id = "user_id"
 
@@ -101,15 +101,15 @@ class BotClient:
     @print_reply
     def reply_init(self, args):
 
-        self.user_id = args["user_id"]
+        self.user_id = args["userId"]
         self.good_in_hand = args["good"]
-        self.desired_good = args["desired_good"] if args["desired_good"] else 1
+        self.desired_good = args["desiredGood"] if args["desiredGood"] else 1
         self.t = args["t"]
-        self.choice_made = args["choice_made"]
-        self.tuto_t = args["tuto_t"]
-        self.tuto_good = args["tuto_good"]
-        self.tuto_desired_good = args["tuto_desired_good"]
-        self.tuto_t_max = args["tuto_t_max"]
+        self.choice_made = args["choiceMade"]
+        self.tuto_t = args["tutoT"]
+        self.tuto_good = args["tutoGood"]
+        self.tuto_desired_good = args["tutoDesiredGood"]
+        self.tuto_t_max = args["tutoTMax"]
         self.game_state = args["state"]
 
         return True, args["wait"]
@@ -121,7 +121,6 @@ class BotClient:
             KeySurvey.age: 31,
             KeySurvey.gender: "female",
             KeySurvey.user_id: self.user_id,
-            KeySurvey.t: self.t,
         })
 
     @print_reply
@@ -137,15 +136,16 @@ class BotClient:
             KeyTuto.demand: "tutorial_choice",
             KeyTuto.progress: 100,
             KeyTuto.user_id: self.user_id,
-            KeyTuto.choice: np.random.randint(3),
+            KeyTuto.desired_good: np.random.randint(3),
+            KeyTuto.t: self.t,
         })
 
     @print_reply
-    def reply_tutorial(self, args):
+    def reply_tutorial_choice(self, args):
 
         self.tuto_t = args["tutoT"]
 
-        return True, args["wait"], args["end"]
+        return True, args["wait"], args["tutoEnd"]
 
     # --------------------- choice ------------------------------------ #
 
@@ -154,7 +154,7 @@ class BotClient:
         return self._request({
             KeyChoice.demand: "choice",
             KeyChoice.user_id: self.user_id,
-            KeyChoice.choice: self.desired_good,
+            KeyChoice.desired_good: self.desired_good,
             KeyChoice.t: self.t
         })
 
@@ -189,24 +189,26 @@ class BotProcess:
 
     def init(self):
 
-        wait = self.wait_for_a_response(f=self.b.init)
+        wait, = self.wait_for_a_response(f=self.b.init)
         while wait:
-            wait = self.wait_for_a_response(f=self.b.init)
+            wait, = self.wait_for_a_response(f=self.b.init)
 
     def survey(self):
 
-        wait = self.wait_for_a_response(f=self.b.init)
+        wait, = self.wait_for_a_response(f=self.b.survey)
         while wait:
-            wait = self.wait_for_a_response(f=self.b.init)
+            wait, = self.wait_for_a_response(f=self.b.survey)
 
     def tutorial(self):
 
+        print("Tutorial: t = {}".format(self.b.tuto_t))
         wait, end = self.wait_for_a_response(f=self.b.tutorial)
         while not end:
             wait, end = self.wait_for_a_response(f=self.b.tutorial)
 
     def game(self):
 
+        print("Game: t = {}".format(self.b.t))
         wait, end = self.wait_for_a_response(f=self.b.tutorial)
         while not end:
             wait, end = self.wait_for_a_response(f=self.b.tutorial)
