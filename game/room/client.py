@@ -6,25 +6,25 @@ import game.user.client
 import game.room.state
 
 
-def get_progression(user_id, t, tuto=False):
+def get_room(room_id):
 
-    u = User.objects.select_for_update().filter(id=user_id).first()I
-
-    if not u:
-        raise Exception("Error: User not found.")
-
-    rm = Room.objects.select_for_update().filter(id=u.room_id).first()
+    rm = Room.objects.select_for_update().filter(id=room_id).first()
 
     if not rm:
         raise Exception("Error: Room not found.")
 
+    return rm
+
+
+def get_progression(u, rm, t, tuto=False):
+
     if u.state in (game.room.state.states.game, game.room.state.states.tutorial):
 
-        return u, rm, game.room.state.get_progress_for_choices(rm=rm, t=t, tuto=tuto)
+        return game.room.state.get_progress_for_choices(rm=rm, t=t, tuto=tuto)
 
     else:
 
-        return u, rm, game.user.state.get_progress_for_current_state(u=u, rm=rm)
+        return game.user.state.get_progress_for_current_state(u=u, rm=rm)
 
 
 def state_verification(u, rm, progress, t):
@@ -35,13 +35,14 @@ def state_verification(u, rm, progress, t):
 
             t += 1
 
-        rm = game.room.state.set_rm_timestep(rm=rm, t=t)
-
         end = game.user.state.get_progress_for_current_state(u=u, rm=rm) == 100
 
         if end:
 
-            game.room.state.next_state(rm)
+            if u.state == rm.state:
+                rm = game.room.state.set_rm_timestep(rm=rm, t=t)
+                game.room.state.next_state(rm)
+
             game.user.state.next_state(u)
 
         return end, t
@@ -50,7 +51,10 @@ def state_verification(u, rm, progress, t):
 
         if progress == 100:
 
-            game.room.state.next_state(rm=rm)
+            if u.state == rm.state:
+                game.room.state.next_state(rm=rm)
+
+            game.user.state.next_state(u=u)
 
             return False
 

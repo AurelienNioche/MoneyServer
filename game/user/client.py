@@ -5,6 +5,7 @@ from parameters import parameters
 
 from game.models import User, Room, Choice, TutorialChoice
 import game.room.state
+import game.user.state
 
 
 def connect(device_id):
@@ -40,7 +41,7 @@ def connect(device_id):
             tuto_good_in_hand = tuto_goods["good_in_hand"]
             tuto_desired_good = tuto_goods["desired_good"]
 
-        progress = game.room.state.get_progress_for_current_state(rm)
+        progress = game.user.state.get_progress_for_current_state(rm=rm, u=u)
         has_to_wait = True if progress != 100 and rm.state == game.room.state.states.welcome else False
 
         # Get relative good_in_hand
@@ -55,7 +56,7 @@ def connect(device_id):
         return {
             "wait": has_to_wait,
             "progress": progress,
-            "state": rm.state,
+            "state": u.state,
             "choice_made": choice_made,
             "tuto_choice_made": tuto_choice_made,
             "score": u.score,
@@ -73,6 +74,13 @@ def connect(device_id):
 
     else:
         raise Exception("Error: No room found.")
+
+
+def get_user(user_id):
+    u = User.objects.select_for_update().filter(user_id=user_id).first()
+    if not u:
+        raise Exception("Error: User not found.")
+    return u
 
 
 def get_user_last_known_goods(u, rm, t, tuto=False):
@@ -180,12 +188,7 @@ def get_absolute_good(u, good):
     return int(mapping[good])
 
 
-def submit_tutorial_done(user_id):
-
-    u = User.objects.filter(id=user_id).first()
-
-    if not u:
-        raise Exception("Error in 'submit_tutorial_progression': User not found.")
+def submit_tutorial_done(u):
 
     u.tutorial_done = True
 

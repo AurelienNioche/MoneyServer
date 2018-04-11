@@ -93,6 +93,9 @@ def init(args):
 
 def survey(args):
 
+    u = game.user.client.get_user(user_id=args.user_id)
+    rm = game.room.client.get_room(room_id=u.room_id)
+
     game.user.client.submit_survey(
         user_id=args.user_id,
         gender=args.gender,
@@ -100,7 +103,7 @@ def survey(args):
     )
 
     wait, progress,  = \
-        game.room.client.get_progression(user_id=args.user_id, t=args.t, user_demand=args.demand)
+        game.room.client.get_progression(u=u, rm=rm, t=args.t)
 
     to_reply = {
         "wait": wait,
@@ -112,22 +115,24 @@ def survey(args):
 
 def tutorial_choice(args):
 
+    u = game.user.client.get_user(user_id=args.user_id)
+    rm = game.room.client.get_room(room_id=u.room_id)
+
     success, score = game.user.client.submit_tutorial_choice(
         user_id=args.user_id,
         desired_good=args.desired_good,
         t=args.t
     )
 
-    rm, choice_progress = \
-        game.room.client.get_progression(user_id=args.user_id, t=args.t, tuto=True)
+    progress = game.room.client.get_progression(u=u, rm=rm, t=args.t)
 
-    wait, t, end = game.room.client.state_verification(rm=rm, t=args.t)
+    wait, t, end = game.room.client.state_verification(rm=rm, u=u, t=args.t, progress=progress)
 
     to_reply = {
         "wait": wait,
         "tutoSuccess": success,
         "tutoScore": score,
-        "tutoProgress": choice_progress,
+        "tutoProgress": progress,
         "tutoT": t,
         "tutoEnd": end
     }
@@ -137,10 +142,15 @@ def tutorial_choice(args):
 
 def tutorial_done(args):
 
-    game.user.client.submit_tutorial_done(user_id=args.user_id)
+    u = game.user.client.get_user(user_id=args.user_id)
 
-    wait, progress, = \
-        game.room.client.get_progression(user_id=args.user_id, t=args.t, user_demand=args.demand)
+    game.user.client.submit_tutorial_done(u=u)
+
+    rm = game.room.client.get_room(room_id=u.room_id)
+
+    progress = game.room.client.get_progression(u=u, rm=rm, t=args.t)
+
+    wait = game.room.client.state_verification(u=u, rm=rm, t=args.t, progress=progress)
 
     to_reply = {
         "wait": wait,
@@ -152,18 +162,22 @@ def tutorial_done(args):
 
 def choice(args):
 
-    success, score = game.room.client.submit_choice(
+    u = game.user.client.get_user(user_id=args.user_id)
+    rm = game.room.client.get_room(room_id=u.room_id)
+
+    success, score = game.user.client.submit_tutorial_choice(
         user_id=args.user_id,
         desired_good=args.desired_good,
         t=args.t
     )
 
-    wait, choice_progress, end, t = \
-        game.room.client.get_progression(user_id=args.user_id, t=args.t, user_demand=args.demand)
+    progress = game.room.client.get_progression(u=u, rm=rm, t=args.t)
+
+    wait, t, end = game.room.client.state_verification(rm=rm, u=u, t=args.t, progress=progress)
 
     to_reply = {
         "wait": wait,
-        "progress": choice_progress,
+        "progress": progress,
         "success": success,
         "end": end,
         "score": score,
