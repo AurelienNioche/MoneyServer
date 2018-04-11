@@ -1,6 +1,7 @@
-from game.models import User, Choice, TutorialChoice
+from game.models import Choice, TutorialChoice
 from collections import namedtuple
 
+from utils import utils
 
 # Globals
 States = namedtuple('States', ['welcome', 'survey', 'tutorial', 'game', 'end'])
@@ -23,6 +24,7 @@ def next_state(rm):
 
         # A bit hacky/dirty, TODO: find another solution
         rm.state = states[states.index(rm.state) + 1]
+        utils.log("Room {} goes to state {}".format(rm.id, rm.state), f=next_state)
         rm.save(update_fields=['state'])
 
     except IndexError:

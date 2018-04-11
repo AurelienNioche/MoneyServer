@@ -67,11 +67,15 @@ def client_request(request):
 
 def init(args):
 
-    info = game.user.client.connect(device_id=args.device_id)
+    info, u, rm = game.user.client.connect(device_id=args.device_id)
+
+    progress = game.room.client.get_progression(u=u, rm=rm, t=args.t)
+
+    wait = game.room.client.state_verification(u=u, rm=rm, t=args.t, progress=progress)
 
     to_reply = {
-        "wait": info["wait"],
-        "progress": info["progress"],
+        "wait": wait,
+        "progress": progress,
         "state": info["state"],
         "choiceMade": info["choice_made"],
         "tutoChoiceMade": info["tuto_choice_made"],
@@ -97,13 +101,15 @@ def survey(args):
     rm = game.room.client.get_room(room_id=u.room_id)
 
     game.user.client.submit_survey(
-        user_id=args.user_id,
+        u=u,
         gender=args.gender,
         age=args.age,
     )
 
-    wait, progress,  = \
-        game.room.client.get_progression(u=u, rm=rm, t=args.t)
+    progress = game.room.client.get_progression(u=u, rm=rm, t=args.t)
+
+    wait = game.room.client.state_verification(u=u, rm=rm, t=args.t, progress=progress)
+
 
     to_reply = {
         "wait": wait,
@@ -136,6 +142,8 @@ def tutorial_choice(args):
         "tutoT": t,
         "tutoEnd": end
     }
+
+    print(to_reply)
 
     return to_reply
 

@@ -1,6 +1,8 @@
 from game.room.state import states
 from game.models import User
 
+from utils import utils
+
 
 def get_progress_for_current_state(rm, u):
 
@@ -38,6 +40,7 @@ def next_state(u):
 
         # A bit hacky/dirty, TODO: find another solution
         u.state = states[states.index(u.state) + 1]
+        utils.log("User {} goes to state {}".format(u.pseudo, u.state), f=next_state)
         u.save(update_fields=['state'])
 
     except IndexError:

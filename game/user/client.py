@@ -10,7 +10,8 @@ import game.user.state
 
 def connect(device_id):
 
-    rm = Room.objects.filter(opened=True).first()
+    with transaction.atomic():
+        rm = Room.objects.select_for_update().filter(opened=True).first()
 
     if rm:
 
@@ -29,20 +30,17 @@ def connect(device_id):
 
         else:
 
-            goods = get_user_last_known_goods(u, rm, rm.t)
+            goods = get_user_last_known_goods(u=u, rm=rm, t=rm.t)
 
             choice_made = goods["choice_made"]
             good_in_hand = goods["good_in_hand"]
             desired_good = goods["desired_good"]
 
-            tuto_goods = get_user_last_known_goods(u, rm, rm.t, tuto=True)
+            tuto_goods = get_user_last_known_goods(u=u, rm=rm, t=rm.t, tuto=True)
 
             tuto_choice_made = tuto_goods["choice_made"]
             tuto_good_in_hand = tuto_goods["good_in_hand"]
             tuto_desired_good = tuto_goods["desired_good"]
-
-        progress = game.user.state.get_progress_for_current_state(rm=rm, u=u)
-        has_to_wait = True if progress != 100 and rm.state == game.room.state.states.welcome else False
 
         # Get relative good_in_hand
         relative_good_in_hand = get_relative_good(u, good_in_hand)
@@ -54,8 +52,6 @@ def connect(device_id):
         relative_tuto_desired_good = get_relative_good(u, tuto_desired_good) if tuto_desired_good else None
 
         return {
-            "wait": has_to_wait,
-            "progress": progress,
             "state": u.state,
             "choice_made": choice_made,
             "tuto_choice_made": tuto_choice_made,
@@ -70,14 +66,15 @@ def connect(device_id):
             "tuto_t": rm.tutorial_t,
             "pseudo": u.pseudo,
             "user_id": u.id
-        }
+        }, u, rm
 
     else:
         raise Exception("Error: No room found.")
 
 
+@transaction.atomic
 def get_user(user_id):
-    u = User.objects.select_for_update().filter(user_id=user_id).first()
+    u = User.objects.select_for_update().filter(id=user_id).first()
     if not u:
         raise Exception("Error: User not found.")
     return u
@@ -136,20 +133,13 @@ def get_user_last_known_goods(u, rm, t, tuto=False):
     return goods
 
 
-def submit_survey(user_id, age, gender):
+def submit_survey(u, age, gender):
 
-    u = User.objects.filter(id=user_id).first()
-
-    if u:
-
-        # if survey is not already completed
-        if u.age is None and u.gender is None:
-            u.age = age
-            u.gender = gender
-            u.save(update_fields=["age", "gender"])
-
-    else:
-        raise Exception("Error: User tries to submit survey but does not exit in database.")
+    # if survey is not already completed
+    if u.age is None and u.gender is None:
+        u.age = age
+        u.gender = gender
+        u.save(update_fields=["age", "gender"])
 
 
 def get_relative_good(u, good):
@@ -260,7 +250,7 @@ def _create_new_user(rm, device_id):
             tutorial_done=False,
             score=0,
             tutorial_score=0,
-            state=game.room.state.states.survey
+            state=game.room.state.states.welcome
         )
 
         u.save()

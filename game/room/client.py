@@ -1,11 +1,12 @@
+from django.db import transaction
 from django.db.models import Q
-import numpy as np
 
 from game.models import User, Room, Choice
 import game.user.client
 import game.room.state
 
 
+@transaction.atomic
 def get_room(room_id):
 
     rm = Room.objects.select_for_update().filter(id=room_id).first()
@@ -31,9 +32,8 @@ def state_verification(u, rm, progress, t):
 
     if u.state in (game.room.state.states.game, game.room.state.states.tutorial):
 
-        if progress == 100:
-
-            t += 1
+        t = t + 1 if progress == 100 else t
+        wait = False if progress == 100 else True
 
         end = game.user.state.get_progress_for_current_state(u=u, rm=rm) == 100
 
@@ -41,11 +41,11 @@ def state_verification(u, rm, progress, t):
 
             if u.state == rm.state:
                 rm = game.room.state.set_rm_timestep(rm=rm, t=t)
-                game.room.state.next_state(rm)
+                game.room.state.next_state(rm=rm)
 
-            game.user.state.next_state(u)
+            game.user.state.next_state(u=u)
 
-        return end, t
+        return wait, t, end
 
     else:
 
@@ -57,6 +57,10 @@ def state_verification(u, rm, progress, t):
             game.user.state.next_state(u=u)
 
             return False
+
+        else:
+
+            return True
 
 
 def submit_choice(desired_good, user_id, t):

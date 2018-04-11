@@ -187,7 +187,7 @@ class BotProcess:
 
         return r[1:]
 
-    def init(self):
+    def welcome(self):
 
         wait, = self.wait_for_a_response(f=self.b.init)
         while wait:
@@ -220,16 +220,19 @@ class BotProcess:
     def run(self):
 
         input("Run? Press a key.")
-        self.init()
 
         methods = [
+            self.welcome,
             self.survey,
             self.tutorial,
             self.game,
             self.end
         ]
 
-        idx = methods.index(getattr(self, self.b.game_state))
+        idx = 0
+        while methods[idx] == self.welcome:
+            self.welcome()
+            idx = methods.index(getattr(self, self.b.game_state))
 
         for i, method in enumerate(methods[idx:]):
             method()
