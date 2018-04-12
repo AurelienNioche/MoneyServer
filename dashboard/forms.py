@@ -13,26 +13,26 @@ class ParametersForm(forms.Form):
 
     x0 = forms.IntegerField(
         label="x0",
-        initial=1,
+        initial=15,
         required=True
     )
 
     x1 = forms.IntegerField(
         label="x1",
-        initial=1,
+        initial=15,
         required=True
     )
 
     x2 = forms.IntegerField(
         label="x2",
-        initial=1,
+        initial=20,
         required=True
     )
 
     t_max = forms.IntegerField(
         label="Duration",
         required=True,
-        initial=10,
+        initial=20,
     )
 
     tutorial_t_max = forms.IntegerField(

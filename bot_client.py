@@ -167,7 +167,7 @@ class BotClient:
         return self._request({
             KeyChoice.demand: "choice",
             KeyChoice.user_id: self.user_id,
-            KeyChoice.desired_good: self.desired_good,
+            KeyChoice.desired_good: np.random.randint(3),
             KeyChoice.t: self.t
         })
 
@@ -299,7 +299,7 @@ def main(args):
             wait_event=time.sleep,
             url=url,
             device_id=device_id,
-            delay=1
+            delay=2
         )
 
         b.run()
@@ -317,7 +317,7 @@ def main(args):
                 wait_event=ml.Event().wait,
                 url=url,
                 device_id=device_id,
-                delay=1
+                delay=2.5
             )
 
             b.start()

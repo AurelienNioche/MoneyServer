@@ -5,7 +5,7 @@ import os
 import subprocess
 import pickle
 
-from game.models import Room, Choice, TutorialChoice
+from game.models import Room, Choice, TutorialChoice, Type
 
 import game.room.state
 
@@ -53,24 +53,31 @@ def create(data):
         Choice(
             room_id=rm.id,
             t=t,
+            player_id=n,
             user_id=None,
             good_in_hand=None,
             desired_good=None,
             success=None
         )
-        for _ in range(n_user) for t in range(t_max)
+        for n in range(n_user) for t in range(t_max)
     ])
 
     TutorialChoice.objects.bulk_create([
         TutorialChoice(
             room_id=rm.id,
             t=t,
+            player_id=n,
             user_id=None,
             good_in_hand=None,
             desired_good=None,
             success=None
         )
-        for _ in range(n_user) for t in range(tutorial_t_max)
+        for n in range(n_user) for t in range(tutorial_t_max)
+    ])
+
+    Type.objects.bulk_create([
+        Type(room_id=rm.id, user_id=None, production_good=g, player_id=n)
+        for g, n in zip((0, ) * rm.x0 + (1, ) * rm.x1 + (2, ) * rm.x2, range(n_user))
     ])
 
 

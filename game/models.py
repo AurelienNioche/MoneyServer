@@ -18,11 +18,12 @@ class Room(models.Model):
 class User(models.Model):
     room_id = models.IntegerField()
     device_id = models.TextField()
+    player_id = models.IntegerField()
     pseudo = models.TextField()
     age = models.IntegerField(null=True)
     gender = models.TextField(null=True)
-    production_good = models.IntegerField()
-    consumption_good = models.IntegerField()
+    production_good = models.IntegerField(null=True)
+    consumption_good = models.IntegerField(null=True)
     score = models.IntegerField(default=0)
     tutorial_done = models.NullBooleanField()
     tutorial_score = models.IntegerField()
@@ -31,25 +32,35 @@ class User(models.Model):
     class Meta:
         unique_together = [
             ('room_id', 'device_id'),
+            ('room_id', 'player_id'),
             ('room_id', 'pseudo')
         ]
 
 
+class Type(models.Model):
+    room_id = models.IntegerField()
+    player_id = models.IntegerField()
+    user_id = models.IntegerField(null=True)
+    production_good = models.IntegerField()
+
+
 class TutorialChoice(models.Model):
     room_id = models.IntegerField()
+    player_id = models.IntegerField()
+    t = models.IntegerField()
     user_id = models.IntegerField(null=True)
     good_in_hand = models.IntegerField(null=True)
     desired_good = models.IntegerField(null=True)
-    t = models.IntegerField()
     success = models.NullBooleanField(null=True)
 
 
 class Choice(models.Model):
     room_id = models.IntegerField()
+    player_id = models.IntegerField()
+    t = models.IntegerField()
     user_id = models.IntegerField(null=True)
     good_in_hand = models.IntegerField(null=True)
     desired_good = models.IntegerField(null=True)
-    t = models.IntegerField()
     success = models.NullBooleanField(null=True)
 
     class Meta:
@@ -61,3 +72,5 @@ class Choice(models.Model):
 class BoolParameter(models.Model):
     name = models.TextField(unique=True)
     value = models.BooleanField()
+
+
