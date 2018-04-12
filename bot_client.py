@@ -111,7 +111,13 @@ class BotClient:
         self.tuto_good = args["tutoGoodInHand"]
         self.tuto_desired_good = args["tutoGoodDesired"]
         self.tuto_t_max = args["tutoTMax"]
+
         self.game_state = args["step"] + "_choice" if args["step"] in ('tutorial', ) else args["step"]
+
+        if args["skipSurvey"]:
+            self.game_state = "tutorial_choice"
+        if args["skipTutorial"]:
+            self.game_state = "game"
 
         return True, args["wait"]
 
