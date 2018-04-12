@@ -1,4 +1,6 @@
 from django.db import transaction
+import django.db.utils
+import psycopg2
 
 import numpy as np
 import time
@@ -148,8 +150,12 @@ def submit_choice(rm, u, desired_good, t):
 
             # Do matching if all users made their choice
             if n == rm.n_user:
-                time.sleep(0.5)
-                _matching(rm, t)
+
+                try:
+                    _matching(rm, t)
+
+                except (psycopg2.OperationalError, django.db.utils.OperationalError):
+                    pass
 
             return None, u.score
 
@@ -178,13 +184,14 @@ def _matching(rm, t):
 
     with transaction.atomic():
         # Get choices for room and time
-        choices = Choice.objects.select_for_update().filter(room_id=rm.id, t=t, success=None)
+
+        choices = Choice.objects.select_for_update(nowait=True).filter(room_id=rm.id, t=t, success=None)
 
         for g1, g2 in markets:
 
             pools = [
-                choices.select_for_update().filter(desired_good=g1, good_in_hand=g2).only('success', 'user_id'),
-                choices.select_for_update().filter(desired_good=g2, good_in_hand=g1).only('success', 'user_id')
+                choices.filter(desired_good=g1, good_in_hand=g2).only('success', 'user_id'),
+                choices.filter(desired_good=g2, good_in_hand=g1).only('success', 'user_id')
             ]
 
             # We sort pools in order to get the shortest pool first
@@ -214,10 +221,6 @@ def _matching(rm, t):
 
                 c.success = False
                 c.save(update_fields=["success"])
-
-        n_choices = Choice.objects.filter(room_id=rm.id, t=t, success=None).count()
-        if n_choices:
-            raise Exception("Matching is done but some choices entries are not filled.")
 
 
 def _compute_score(u1, u2, good1, good2):
