@@ -211,7 +211,7 @@ def _compute_score(u1, u2):
 
     for i in (u1, u2):
 
-        u = User.objects.filter(id=i).first()
+        u = User.objects.select_for_update().filter(id=i).first()
 
         if u:
 

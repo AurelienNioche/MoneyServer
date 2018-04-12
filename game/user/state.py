@@ -31,6 +31,8 @@ def get_progress_for_current_state(rm, u):
 
         else:
 
+            # During tutorial, progression is always 100 because
+            # players don't wait for other's choices.
             return 100
 
     elif u.state in (states.game, states.end, ):

@@ -52,20 +52,20 @@ def connect(device_id):
         relative_tuto_desired_good = get_relative_good(u, tuto_desired_good) if tuto_desired_good else None
 
         return {
+            "pseudo": u.pseudo,
+            "user_id": u.id,
             "state": u.state,
             "choice_made": choice_made,
             "tuto_choice_made": tuto_choice_made,
             "score": u.score,
+            "t": rm.t,
+            "t_max": rm.t_max,
             "good_in_hand": relative_good_in_hand,
             "tuto_good_in_hand": relative_tuto_good_in_hand,
             "desired_good": relative_desired_good,
             "tuto_desired_good": relative_tuto_desired_good,
-            "t": rm.t,
-            "t_max": rm.t_max,
             "tuto_t_max": rm.tutorial_t_max,
             "tuto_t": rm.tutorial_t,
-            "pseudo": u.pseudo,
-            "user_id": u.id,
             "tuto_score": u.tutorial_score
         }, u, rm
 
@@ -217,13 +217,13 @@ def submit_tutorial_choice(u, rm, desired_good, t):
             choice.desired_good = get_absolute_good(good=desired_good, u=u)
             choice.good_in_hand = get_user_last_known_goods(u=u, rm=rm, t=t, tuto=True)["good_in_hand"]
             choice.success = bool(np.random.choice([False, True]))
-            u.score += choice.success
+            u.tutorial_score += choice.success
             choice.save(update_fields=['user_id', 'success', 'good_in_hand', 'desired_good'])
-            u.save(update_fields=["score"])
+            u.save(update_fields=["tutorial_score"])
 
-            return choice.success, u.score
+            return choice.success, u.tutorial_score
     else:
-        return choice.success, u.score
+        return choice.success, u.tutorial_score
 
 
 def _create_new_user(rm, device_id):
@@ -236,10 +236,10 @@ def _create_new_user(rm, device_id):
     choice_made (bool), good_in_hand, desired_good
     """
 
-    good_in_hand = _get_user_production_good(rm)
-    consumption_good = (good_in_hand + 1) % 2
-
     with transaction.atomic():
+
+        good_in_hand = _get_user_production_good(rm)
+        consumption_good = (good_in_hand + 1) % 3
 
         pseudo = np.random.choice(parameters.pseudo)
 
@@ -260,7 +260,7 @@ def _create_new_user(rm, device_id):
 
         u.save()
 
-    return u, good_in_hand
+        return u, good_in_hand
 
 
 def _get_user_production_good(rm):
