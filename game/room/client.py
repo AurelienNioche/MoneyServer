@@ -215,8 +215,10 @@ def _matching(rm, t):
                     good2=c2.desired_good
                 )
 
+            idx = min_pool.count()
             # The lasts fail
-            for c in max_pool[idx_min:]:
+
+            for c in max_pool[:idx]:
 
                 c.success = False
                 c.save(update_fields=["success"])
