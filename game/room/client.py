@@ -1,16 +1,16 @@
 from django.db import transaction
 
 import numpy as np
+import time
 
 from game.models import User, Room, Choice
 import game.user.client
 import game.room.state
 
 
-@transaction.atomic
 def get_room(room_id):
 
-    rm = Room.objects.select_for_update().filter(id=room_id).first()
+    rm = Room.objects.filter(id=room_id).first()
 
     if not rm:
         raise Exception("Error: Room not found.")
@@ -20,7 +20,7 @@ def get_room(room_id):
 
 def get_progression(u, rm, t, tuto=False):
 
-    if u.state in (game.room.state.states.game, game.room.state.states.tutorial):
+    if u.state in (game.room.state.states.game, ):
 
         return game.room.state.get_progress_for_choices(rm=rm, t=t, tuto=tuto)
 
@@ -33,11 +33,9 @@ def state_verification(u, rm, progress, t, demand):
 
     if demand in ('tutorial_choice', ):
 
-        t = t + 1 if progress == 100 else t
-        rm = game.room.state.set_rm_timestep(rm=rm, t=t, tuto=True)
-        wait = False if progress == 100 else True
-
-        end = rm.tutorial_t == rm.tutorial_t_max
+        t += 1
+        wait = False
+        end = t == rm.tutorial_t_max
 
         return wait, t, end
 
@@ -65,7 +63,7 @@ def state_verification(u, rm, progress, t, demand):
 
         return wait, t, end
 
-    elif demand in ('init', 'survey', 'tutorial_done'):
+    elif demand in ('init', ):
 
         if progress == 100:
 
@@ -74,40 +72,62 @@ def state_verification(u, rm, progress, t, demand):
                     rm=rm,
                     state=game.room.state.states.survey
                 )
+
             if u.state in (game.room.state.states.welcome, ):
-                game.user.state.next_state(
+                u = game.user.state.next_state(
                     u=u,
                     state=game.room.state.states.survey
                 )
+
+            return False, u.state
+
+        else:
+
+            return True, u.state
+
+    elif demand in ('survey', ):
+
+        if progress == 100:
 
             if rm.state in (game.room.state.states.survey, ):
                 game.room.state.next_state(
                     rm=rm,
                     state=game.room.state.states.tutorial
                 )
+
             if u.state in (game.room.state.states.survey, ):
-                game.user.state.next_state(
+                u = game.user.state.next_state(
                     u=u,
                     state=game.room.state.states.tutorial,
                 )
 
+            return False, u.state
+
+        else:
+
+            return True, u.state
+
+    elif demand in ('tutorial_done', ):
+
+        if progress == 100:
+
             if rm.state in (game.room.state.states.tutorial, ):
+
                 game.room.state.next_state(
                     rm=rm,
                     state=game.room.state.states.game
                 )
 
             if u.state in (game.room.state.states.tutorial, ):
-                game.user.state.next_state(
+                u = game.user.state.next_state(
                     u=u,
                     state=game.room.state.states.game
                 )
 
-            return False
+            return False, u.state
 
         else:
-
-            return True
+            return True, u.state
 
 
 def submit_choice(rm, u, desired_good, t):
@@ -123,28 +143,32 @@ def submit_choice(rm, u, desired_good, t):
             return current_choice.success, u.score
 
         else:
-            _matching(rm, t)
+
+            n = Choice.objects.filter(room_id=rm.id, t=t).exclude(user_id=None).count()
+
+            # Do matching if all users made their choice
+            if n == rm.n_user:
+                time.sleep(0.5)
+                _matching(rm, t)
+
             return None, u.score
 
     # If choice entry is not filled for this t
     else:
 
-        with transaction.atomic():
+        current_choice = Choice.objects.filter(room_id=rm.id, t=t, player_id=u.player_id).first()
 
-            current_choice = Choice.objects.select_for_update()\
-                .filter(room_id=rm.id, t=t, user_id=None).first()
+        current_choice.user_id = u.id
 
-            current_choice.user_id = u.id
+        current_choice.desired_good = \
+            game.user.client.get_absolute_good(u=u, good=desired_good)
 
-            current_choice.desired_good = \
-                game.user.client.get_absolute_good(u=u, good=desired_good)
+        current_choice.good_in_hand = \
+            game.user.client.get_user_last_known_goods(rm=rm, u=u, t=t-1)["good_in_hand"]
 
-            current_choice.good_in_hand = \
-                game.user.client.get_user_last_known_goods(rm=rm, u=u, t=t-1)["good_in_hand"]
+        current_choice.save(update_fields=["user_id", "desired_good", "good_in_hand"])
 
-            current_choice.save(update_fields=["user_id", "desired_good", "good_in_hand"])
-
-            return None, u.score
+        return None, u.score
 
 
 def _matching(rm, t):
@@ -159,8 +183,8 @@ def _matching(rm, t):
         for g1, g2 in markets:
 
             pools = [
-                choices.filter(desired_good=g1, good_in_hand=g2).only('success', 'user_id'),
-                choices.filter(desired_good=g2, good_in_hand=g1).only('success', 'user_id')
+                choices.select_for_update().filter(desired_good=g1, good_in_hand=g2).only('success', 'user_id'),
+                choices.select_for_update().filter(desired_good=g2, good_in_hand=g1).only('success', 'user_id')
             ]
 
             # We sort pools in order to get the shortest pool first
@@ -178,25 +202,35 @@ def _matching(rm, t):
                 c1.save(update_fields=["success"])
                 c2.save(update_fields=["success"])
 
-                _compute_score(u1=c1.user_id, u2=c2.user_id)
+                _compute_score(
+                    u1=c1.user_id,
+                    u2=c2.user_id,
+                    good1=c1.desired_good,
+                    good2=c2.desired_good
+                )
 
             # The lasts fail
-            for c in max_pool.exclude(success=True):
+            for c in max_pool[idx_min:]:
 
                 c.success = False
                 c.save(update_fields=["success"])
 
+        n_choices = Choice.objects.filter(room_id=rm.id, t=t, success=None).count()
+        if n_choices:
+            raise Exception("Matching is done but some choices entries are not filled.")
 
-def _compute_score(u1, u2):
 
-    for i in (u1, u2):
+def _compute_score(u1, u2, good1, good2):
 
-        u = User.objects.filter(id=i).first()
+    for i, good in zip((u1, u2), (good1, good2)):
+
+        u = User.objects.select_for_update().filter(id=i).first()
 
         if u:
 
-            u.score += 1
-            u.save(update_fields=["score"])
+            if u.consumption_good in (good, ):
+                u.score += 1
+                u.save(update_fields=["score"])
 
         else:
             raise Exception("Error in '_matching': Users are not found for that exchange.")

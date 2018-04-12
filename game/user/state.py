@@ -31,7 +31,9 @@ def get_progress_for_current_state(rm, u):
 
         else:
 
-            return round(rm.tutorial_t / rm.tutorial_t_max * 100)
+            # During tutorial, progression is always 100 because
+            # players don't wait for other's choices.
+            return 100
 
     elif u.state in (states.game, states.end, ):
 
@@ -44,6 +46,7 @@ def get_progress_for_current_state(rm, u):
 
 def next_state(u, state):
     u.state = state
-    utils.log("User {} goes to state {}".format(u.pseudo, u.state), f=next_state)
+    # utils.log("User {} goes to state {}".format(u.pseudo, u.state), f=next_state)
     u.save(update_fields=['state'])
+    return u
 

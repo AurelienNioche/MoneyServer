@@ -21,8 +21,12 @@ def get_progress_for_choices(rm, t, tuto=False):
 def next_state(rm, state):
 
     rm.state = state
-    utils.log("Room {} goes to state {}".format(rm.id, rm.state), f=next_state)
-    rm.save(update_fields=['state'])
+
+    if state == states.end:
+        rm.opened = False
+
+    # utils.log("Room {} goes to state {}".format(rm.id, rm.state), f=next_state)
+    rm.save(update_fields=['state', 'opened'])
 
 
 def set_rm_timestep(rm, t, tuto):

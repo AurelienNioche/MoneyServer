@@ -2,6 +2,8 @@ import requests
 import json
 import time
 import numpy as np
+import multiprocessing as ml
+import argparse
 
 
 # --------------- Init ----------------- #
@@ -26,7 +28,7 @@ class KeyTuto:
     demand = "demand"
     user_id = "user_id"
     progress = "progress"
-    desired_good = "desired_good"
+    desired_good = "good"
     t = "t"
 
 # -------------- Play -------------------- #
@@ -34,7 +36,7 @@ class KeyTuto:
 
 class KeyChoice:
     demand = "demand"
-    desired_good = "desired_good"
+    desired_good = "good"
     t = "t"
     user_id = "user_id"
 
@@ -101,15 +103,15 @@ class BotClient:
     def reply_init(self, args):
 
         self.user_id = args["userId"]
-        self.good_in_hand = args["good"]
-        self.desired_good = args["desiredGood"] if args["desiredGood"] else 1
+        self.good_in_hand = args["goodInHand"]
+        self.desired_good = args["goodDesired"] if args["goodDesired"] else 1
         self.t = args["t"]
         self.choice_made = args["choiceMade"]
         self.tuto_t = args["tutoT"]
-        self.tuto_good = args["tutoGood"]
-        self.tuto_desired_good = args["tutoDesiredGood"]
+        self.tuto_good = args["tutoGoodInHand"]
+        self.tuto_desired_good = args["tutoGoodDesired"]
         self.tuto_t_max = args["tutoTMax"]
-        self.game_state = args["state"]
+        self.game_state = args["step"] + "_choice" if args["step"] in ('tutorial', ) else args["step"]
 
         return True, args["wait"]
 
@@ -165,7 +167,7 @@ class BotClient:
         return self._request({
             KeyChoice.demand: "choice",
             KeyChoice.user_id: self.user_id,
-            KeyChoice.desired_good: self.desired_good,
+            KeyChoice.desired_good: np.random.randint(3),
             KeyChoice.t: self.t
         })
 
@@ -175,113 +177,162 @@ class BotClient:
         return True, args["wait"], args["end"]
 
 
-class BotProcess:
+def bot_factory(base, device_id, delay, url, wait_event):
 
-    def __init__(self, url, delay=0.5, device_id="1"):
-        super().__init__()
-        self.b = BotClient(url=url, device_id=device_id)
-        self.delay = delay
+    class BotProcess(base):
 
-    def _wait(self):
+        def __init__(self):
+            super().__init__()
+            self.b = BotClient(url=url, device_id=device_id)
+            self.delay = delay
 
-        time.sleep(self.delay)
+        def _wait(self):
 
-    def wait_for_a_response(self, f):
+            wait_event(self.delay)
 
-        self._wait()
+        def wait_for_a_response(self, f):
 
-        r = f()
-
-        while not r:
             self._wait()
+
             r = f()
 
-        return r[1:]
+            while not r:
+                self._wait()
+                r = f()
 
-    def welcome(self):
+            return r[1:]
 
-        wait, = self.wait_for_a_response(f=self.b.init)
-        while wait:
+        def welcome(self):
+
             wait, = self.wait_for_a_response(f=self.b.init)
+            while wait:
+                wait, = self.wait_for_a_response(f=self.b.init)
 
-    def survey(self):
+        def survey(self):
 
-        wait, = self.wait_for_a_response(f=self.b.survey)
-        while wait:
             wait, = self.wait_for_a_response(f=self.b.survey)
+            while wait:
+                wait, = self.wait_for_a_response(f=self.b.survey)
 
-    def tutorial(self):
+        def tutorial_choice(self):
 
-        wait, end = self.wait_for_a_response(f=self.b.tutorial)
-        while not end:
-            print("Tutorial: t = {}".format(self.b.tuto_t))
             wait, end = self.wait_for_a_response(f=self.b.tutorial)
+            while not end:
+                print("Tutorial: t = {}".format(self.b.tuto_t))
+                wait, end = self.wait_for_a_response(f=self.b.tutorial)
 
-        wait, = self.wait_for_a_response(f=self.b.tutorial_done)
-        while wait:
-            wait, self.wait_for_a_response(f=self.b.tutorial_done)
+        def tutorial_done(self):
 
-    def game(self):
+            wait, = self.wait_for_a_response(f=self.b.tutorial_done)
+            while wait:
+                wait, = self.wait_for_a_response(f=self.b.tutorial_done)
 
-        wait, end = self.wait_for_a_response(f=self.b.choice)
-        while not end:
-            print("Game: t = {}".format(self.b.t))
+        def game(self):
+
             wait, end = self.wait_for_a_response(f=self.b.choice)
+            while not end:
+                print("Game: t = {}".format(self.b.t))
+                wait, end = self.wait_for_a_response(f=self.b.choice)
 
-    def end(self):
+        def end(self):
 
-        print("It is the end, my only friend, the end.")
+            print("It is the end, my only friend, the end.")
 
-    def run(self):
+        def run(self):
 
-        input("Run? Press a key.")
+            if not isinstance(self, ml.Process):
+                input("Run? Press a key.")
 
-        methods = iter([
-            self.welcome,
-            self.survey,
-            self.tutorial,
-            self.game,
-            self.end
-        ])
+            methods = [
+                self.welcome,
+                self.survey,
+                self.tutorial_choice,
+                self.tutorial_done,
+                self.game,
+                self.end
+            ]
 
-        mapping = {
-            "welcome": self.welcome,
-            "survey": self.survey,
-            "tutorial": self.tutorial,
-            "game": self.game,
-            "end": self.end
-        }
+            mapping = {
+                "welcome": self.welcome,
+                "survey": self.survey,
+                "tutorial_choice": self.tutorial_choice,
+                "tutorial_done": self.tutorial_done,
+                "game": self.game,
+                "end": self.end
+            }
 
-        self.welcome()
+            self.welcome()
 
-        next_method = mapping[self.b.game_state]
+            next_method = mapping[self.b.game_state]
+            idx = methods.index(next_method)
 
-        while True:
-            next_method()
-            next_method = next(methods)
+            if not isinstance(self, ml.Process):
+                input("Go to state {}? Press a key.".format(next_method.__name__))
 
-            if next_method.__name__ == "end":
-                self.end()
-                break
+            while True:
+                next_method()
+                idx += 1
+                next_method = methods[idx]
 
-            # input("Go to state {}? Press a key.".format(next_method.__name__))
+                if next_method.__name__ == "end":
+                    self.end()
+                    break
+
+            if not isinstance(self, ml.Process):
+                input("Go to state {}? Press a key.".format(next_method.__name__))
+
+    return BotProcess()
 
 
-def main():
+def main(args):
 
+    # url = "http://money.getz.fr/client_request/"
     url = "http://127.0.0.1:8000/client_request/"
 
-    n = input("Bot id? > ")
-    device_id = "bot{}".format(n)
+    if not args.multiprocessing:
 
-    b = BotProcess(
-        url=url,
-        device_id=device_id
-    )
+        n = input("Bot id? > ")
+        device_id = "bot{}".format(n)
 
-    b.run()
+        b = bot_factory(
+            base=object,
+            wait_event=time.sleep,
+            url=url,
+            device_id=device_id,
+            delay=2
+        )
+
+        b.run()
+
+    else:
+
+        n = int(args.number)
+
+        for b in range(n):
+
+            device_id = "bot{}".format(b)
+
+            b = bot_factory(
+                base=ml.Process,
+                wait_event=ml.Event().wait,
+                url=url,
+                device_id=device_id,
+                delay=2.5
+            )
+
+            b.start()
 
 
 if __name__ == "__main__":
 
-    main()
+    parser = argparse.ArgumentParser(description='Run bots.')
+
+    parser.add_argument('-n', '--number', action="store", default=3,
+                        help="number of bots")
+
+    parser.add_argument('-ml', '--multiprocessing', action="store_true", default=False,
+                        help="multiprocessed bots")
+
+    parsed_args = parser.parse_args()
+
+    main(parsed_args)

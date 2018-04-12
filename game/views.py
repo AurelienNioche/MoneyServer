@@ -57,11 +57,9 @@ def client_request(request):
     to_reply = func(args)
 
     # Log
-    utils.log("I reply: {}".format(list(to_reply.items())), f=client_request)
+    # utils.log("I reply: {}".format(list(to_reply.items())), f=client_request)
 
     to_reply["demand"] = demand
-    to_reply["skip_tutorial"] = skip_tutorial
-    to_reply["skip_survey"] = skip_survey
 
     response = JsonResponse(to_reply)
 
@@ -74,25 +72,34 @@ def init(args):
 
     progress = game.room.client.get_progression(u=u, rm=rm, t=args.t)
 
-    wait = game.room.client.state_verification(u=u, rm=rm, t=args.t, progress=progress, demand=init.__name__)
+    wait, state = game.room.client.state_verification(
+        u=u, rm=rm, t=args.t, progress=progress, demand=init.__name__
+    )
 
     to_reply = {
+
         "wait": wait if u.state in ("welcome", ) else False,
         "progress": progress,
-        "state": info["state"],
-        "choiceMade": info["choice_made"],
-        "tutoChoiceMade": info["tuto_choice_made"],
+
+        "step": state,
         "score": info["score"],
-        "good": info["good_in_hand"],
-        "tutoGood": info["tuto_good_in_hand"],
-        "goodDesired": info["desired_good"],
-        "tutoGoodDesired": info["tuto_desired_good"],
+
         "t": info["t"],
         "tMax": info["t_max"],
-        "tutoT": info["tuto_t"],
-        "tutoTMax": info["tuto_t_max"],
+
+        "choiceMade": info["choice_made"],
+        "goodInHand": info["good_in_hand"],
+        "goodDesired": info["desired_good"],
+
         "userId": info["user_id"],
         "pseudo": info["pseudo"],
+
+        "tutoGoodInHand": info["tuto_good_in_hand"],
+        "tutoChoiceMade": info["tuto_choice_made"],
+        "tutoGoodDesired": info["tuto_desired_good"],
+        "tutoT": info["tuto_t"],
+        "tutoTMax": info["tuto_t_max"],
+        "tutoScore": info["tuto_score"]
     }
 
     return to_reply
@@ -111,10 +118,12 @@ def survey(args):
 
     progress = game.room.client.get_progression(u=u, rm=rm, t=args.t)
 
-    wait = game.room.client.state_verification(u=u, rm=rm, t=args.t, progress=progress, demand=survey.__name__)
+    wait, state = game.room.client.state_verification(
+        u=u, rm=rm, t=args.t, progress=progress, demand=survey.__name__
+    )
 
     to_reply = {
-        "wait": wait if u.state in ("survey", ) else False,
+        "wait": wait if state in ("survey", ) else False,
         "progress": progress
     }
 
@@ -135,7 +144,9 @@ def tutorial_choice(args):
 
     progress = game.room.client.get_progression(u=u, rm=rm, t=args.t, tuto=True)
 
-    wait, t, end = game.room.client.state_verification(rm=rm, u=u, t=args.t, progress=progress, demand=tutorial_choice.__name__)
+    wait, t, end = game.room.client.state_verification(
+        rm=rm, u=u, t=args.t, progress=progress, demand=tutorial_choice.__name__
+    )
 
     to_reply = {
         "wait": wait,
@@ -152,17 +163,18 @@ def tutorial_choice(args):
 def tutorial_done(args):
 
     u = game.user.client.get_user(user_id=args.user_id)
-
     u = game.user.client.submit_tutorial_done(u=u)
 
     rm = game.room.client.get_room(room_id=u.room_id)
 
     progress = game.room.client.get_progression(u=u, rm=rm, t=args.t)
 
-    wait = game.room.client.state_verification(u=u, rm=rm, t=args.t, progress=progress, demand=tutorial_done.__name__)
+    wait, state = game.room.client.state_verification(
+        u=u, rm=rm, t=args.t, progress=progress, demand=tutorial_done.__name__
+    )
 
     to_reply = {
-        "wait": wait if u.state in ("tutorial", ) else False,
+        "wait": wait if state in ("tutorial", ) else False,
         "progress": progress
     }
 
@@ -183,7 +195,9 @@ def choice(args):
 
     progress = game.room.client.get_progression(u=u, rm=rm, t=args.t)
 
-    wait, t, end = game.room.client.state_verification(rm=rm, u=u, t=args.t, progress=progress, demand=choice.__name__)
+    wait, t, end = game.room.client.state_verification(
+        rm=rm, u=u, t=args.t, progress=progress, demand=choice.__name__
+    )
 
     to_reply = {
         "wait": wait,
@@ -214,7 +228,7 @@ def _treat_args(request):
             device_id=form.cleaned_data.get("device_id"),
             age=form.cleaned_data.get("age"),
             gender=form.cleaned_data.get("sex"),
-            desired_good=form.cleaned_data.get("desired_good"),
+            desired_good=form.cleaned_data.get("good"),
             t=form.cleaned_data.get("t")
         )
 

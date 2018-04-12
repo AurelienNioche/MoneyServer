@@ -3,7 +3,7 @@ import numpy as np
 
 from parameters import parameters
 
-from game.models import User, Room, Choice, TutorialChoice
+from game.models import User, Room, Choice, TutorialChoice, Type
 import game.room.state
 import game.user.state
 
@@ -19,9 +19,10 @@ def connect(device_id):
 
         if not u:
 
-            u, good_in_hand = _create_new_user(rm, device_id)
+            u = _create_new_user(rm, device_id)
 
             choice_made = None
+            good_in_hand = u.production_good
             desired_good = None
 
             tuto_choice_made = None
@@ -43,8 +44,8 @@ def connect(device_id):
             tuto_desired_good = tuto_goods["desired_good"]
 
         # Get relative good_in_hand
-        relative_good_in_hand = get_relative_good(u, good_in_hand)
-        relative_tuto_good_in_hand = get_relative_good(u, tuto_good_in_hand)
+        relative_good_in_hand = get_relative_good(u=u, good=good_in_hand)
+        relative_tuto_good_in_hand = get_relative_good(u=u, good=tuto_good_in_hand)
 
         # only get desired good if it exists
         # (meaning it is a reconnection and not a first connection)
@@ -52,20 +53,21 @@ def connect(device_id):
         relative_tuto_desired_good = get_relative_good(u, tuto_desired_good) if tuto_desired_good else None
 
         return {
+            "pseudo": u.pseudo,
+            "user_id": u.id,
             "state": u.state,
             "choice_made": choice_made,
             "tuto_choice_made": tuto_choice_made,
             "score": u.score,
+            "t": rm.t,
+            "t_max": rm.t_max,
             "good_in_hand": relative_good_in_hand,
             "tuto_good_in_hand": relative_tuto_good_in_hand,
             "desired_good": relative_desired_good,
             "tuto_desired_good": relative_tuto_desired_good,
-            "t": rm.t,
-            "t_max": rm.t_max,
             "tuto_t_max": rm.tutorial_t_max,
             "tuto_t": rm.tutorial_t,
-            "pseudo": u.pseudo,
-            "user_id": u.id
+            "tuto_score": u.tutorial_score
         }, u, rm
 
     else:
@@ -151,9 +153,9 @@ def get_relative_good(u, good):
     medium_good = goods[cond0 * cond1][0]
 
     mapping = {
-        0: u.production_good,
-        1: u.consumption_good,
-        2: medium_good
+        u.production_good: 0,
+        u.consumption_good: 1,
+        medium_good: 2,
     }
 
     # np.int64 is not json serializable
@@ -169,9 +171,9 @@ def get_absolute_good(u, good):
     medium_good = goods[cond0 * cond1][0]
 
     mapping = {
-        u.production_good: 0,
-        u.consumption_good: 1,
-        medium_good: 2,
+        0: u.production_good,
+        1: u.consumption_good,
+        2: medium_good
     }
 
     # np.int64 is not json serializable
@@ -204,25 +206,22 @@ def submit_tutorial_choice(u, rm, desired_good, t):
 
     if not choice:
 
-        with transaction.atomic():
+        choice = TutorialChoice.objects.filter(room_id=u.room_id, player_id=u.player_id, t=t).first()
 
-            choice = TutorialChoice.objects.select_for_update()\
-                    .filter(room_id=u.room_id, user_id=None, t=t).first()
+        if not choice:
+            raise Exception("Error in 'submit_tutorial_choice': Did not found a choice entry.")
 
-            if not choice:
-                raise Exception("Error in 'submit_tutorial_choice': Did not found an empty choice entry.")
+        choice.user_id = u.id
+        choice.desired_good = get_absolute_good(good=desired_good, u=u)
+        choice.good_in_hand = get_user_last_known_goods(u=u, rm=rm, t=t, tuto=True)["good_in_hand"]
+        choice.success = bool(np.random.choice([False, True]))
+        u.tutorial_score += choice.success
+        choice.save(update_fields=['user_id', 'success', 'good_in_hand', 'desired_good'])
+        u.save(update_fields=["tutorial_score"])
 
-            choice.user_id = u.id
-            choice.desired_good = get_absolute_good(good=desired_good, u=u)
-            choice.good_in_hand = get_user_last_known_goods(u=u, rm=rm, t=t, tuto=True)["good_in_hand"]
-            choice.success = np.random.choice([False, True])
-            u.score += choice.success
-            choice.save(update_fields=['user_id', 'success', 'good_in_hand', 'desired_good'])
-            u.save(update_fields=["score"])
-
-            return choice.success, u.score
+        return choice.success, u.tutorial_score
     else:
-        return choice.success, u.score
+        return choice.success, u.tutorial_score
 
 
 def _create_new_user(rm, device_id):
@@ -235,22 +234,17 @@ def _create_new_user(rm, device_id):
     choice_made (bool), good_in_hand, desired_good
     """
 
-    good_in_hand = _get_user_production_good(rm)
-    consumption_good = (good_in_hand + 1) % 2
-
     with transaction.atomic():
 
-        pseudo = np.random.choice(parameters.pseudo)
+        player_id = User.objects.select_for_update().filter(room_id=rm.id).count()
 
-        while User.objects.filter(pseudo=pseudo, room_id=rm.id).first():
-            pseudo = np.random.choice(parameters.pseudo)
+        pseudo = parameters.pseudo[player_id]
 
         u = User(
             device_id=device_id,
+            player_id=player_id,
             pseudo=pseudo,
             room_id=rm.id,
-            production_good=good_in_hand,
-            consumption_good=consumption_good,
             tutorial_done=False,
             score=0,
             tutorial_score=0,
@@ -259,18 +253,26 @@ def _create_new_user(rm, device_id):
 
         u.save()
 
-    return u, good_in_hand
+        u.production_good = _get_user_production_good(rm, u)
+        u.consumption_good = (u.production_good + 1) % 3
+
+        u.save(update_fields=["production_good", "consumption_good"])
+
+        return u
 
 
-def _get_user_production_good(rm):
+def _get_user_production_good(rm, u):
 
-    for g, n in enumerate([rm.x0, rm.x1, rm.x2]):
+    t = Type.objects.filter(room_id=rm.id, player_id=u.player_id).first()
 
-        n_user = User.objects.filter(room_id=rm.id, production_good=g).count()
+    if t:
+        t.user_id = u.id
+        t.save(update_fields=["user_id"])
+        return t.production_good
 
-        if n_user < n:
+    else:
+        raise Exception("Too much players.")
 
-            return g
 
-    raise Exception("Error: too much players.")
+
 
