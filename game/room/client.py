@@ -3,7 +3,6 @@ import django.db.utils
 import psycopg2
 
 import numpy as np
-import time
 
 from game.models import User, Room, Choice
 import game.user.client
