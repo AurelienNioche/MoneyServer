@@ -216,9 +216,9 @@ def _matching(rm, t):
                 )
 
             idx = min_pool.count()
-            # The lasts fail
 
-            for c in max_pool[:idx]:
+            # The lasts fail
+            for c in max_pool[idx:]:
 
                 c.success = False
                 c.save(update_fields=["success"])
