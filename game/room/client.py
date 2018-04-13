@@ -136,25 +136,29 @@ def matching(rm, t):
     markets = (0, 1), (1, 2), (2, 0)
 
     with transaction.atomic():
-        # Get choices for room and time
 
+        # Get choices for room and time
+        # No wait argument allows to raise an exception when another process
+        # tries to select these entries
         choices = Choice.objects.select_for_update(nowait=True).filter(room_id=rm.id, t=t, success=None)
 
         for g1, g2 in markets:
 
+            # Get exchanges for goods e.g 0, 1 and 1, 0
             pools = [
                 choices.filter(desired_good=g1, good_in_hand=g2).only('success', 'user_id'),
                 choices.filter(desired_good=g2, good_in_hand=g1).only('success', 'user_id')
             ]
 
-            # We sort pools in order to get the shortest pool first
+            # We sort 'pools' of choices in order to get the shortest pool first
             idx_min, idx_max = np.argsort([p.count() for p in pools])
+            # Then we have two pools with different sizes
             min_pool, max_pool = pools[idx_min], pools[idx_max]
 
-            # Shuffle the max pool
+            # Randomize the max pool
             max_pool = max_pool.order_by('?')
 
-            # The firsts succeed
+            # The firsts succeed to exchange
             for c1, c2 in zip(min_pool, max_pool):
 
                 c1.success = True
@@ -162,6 +166,8 @@ def matching(rm, t):
                 c1.save(update_fields=["success"])
                 c2.save(update_fields=["success"])
 
+                # Compute score and set the resulting good in hand
+                # for each exchange.
                 _compute_score_and_final_good(c=c1)
                 _compute_score_and_final_good(c=c2)
 
@@ -181,22 +187,27 @@ def _compute_score_and_final_good(c):
     u = User.objects.select_for_update().filter(id=c.user_id).first()
 
     if u:
-
         if c.success:
 
+            # If desired good is consumption good
+            # then consume and increase score
             if u.consumption_good in (c.desired_good, ):
                 c.final_good = u.production_good
                 u.score += 1
                 u.save(update_fields=["score"])
                 c.save(update_fields=["final_good"])
+
+            # else the resulting is the desired good
             else:
                 c.final_good = c.desired_good
                 c.save(update_fields=["final_good"])
 
+        # If the exchange did not succeed then
+        # the resulting good is the good in hand
         else:
 
             c.final_good = c.good_in_hand
             c.save(update_fields=["final_good"])
 
     else:
-        raise Exception("Error in '_matching': Users are not found for that exchange.")
+        raise Exception("User is not found for that exchange.")

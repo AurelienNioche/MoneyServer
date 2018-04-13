@@ -1,4 +1,13 @@
-function saveParams () {
+function saveParams (name) {
+
+    // Check for parameters compatibility
+    if (name === "trial") {
+        $('form input[name="skip_tutorial"]').removeProp("checked");
+        $('form input[name="skip_survey"]').removeProp("checked");
+
+    } else {
+        $('form input[name="trial"]').removeProp("checked");
+    }
 
     var data = $('#parameterform').serialize();
 
