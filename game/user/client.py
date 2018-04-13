@@ -158,39 +158,30 @@ def submit_choice(rm, u, desired_good, t):
 
     current_choice = Choice.objects.filter(room_id=rm.id, t=t, user_id=u.id).first()
 
-    if current_choice:
-
-        # If matching has been done
-        if current_choice and current_choice.success is not None:
-            return current_choice.success, u.score
-
-        else:
-
-            n = Choice.objects.filter(room_id=rm.id, t=t).exclude(user_id=None).count()
-
-            # Do matching if all users made their choice
-            if n == rm.n_user:
-
-                try:
-                    game.room.client.matching(rm=rm, t=t)
-
-                except (psycopg2.OperationalError, django.db.utils.OperationalError):
-                    pass
-
-            return None, u.score
-
-    # If choice entry is not filled for this t
-    else:
+    if not current_choice:
 
         current_choice = Choice.objects.filter(room_id=rm.id, t=t, player_id=u.player_id).first()
 
         current_choice.user_id = u.id
-
         current_choice.desired_good = desired_good
 
         current_choice.save(update_fields=["user_id", "desired_good"])
 
-        return None, u.score
+    n = Choice.objects.filter(room_id=rm.id, t=t).exclude(desired_good=None).count()
+
+    # Do matching if all users made their choice
+    if n == rm.n_user:
+
+        try:
+            game.room.client.matching(rm=rm, t=t)
+
+        except (psycopg2.OperationalError, django.db.utils.OperationalError):
+            pass
+
+    choice = Choice.objects.filter(user_id=u.id, room_id=rm.id, t=t).first()
+    u = User.objects.filter(id=u.id).first()
+
+    return choice.success, u.score
 
 
 def _create_new_user(rm, device_id):

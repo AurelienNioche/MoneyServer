@@ -47,13 +47,15 @@ def create(data):
 
     rm.save()
 
+    types = (0, ) * rm.x0 + (1, ) * rm.x1 + (2, ) * rm.x2
+
     Choice.objects.bulk_create([
         Choice(
             room_id=rm.id,
             t=t,
             player_id=n,
             user_id=None,
-            good_in_hand=None,
+            good_in_hand=types[n],
             desired_good=None,
             success=None
         )
@@ -66,7 +68,7 @@ def create(data):
             t=t,
             player_id=n,
             user_id=None,
-            good_in_hand=None,
+            good_in_hand=types[n],
             desired_good=None,
             success=None
         )
@@ -80,8 +82,7 @@ def create(data):
             player_id=n,
             user_id=None
         )
-        for g, n in zip(
-            (0, ) * rm.x0 + (1, ) * rm.x1 + (2, ) * rm.x2, range(n_user)
+        for g, n in zip(types, range(n_user)
         )
     ])
 

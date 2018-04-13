@@ -309,8 +309,8 @@ def bot_factory(base, device_id, delay, url, wait_event):
 
 def main(args):
 
-    url = "http://money.getz.fr/client_request/"
-    # url = "http://127.0.0.1:8000/client_request/"
+    # url = "http://money.getz.fr/client_request/"
+    url = "http://127.0.0.1:8000/client_request/"
 
     if not args.multiprocessing:
 
@@ -340,7 +340,7 @@ def main(args):
                 wait_event=ml.Event().wait,
                 url=url,
                 device_id=device_id,
-                delay=2
+                delay=3
             )
 
             b.start()

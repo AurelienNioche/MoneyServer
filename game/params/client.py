@@ -13,7 +13,7 @@ def is_trial():
 
         if not trial:
 
-            trial = BoolParameter(name="trial", value=True)
+            trial = BoolParameter(name="trial", value=False)
             trial.save()
 
         if not skip_survey:
