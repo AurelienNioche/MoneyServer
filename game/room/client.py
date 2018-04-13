@@ -205,13 +205,13 @@ def _compute_score_and_final_good(c):
                 next_choice.good_in_hand = u.production_good
                 u.score += 1
                 u.save(update_fields=["score"])
-                next_choice.save(update_fields=["good_in_hand"])
 
             # else the resulting is the desired good
             else:
                 print("WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWw")
                 next_choice.good_in_hand = c.desired_good
-                next_choice.save(update_fields=["good_in_hand"])
+
+            next_choice.save(update_fields=["good_in_hand"])
 
         # If the exchange did not succeed then
         # the resulting good is the good in hand
