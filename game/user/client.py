@@ -186,13 +186,9 @@ def submit_choice(rm, u, desired_good, t):
 
         current_choice.user_id = u.id
 
-        current_choice.desired_good = \
-            _get_absolute_good(u=u, good=desired_good)
+        current_choice.desired_good = desired_good
 
-        current_choice.good_in_hand = \
-            _get_user_last_known_goods(rm=rm, u=u, t=t-1)["good_in_hand"]
-
-        current_choice.save(update_fields=["user_id", "desired_good", "good_in_hand"])
+        current_choice.save(update_fields=["user_id", "desired_good"])
 
         return None, u.score
 
@@ -283,7 +279,7 @@ def _get_relative_good(u, good):
     return int(mapping[good])
 
 
-def _get_absolute_good(u, good):
+def get_absolute_good(u, good):
 
     # Get medium good
     goods = np.array([0, 1, 2])
@@ -356,13 +352,7 @@ def _check_choice_validity(u, desired_good, t):
 
     choice = Choice.objects.filter(user_id=u.id, t=t).first()
 
-    if choice:
+    if choice and choice.good_in_hand and choice.good_in_hand == desired_good:
 
-        if choice.good_in_hand:
-
-            relative_good_in_hand = _get_relative_good(u, good=choice.good_in_hand)
-
-            if relative_good_in_hand == desired_good:
-
-                raise Exception("User {} can't choose the same good as he is carrying!".format(u.pseudo))
+        raise Exception("User {} can't choose the same good as he is carrying!".format(u.pseudo))
 
