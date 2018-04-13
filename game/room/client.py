@@ -210,14 +210,13 @@ def _compute_score_and_final_good(c):
             else:
                 next_choice.good_in_hand = c.desired_good
 
-            next_choice.save(update_fields=["good_in_hand"])
-
         # If the exchange did not succeed then
         # the resulting good is the good in hand
         else:
 
             next_choice.good_in_hand = c.good_in_hand
-            next_choice.save(update_fields=["good_in_hand"])
+
+        next_choice.save(update_fields=["good_in_hand"])
 
     else:
         raise Exception("User is not found for that exchange.")
