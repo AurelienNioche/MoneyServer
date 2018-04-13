@@ -1,5 +1,7 @@
 function saveParams (name) {
 
+    console.log(name);
+    console.log(name === "trial") ;
     var skip_tuto = $('form input[name="skip_tutorial"]');
     var skip_survey = $('form input[name="skip_survey"]');
     var trial = $('form input[name="trial"]');
