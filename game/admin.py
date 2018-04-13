@@ -18,7 +18,7 @@ class BoolParameterAdmin(admin.ModelAdmin):
 
 class ChoiceAdmin(admin.ModelAdmin):
     list_display = (
-        'id', 'desired_good', 'good_in_hand', 'user_id', 'player_id', 'room_id', 'success', 't',
+        'id', 'good_in_hand', 'desired_good', 'user_id', 'player_id', 'room_id', 'success', 't',
     )
 
 
