@@ -51,6 +51,7 @@ class TutorialChoice(models.Model):
     user_id = models.IntegerField(null=True)
     good_in_hand = models.IntegerField(null=True)
     desired_good = models.IntegerField(null=True)
+    final_good = models.IntegerField(null=True)
     success = models.NullBooleanField(null=True)
 
 
@@ -60,6 +61,7 @@ class Choice(models.Model):
     t = models.IntegerField()
     user_id = models.IntegerField(null=True)
     good_in_hand = models.IntegerField(null=True)
+    final_good = models.IntegerField(null=True)
     desired_good = models.IntegerField(null=True)
     success = models.NullBooleanField(null=True)
 

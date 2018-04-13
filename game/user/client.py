@@ -1,14 +1,25 @@
 from django.db import transaction
+import django.db.utils
+import psycopg2
 import numpy as np
 
 from parameters import parameters
 
 from game.models import User, Room, Choice, TutorialChoice, Type
 import game.room.state
+import game.room.client
 import game.user.state
 
 
-def connect(device_id):
+@transaction.atomic
+def get_user(user_id):
+    u = User.objects.select_for_update().filter(id=user_id).first()
+    if not u:
+        raise Exception("Error: User not found.")
+    return u
+
+
+def connect(device_id, skip_survey, skip_tutorial):
 
     with transaction.atomic():
         rm = Room.objects.select_for_update().filter(opened=True).first()
@@ -31,31 +42,43 @@ def connect(device_id):
 
         else:
 
-            goods = get_user_last_known_goods(u=u, rm=rm, t=rm.t)
+            goods = _get_user_last_known_goods(u=u, rm=rm, t=rm.t)
 
             choice_made = goods["choice_made"]
             good_in_hand = goods["good_in_hand"]
             desired_good = goods["desired_good"]
 
-            tuto_goods = get_user_last_known_goods(u=u, rm=rm, t=rm.t, tuto=True)
+            tuto_goods = _get_user_last_known_goods(u=u, rm=rm, t=rm.t, tuto=True)
 
             tuto_choice_made = tuto_goods["choice_made"]
             tuto_good_in_hand = tuto_goods["good_in_hand"]
             tuto_desired_good = tuto_goods["desired_good"]
 
         # Get relative good_in_hand
-        relative_good_in_hand = get_relative_good(u=u, good=good_in_hand)
-        relative_tuto_good_in_hand = get_relative_good(u=u, good=tuto_good_in_hand)
+        relative_good_in_hand = _get_relative_good(u=u, good=good_in_hand)
+        relative_tuto_good_in_hand = _get_relative_good(u=u, good=tuto_good_in_hand)
 
         # only get desired good if it exists
         # (meaning it is a reconnection and not a first connection)
-        relative_desired_good = get_relative_good(u, desired_good) if desired_good else None
-        relative_tuto_desired_good = get_relative_good(u, tuto_desired_good) if tuto_desired_good else None
+        relative_desired_good = _get_relative_good(u, desired_good) if desired_good else None
+        relative_tuto_desired_good = _get_relative_good(u, tuto_desired_good) if tuto_desired_good else None
+
+        if skip_survey or skip_tutorial:
+
+            skip_state = _handle_skip_options(
+                u=u,
+                rm=rm,
+                skip_tutorial=skip_tutorial,
+                skip_survey=skip_survey
+            )
+
+        else:
+            skip_state = None
 
         return {
             "pseudo": u.pseudo,
             "user_id": u.id,
-            "state": u.state,
+            "state": u.state if not skip_state else skip_state,
             "choice_made": choice_made,
             "tuto_choice_made": tuto_choice_made,
             "score": u.score,
@@ -74,67 +97,6 @@ def connect(device_id):
         raise Exception("Error: No room found.")
 
 
-@transaction.atomic
-def get_user(user_id):
-    u = User.objects.select_for_update().filter(id=user_id).first()
-    if not u:
-        raise Exception("Error: User not found.")
-    return u
-
-
-def get_user_last_known_goods(u, rm, t, tuto=False):
-    """
-    Get user' goods for t.
-    In the event it does not exists,
-    it means that the user did not make its choice yet.
-    Then returns last known good_in_hand, precising that
-    choice_made is False and desired_good is None because
-    it does not exist yet.
-    :param u: user
-    :param rm: room
-    :param t: time
-    :param tuto: is it tutorial or not
-    :return: choice_made, good_in_hand, desired_good
-    """
-
-    # Get the right table
-    table = TutorialChoice if tuto else Choice
-
-    goods = {}
-
-    choice = table.objects.filter(user_id=u.id, room_id=rm.id, t=t).first()
-
-    if choice:
-        # Choice has been made, return choice data
-        goods["choice_made"] = True
-        goods["good_in_hand"] = choice.good_in_hand
-        goods["desired_good"] = choice.desired_good
-
-    else:
-        # Choice has not been made, return last time choice
-        goods["choice_made"] = False
-        goods["desired_good"] = None
-
-        last_choice = table.objects.filter(user_id=u.id, room_id=rm.id, t=t-1).first()
-
-        if last_choice:
-
-            # If exchange was a success, return desired good as good in hand.
-            if last_choice.success:
-                goods["good_in_hand"] = last_choice.desired_good
-
-            # Else return last good in hand
-            else:
-                goods["good_in_hand"] = last_choice.good_in_hand
-
-        # If last_choice is not found, it means it means that t <= 1
-        # and user has in hand production good
-        else:
-            goods["good_in_hand"] = u.production_good
-
-    return goods
-
-
 def submit_survey(u, age, gender):
 
     # if survey is not already completed
@@ -142,42 +104,6 @@ def submit_survey(u, age, gender):
         u.age = age
         u.gender = gender
         u.save(update_fields=["age", "gender"])
-
-
-def get_relative_good(u, good):
-
-    goods = np.array([0, 1, 2])
-
-    cond0 = goods != u.production_good
-    cond1 = goods != u.consumption_good
-    medium_good = goods[cond0 * cond1][0]
-
-    mapping = {
-        u.production_good: 0,
-        u.consumption_good: 1,
-        medium_good: 2,
-    }
-
-    # np.int64 is not json serializable
-    return int(mapping[good])
-
-
-def get_absolute_good(u, good):
-
-    goods = np.array([0, 1, 2])
-
-    cond0 = goods != u.production_good
-    cond1 = goods != u.consumption_good
-    medium_good = goods[cond0 * cond1][0]
-
-    mapping = {
-        0: u.production_good,
-        1: u.consumption_good,
-        2: medium_good
-    }
-
-    # np.int64 is not json serializable
-    return int(mapping[good])
 
 
 def submit_tutorial_done(u):
@@ -212,8 +138,8 @@ def submit_tutorial_choice(u, rm, desired_good, t):
             raise Exception("Error in 'submit_tutorial_choice': Did not found a choice entry.")
 
         choice.user_id = u.id
-        choice.desired_good = get_absolute_good(good=desired_good, u=u)
-        choice.good_in_hand = get_user_last_known_goods(u=u, rm=rm, t=t, tuto=True)["good_in_hand"]
+        choice.desired_good = _get_absolute_good(good=desired_good, u=u)
+        choice.good_in_hand = _get_user_last_known_goods(u=u, rm=rm, t=t, tuto=True)["good_in_hand"]
         choice.success = bool(np.random.choice([False, True]))
         u.tutorial_score += choice.success
         choice.save(update_fields=['user_id', 'success', 'good_in_hand', 'desired_good'])
@@ -222,6 +148,51 @@ def submit_tutorial_choice(u, rm, desired_good, t):
         return choice.success, u.tutorial_score
     else:
         return choice.success, u.tutorial_score
+
+
+def submit_choice(rm, u, desired_good, t):
+
+    # ------- Check if current choice has been set or not ------ #
+
+    current_choice = Choice.objects.filter(room_id=rm.id, t=t, user_id=u.id).first()
+
+    if current_choice:
+
+        # If matching has been done
+        if current_choice and current_choice.success is not None:
+            return current_choice.success, u.score
+
+        else:
+
+            n = Choice.objects.filter(room_id=rm.id, t=t).exclude(user_id=None).count()
+
+            # Do matching if all users made their choice
+            if n == rm.n_user:
+
+                try:
+                    game.room.client.matching(rm=rm, t=t)
+
+                except (psycopg2.OperationalError, django.db.utils.OperationalError):
+                    pass
+
+            return None, u.score
+
+    # If choice entry is not filled for this t
+    else:
+
+        current_choice = Choice.objects.filter(room_id=rm.id, t=t, player_id=u.player_id).first()
+
+        current_choice.user_id = u.id
+
+        current_choice.desired_good = \
+            _get_absolute_good(u=u, good=desired_good)
+
+        current_choice.good_in_hand = \
+            _get_user_last_known_goods(rm=rm, u=u, t=t-1)["good_in_hand"]
+
+        current_choice.save(update_fields=["user_id", "desired_good", "good_in_hand"])
+
+        return None, u.score
 
 
 def _create_new_user(rm, device_id):
@@ -272,6 +243,112 @@ def _get_user_production_good(rm, u):
 
     else:
         raise Exception("Too much players.")
+
+
+def _handle_skip_options(u, rm, skip_tutorial, skip_survey):
+
+    if skip_survey:
+        skip_state = game.room.state.states.tutorial
+
+    if skip_tutorial:
+        skip_state = game.room.state.states.game
+
+    if rm.state != skip_state:
+        game.room.state.next_state(rm, skip_state)
+
+    if u.state != skip_state:
+        game.user.state.next_state(u, skip_state)
+
+    return skip_state
+
+
+def _get_relative_good(u, good):
+
+    # Get medium good
+    goods = np.array([0, 1, 2])
+
+    cond0 = goods != u.production_good
+    cond1 = goods != u.consumption_good
+    medium_good = goods[cond0 * cond1][0]
+
+    mapping = {
+        u.production_good: 0,
+        u.consumption_good: 1,
+        medium_good: 2,
+    }
+
+    # np.int64 is not json serializable
+    return int(mapping[good])
+
+
+def _get_absolute_good(u, good):
+
+    # Get medium good
+    goods = np.array([0, 1, 2])
+
+    cond0 = goods != u.production_good
+    cond1 = goods != u.consumption_good
+    medium_good = goods[cond0 * cond1][0]
+
+    mapping = {
+        0: u.production_good,
+        1: u.consumption_good,
+        2: medium_good
+    }
+
+    # np.int64 is not json serializable
+    return int(mapping[good])
+
+
+def _get_user_last_known_goods(u, rm, t, tuto=False):
+
+    """
+    Get user' goods for t.
+    In the event it does not exists,
+    it means that the user did not make its choice yet.
+    Then returns last known good_in_hand, precising that
+    choice_made is False and desired_good is None because
+    it does not exist yet.
+    :param u: user
+    :param rm: room
+    :param t: time
+    :param tuto: is it tutorial or not
+    :return: choice_made, good_in_hand, desired_good
+    """
+
+    # Get the right table
+    table = TutorialChoice if tuto else Choice
+
+    goods = {}
+
+    choice = table.objects.filter(user_id=u.id, room_id=rm.id, t=t).first()
+
+    if choice:
+
+        # Choice has been made, return choice data
+        goods["choice_made"] = True
+        goods["good_in_hand"] = choice.good_in_hand
+        goods["desired_good"] = choice.desired_good
+
+    else:
+
+        goods["choice_made"] = False
+
+        last_choice = table.objects.filter(user_id=u.id, room_id=rm.id, t=t-1).first()
+
+        if last_choice:
+
+            goods["desired_good"] = None
+            goods["good_in_hand"] = last_choice.final_good
+
+        else:
+            # If last choice is not found, it means it means that t < 1
+            # and user has in hand production good
+            goods["desired_good"] = None
+            goods["good_in_hand"] = u.production_good
+
+    return goods
+
 
 
 

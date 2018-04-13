@@ -52,12 +52,12 @@ def client_request(request):
         except AttributeError:
             raise Exception("Bad demand.")
 
-    args = _treat_args(request)
+    args = _treat_args(
+        request,
+        {"skip_tutorial": skip_tutorial, "skip_survey": skip_survey}
+    )
 
     to_reply = func(args)
-
-    # Log
-    # utils.log("I reply: {}".format(list(to_reply.items())), f=client_request)
 
     to_reply["demand"] = demand
     to_reply["skipSurvey"] = skip_survey
@@ -70,12 +70,16 @@ def client_request(request):
 
 def init(args):
 
-    info, u, rm = game.user.client.connect(device_id=args.device_id)
+    info, u, rm = game.user.client.connect(
+        device_id=args.device_id,
+        skip_tutorial=args.skip_tutorial,
+        skip_survey=args.skip_survey,
+    )
 
     progress = game.room.client.get_progression(u=u, rm=rm, t=args.t)
 
     wait, state = game.room.client.state_verification(
-        u=u, rm=rm, t=args.t, progress=progress, demand=init.__name__
+        u=u, rm=rm, t=args.t, progress=progress, demand=init,
     )
 
     to_reply = {
@@ -121,7 +125,7 @@ def survey(args):
     progress = game.room.client.get_progression(u=u, rm=rm, t=args.t)
 
     wait, state = game.room.client.state_verification(
-        u=u, rm=rm, t=args.t, progress=progress, demand=survey.__name__
+        u=u, rm=rm, t=args.t, progress=progress, demand=survey
     )
 
     to_reply = {
@@ -147,7 +151,7 @@ def tutorial_choice(args):
     progress = game.room.client.get_progression(u=u, rm=rm, t=args.t, tuto=True)
 
     wait, t, end = game.room.client.state_verification(
-        rm=rm, u=u, t=args.t, progress=progress, demand=tutorial_choice.__name__
+        rm=rm, u=u, t=args.t, progress=progress, demand=tutorial_choice
     )
 
     to_reply = {
@@ -172,7 +176,7 @@ def tutorial_done(args):
     progress = game.room.client.get_progression(u=u, rm=rm, t=args.t)
 
     wait, state = game.room.client.state_verification(
-        u=u, rm=rm, t=args.t, progress=progress, demand=tutorial_done.__name__
+        u=u, rm=rm, t=args.t, progress=progress, demand=tutorial_done
     )
 
     to_reply = {
@@ -188,7 +192,7 @@ def choice(args):
     u = game.user.client.get_user(user_id=args.user_id)
     rm = game.room.client.get_room(room_id=u.room_id)
 
-    success, score = game.room.client.submit_choice(
+    success, score = game.user.client.submit_choice(
         u=u,
         rm=rm,
         desired_good=args.desired_good,
@@ -198,11 +202,11 @@ def choice(args):
     progress = game.room.client.get_progression(u=u, rm=rm, t=args.t)
 
     wait, t, end = game.room.client.state_verification(
-        rm=rm, u=u, t=args.t, progress=progress, demand=choice.__name__
+        rm=rm, u=u, t=args.t, progress=progress, demand=choice
     )
 
     to_reply = {
-        "wait": wait,
+        "wait": wait if success is not None else True,
         "progress": progress,
         "success": success,
         "end": end,
@@ -213,7 +217,7 @@ def choice(args):
     return to_reply
 
 
-def _treat_args(request):
+def _treat_args(request, options):
 
     form = ClientRequestForm(request.POST)
 
@@ -221,7 +225,8 @@ def _treat_args(request):
 
         Args = namedtuple(
             "Args",
-            ["demand", "device_id", "user_id", "age", "gender", "desired_good", "t"]
+            ["demand", "device_id", "user_id",
+             "age", "gender", "desired_good", "t", "skip_survey", "skip_tutorial"]
         )
 
         args = Args(
@@ -231,7 +236,9 @@ def _treat_args(request):
             age=form.cleaned_data.get("age"),
             gender=form.cleaned_data.get("sex"),
             desired_good=form.cleaned_data.get("good"),
-            t=form.cleaned_data.get("t")
+            t=form.cleaned_data.get("t"),
+            skip_tutorial=options["skip_tutorial"],
+            skip_survey=options["skip_survey"]
         )
 
         return args

@@ -70,6 +70,7 @@ class BotClient:
         self.tuto_desired_good = None
         self.tuto_t_max = None
         self.choice_made = None
+        self.type = None
 
         self.game_state = None
 
@@ -87,8 +88,11 @@ class BotClient:
         except Exception as e:
             print("Error while treating request: {}".format(e.with_traceback(e.__traceback__)))
 
-    def _increment_time_step(self):
-        self.t += 1
+    def set_desired_good(self):
+
+        self.desired_good = np.random.randint(3)
+        while self.desired_good == self.good_in_hand:
+            self.desired_good = np.random.randint(3)
 
     # --------------------- Init ------------------------------------ #
 
@@ -103,9 +107,9 @@ class BotClient:
     def reply_init(self, args):
 
         self.user_id = args["userId"]
-        self.good_in_hand = args["goodInHand"]
-        self.desired_good = args["goodDesired"] if args["goodDesired"] else 1
-        self.t = args["t"]
+        self.good_in_hand = int(args["goodInHand"])
+        self.desired_good = int(args["goodDesired"]) if args["goodDesired"] else 1
+        self.t = int(args["t"])
         self.choice_made = args["choiceMade"]
         self.tuto_t = args["tutoT"]
         self.tuto_good = args["tutoGoodInHand"]
@@ -170,16 +174,28 @@ class BotClient:
 
     def choice(self):
 
+        self.set_desired_good()
+
+        print(self.desired_good, self.good_in_hand)
+
         return self._request({
             KeyChoice.demand: "choice",
             KeyChoice.user_id: self.user_id,
-            KeyChoice.desired_good: np.random.randint(3),
+            KeyChoice.desired_good: self.desired_good,
             KeyChoice.t: self.t
         })
 
     @print_reply
     def reply_choice(self, args):
+
+        if args["success"]:
+            self.good_in_hand = self.desired_good
+
+        if self.good_in_hand == 1:
+            self.good_in_hand = 0
+
         self.t = args["t"]
+
         return True, args["wait"], args["end"]
 
 
@@ -323,7 +339,7 @@ def main(args):
                 wait_event=ml.Event().wait,
                 url=url,
                 device_id=device_id,
-                delay=2.5
+                delay=1.5
             )
 
             b.start()
