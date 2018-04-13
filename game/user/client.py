@@ -354,14 +354,13 @@ def _get_user_last_known_goods(u, rm, t, tuto=False):
 
 def _check_choice_validity(u, desired_good, t):
 
-    choice = Choice.objects.filter(user_id=u.id, t=t-1).first()
+    choice = Choice.objects.filter(user_id=u.id, t=t).first()
 
     if choice:
 
-        if choice.final_good is not None:
+        if choice.good_in_hand:
 
-            good_in_hand = choice.final_good
-            relative_good_in_hand = _get_relative_good(u, good=good_in_hand)
+            relative_good_in_hand = _get_relative_good(u, good=choice.good_in_hand)
 
             if relative_good_in_hand == desired_good:
 
