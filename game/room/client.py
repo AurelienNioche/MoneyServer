@@ -187,27 +187,37 @@ def _compute_score_and_final_good(c):
     u = User.objects.select_for_update().filter(id=c.user_id).first()
 
     if u:
+
+        next_choice = Choice.objects.select_for_update().filter(
+            player_id=u.player_id,
+            t=c.t+1,
+            room_id=c.room_id
+        ).first()
+
+        if not next_choice:
+            raise Exception("t {} does not exist".format(c.t+1))
+
         if c.success:
 
             # If desired good is consumption good
             # then consume and increase score
-            if u.consumption_good in (c.desired_good, ):
-                c.final_good = u.production_good
+            if u.consumption_good == c.desired_good:
+                next_choice.good_in_hand = u.production_good
                 u.score += 1
                 u.save(update_fields=["score"])
-                c.save(update_fields=["final_good"])
+                next_choice.save(update_fields=["good_in_hand"])
 
             # else the resulting is the desired good
             else:
-                c.final_good = c.desired_good
-                c.save(update_fields=["final_good"])
+                next_choice.good_in_hand = c.desired_good
+                next_choice.save(update_fields=["good_in_hand"])
 
         # If the exchange did not succeed then
         # the resulting good is the good in hand
         else:
 
-            c.final_good = c.good_in_hand
-            c.save(update_fields=["final_good"])
+            next_choice.good_in_hand = c.good_in_hand
+            next_choice.save(update_fields=["good_in_hand"])
 
     else:
         raise Exception("User is not found for that exchange.")

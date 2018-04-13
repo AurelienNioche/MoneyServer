@@ -341,7 +341,7 @@ def _get_user_last_known_goods(u, rm, t, tuto=False):
         if last_choice:
 
             goods["desired_good"] = None
-            goods["good_in_hand"] = last_choice.final_good
+            goods["good_in_hand"] = last_choice.good_in_hand
 
         else:
             # If last choice is not found, it means it means that t < 1
