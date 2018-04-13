@@ -154,6 +154,8 @@ def submit_choice(rm, u, desired_good, t):
 
     # ------- Check if current choice has been set or not ------ #
 
+    _check_choice_validity(u=u, desired_good=desired_good, t=t)
+
     current_choice = Choice.objects.filter(room_id=rm.id, t=t, user_id=u.id).first()
 
     if current_choice:
@@ -350,6 +352,18 @@ def _get_user_last_known_goods(u, rm, t, tuto=False):
     return goods
 
 
+def _check_choice_validity(u, desired_good, t):
 
+    choice = Choice.objects.filter(user_id=u.id, t=t-1).first()
 
+    if choice:
+
+        if choice.final_good is not None:
+
+            good_in_hand = choice.final_good
+            relative_good_in_hand = _get_relative_good(u, good=good_in_hand)
+
+            if relative_good_in_hand == desired_good:
+
+                raise Exception("User can't choose the same good as he is carrying!")
 
