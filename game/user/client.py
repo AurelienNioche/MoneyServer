@@ -175,6 +175,7 @@ def submit_choice(rm, u, desired_good, t):
                     game.room.client.matching(rm=rm, t=t)
 
                 except (psycopg2.OperationalError, django.db.utils.OperationalError):
+                    print("WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW")
                     pass
 
             return None, u.score
