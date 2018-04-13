@@ -90,9 +90,9 @@ class BotClient:
 
     def set_desired_good(self):
 
-        self.desired_good = np.random.randint(3)
+        self.desired_good = np.random.choice([1, 2])
         while self.desired_good == self.good_in_hand:
-            self.desired_good = np.random.randint(3)
+            self.desired_good = np.random.choice([1, 2])
 
     # --------------------- Init ------------------------------------ #
 
@@ -147,7 +147,7 @@ class BotClient:
             KeyTuto.demand: "tutorial_choice",
             KeyTuto.progress: 100,
             KeyTuto.user_id: self.user_id,
-            KeyTuto.desired_good: np.random.randint(3),
+            KeyTuto.desired_good: np.random.choice([1, 2]),
             KeyTuto.t: self.tuto_t,
         })
 
@@ -176,8 +176,6 @@ class BotClient:
 
         self.set_desired_good()
 
-        print(self.desired_good, self.good_in_hand)
-
         return self._request({
             KeyChoice.demand: "choice",
             KeyChoice.user_id: self.user_id,
@@ -188,13 +186,16 @@ class BotClient:
     @print_reply
     def reply_choice(self, args):
 
-        if args["success"]:
-            self.good_in_hand = self.desired_good
+        if not args["wait"]:
 
-        if self.good_in_hand == 1:
-            self.good_in_hand = 0
+            if args["success"]:
 
-        self.t = args["t"]
+                if self.desired_good == 1:
+                    self.good_in_hand = 0
+                else:
+                    self.good_in_hand = self.desired_good
+
+            self.t = args["t"]
 
         return True, args["wait"], args["end"]
 
@@ -339,7 +340,7 @@ def main(args):
                 wait_event=ml.Event().wait,
                 url=url,
                 device_id=device_id,
-                delay=1.5
+                delay=1
             )
 
             b.start()

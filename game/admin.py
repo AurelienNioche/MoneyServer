@@ -18,7 +18,7 @@ class BoolParameterAdmin(admin.ModelAdmin):
 
 class ChoiceAdmin(admin.ModelAdmin):
     list_display = (
-        'id', 'desired_good', 'good_in_hand', 'user_id', 'player_id', 'room_id', 'success', 't'
+        'id', 'desired_good', 'good_in_hand', 'user_id', 'player_id', 'room_id', 'success', 't', 'final_good'
     )
 
 
@@ -37,6 +37,7 @@ class TypeAdmin(admin.ModelAdmin):
     list_display = (
         'id', 'production_good', 'player_id', 'room_id'
     )
+
 
 admin.site.register(Type, TypeAdmin)
 admin.site.register(User, UserAdmin)
