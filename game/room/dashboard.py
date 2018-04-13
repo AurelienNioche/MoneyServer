@@ -6,7 +6,6 @@ import subprocess
 import pickle
 
 from game.models import Room, Choice, TutorialChoice, Type
-
 import game.room.state
 
 
@@ -15,14 +14,13 @@ def delete(room_id):
     rm = Room.objects.filter(id=room_id).first()
 
     if rm:
+
         Choice.objects.filter(room_id=rm.id).delete()
         TutorialChoice.objects.filter(room_id=rm.id).delete()
         rm.delete()
 
 
 def create(data):
-
-    Room.objects.select_for_update().all()
 
     x0 = int(data["x0"])
     x1 = int(data["x1"])
@@ -49,13 +47,15 @@ def create(data):
 
     rm.save()
 
+    types = (0, ) * rm.x0 + (1, ) * rm.x1 + (2, ) * rm.x2
+
     Choice.objects.bulk_create([
         Choice(
             room_id=rm.id,
             t=t,
             player_id=n,
             user_id=None,
-            good_in_hand=None,
+            good_in_hand=types[n],
             desired_good=None,
             success=None
         )
@@ -68,7 +68,7 @@ def create(data):
             t=t,
             player_id=n,
             user_id=None,
-            good_in_hand=None,
+            good_in_hand=types[n],
             desired_good=None,
             success=None
         )
@@ -76,8 +76,14 @@ def create(data):
     ])
 
     Type.objects.bulk_create([
-        Type(room_id=rm.id, user_id=None, production_good=g, player_id=n)
-        for g, n in zip((0, ) * rm.x0 + (1, ) * rm.x1 + (2, ) * rm.x2, range(n_user))
+        Type(
+            room_id=rm.id,
+            production_good=g,
+            player_id=n,
+            user_id=None
+        )
+        for g, n in zip(types, range(n_user)
+        )
     ])
 
 
@@ -111,7 +117,6 @@ def get_path(dtype):
 def convert_data_to_pickle():
 
     mydata = get_path("p")
-
     d = {}
 
     for table in (
@@ -153,7 +158,7 @@ def flush_db():
         settings.DATABASES["default"]["NAME"]
     ), shell=True)
 
-    for table in (None):
+    for table in (None, ):
 
         entries = table.objects.all()
         entries.delete()

@@ -1,12 +1,11 @@
 from django.db import transaction
-import django.db.utils
-import psycopg2
 
 import numpy as np
 
 from game.models import User, Room, Choice
 import game.user.client
 import game.room.state
+import game.views
 
 
 def get_room(room_id):
@@ -32,7 +31,7 @@ def get_progression(u, rm, t, tuto=False):
 
 def state_verification(u, rm, progress, t, demand):
 
-    if demand in ('tutorial_choice', ):
+    if demand in (game.views.tutorial_choice, ):
 
         t += 1
         wait = False
@@ -40,7 +39,7 @@ def state_verification(u, rm, progress, t, demand):
 
         return wait, t, end
 
-    elif demand in ('choice', ):
+    elif demand in (game.views.choice, ):
 
         t = t + 1 if progress == 100 else t
         rm = game.room.state.set_rm_timestep(rm=rm, t=t, tuto=False)
@@ -64,7 +63,7 @@ def state_verification(u, rm, progress, t, demand):
 
         return wait, t, end
 
-    elif demand in ('init', ):
+    elif demand in (game.views.init, ):
 
         if progress == 100:
 
@@ -86,7 +85,7 @@ def state_verification(u, rm, progress, t, demand):
 
             return True, u.state
 
-    elif demand in ('survey', ):
+    elif demand in (game.views.survey, ):
 
         if progress == 100:
 
@@ -108,7 +107,7 @@ def state_verification(u, rm, progress, t, demand):
 
             return True, u.state
 
-    elif demand in ('tutorial_done', ):
+    elif demand in (game.views.tutorial_done, ):
 
         if progress == 100:
 
@@ -131,76 +130,35 @@ def state_verification(u, rm, progress, t, demand):
             return True, u.state
 
 
-def submit_choice(rm, u, desired_good, t):
-
-    # ------- Check if current choice has been set or not ------ #
-
-    current_choice = Choice.objects.filter(room_id=rm.id, t=t, user_id=u.id).first()
-
-    if current_choice:
-
-        # If matching has been done
-        if current_choice and current_choice.success is not None:
-            return current_choice.success, u.score
-
-        else:
-
-            n = Choice.objects.filter(room_id=rm.id, t=t).exclude(user_id=None).count()
-
-            # Do matching if all users made their choice
-            if n == rm.n_user:
-
-                try:
-                    _matching(rm, t)
-
-                except (psycopg2.OperationalError, django.db.utils.OperationalError):
-                    pass
-
-            return None, u.score
-
-    # If choice entry is not filled for this t
-    else:
-
-        current_choice = Choice.objects.filter(room_id=rm.id, t=t, player_id=u.player_id).first()
-
-        current_choice.user_id = u.id
-
-        current_choice.desired_good = \
-            game.user.client.get_absolute_good(u=u, good=desired_good)
-
-        current_choice.good_in_hand = \
-            game.user.client.get_user_last_known_goods(rm=rm, u=u, t=t-1)["good_in_hand"]
-
-        current_choice.save(update_fields=["user_id", "desired_good", "good_in_hand"])
-
-        return None, u.score
-
-
-def _matching(rm, t):
+def matching(rm, t):
 
     # List possible markets
     markets = (0, 1), (1, 2), (2, 0)
 
     with transaction.atomic():
-        # Get choices for room and time
 
+        # Get choices for room and time
+        # No wait argument allows to raise an exception when another process
+        # tries to select these entries
         choices = Choice.objects.select_for_update(nowait=True).filter(room_id=rm.id, t=t, success=None)
 
         for g1, g2 in markets:
 
+            # Get exchanges for goods e.g 0, 1 and 1, 0
             pools = [
                 choices.filter(desired_good=g1, good_in_hand=g2).only('success', 'user_id'),
                 choices.filter(desired_good=g2, good_in_hand=g1).only('success', 'user_id')
             ]
 
-            # We sort pools in order to get the shortest pool first
+            # We sort 'pools' of choices in order to get the shortest pool first
             idx_min, idx_max = np.argsort([p.count() for p in pools])
+            # Then we have two pools with different sizes
             min_pool, max_pool = pools[idx_min], pools[idx_max]
 
-            # Shuffle the max pool
+            # Randomize the max pool
             max_pool = max_pool.order_by('?')
 
-            # The firsts succeed
+            # The firsts succeed to exchange
             for c1, c2 in zip(min_pool, max_pool):
 
                 c1.success = True
@@ -208,31 +166,59 @@ def _matching(rm, t):
                 c1.save(update_fields=["success"])
                 c2.save(update_fields=["success"])
 
-                _compute_score(
-                    u1=c1.user_id,
-                    u2=c2.user_id,
-                    good1=c1.desired_good,
-                    good2=c2.desired_good
-                )
+                # Compute score and set the resulting good in hand
+                # for each exchange.
+                _compute_score_and_final_good(c=c1)
+                _compute_score_and_final_good(c=c2)
+
+            idx = min_pool.count()
 
             # The lasts fail
-            for c in max_pool[idx_min:]:
+            for c in max_pool[idx:]:
 
                 c.success = False
                 c.save(update_fields=["success"])
 
+                _compute_score_and_final_good(c)
 
-def _compute_score(u1, u2, good1, good2):
 
-    for i, good in zip((u1, u2), (good1, good2)):
+def _compute_score_and_final_good(c):
 
-        u = User.objects.select_for_update().filter(id=i).first()
+    u = User.objects.select_for_update().filter(id=c.user_id).first()
 
-        if u:
+    if u:
 
-            if u.consumption_good in (good, ):
+        next_choice = Choice.objects.select_for_update().filter(
+            player_id=u.player_id,
+            t=c.t+1,
+            room_id=c.room_id
+        ).first()
+
+        if not next_choice:
+            raise Exception("t {} does not exist".format(c.t+1))
+
+        if c.success:
+
+            # If desired good is consumption good
+            # then consume and increase score
+            if u.consumption_good == c.desired_good:
+                next_choice.good_in_hand = u.production_good
                 u.score += 1
                 u.save(update_fields=["score"])
 
+            # else the resulting is the desired good
+            else:
+                print("WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWw")
+                next_choice.good_in_hand = c.desired_good
+
+            next_choice.save(update_fields=["good_in_hand"])
+
+        # If the exchange did not succeed then
+        # the resulting good is the good in hand
         else:
-            raise Exception("Error in '_matching': Users are not found for that exchange.")
+
+            next_choice.good_in_hand = c.good_in_hand
+            next_choice.save(update_fields=["good_in_hand"])
+
+    else:
+        raise Exception("User is not found for that exchange.")

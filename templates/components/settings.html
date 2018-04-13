@@ -33,9 +33,9 @@
                                 {{ p.proper_name }}
                                 </p>
                                 {% if p.value == True %}
-                                    <input name="{{ p.name }}" type="checkbox" checked="true" onclick="saveParams()">
+                                    <input name="{{ p.name }}" type="checkbox" checked="true" onclick="saveParams('{{ p.name }}')">
                                 {% else %}
-                                    <input name="{{ p.name }}" type="checkbox" onclick="saveParams()">
+                                    <input name="{{ p.name }}" type="checkbox" onclick="saveParams('{{ p.name }}')">
                                 {% endif %}
                                     <span class="slider round"></span>
                                     {% csrf_token %}

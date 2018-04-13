@@ -317,7 +317,7 @@ input:checked + .slider:before {
 
 .sidebar ul li a.active {
     background-color: #444A58;
-    border-left: 4px solid #337aB7;
+    border-left: 8px solid #337aB7;
 }
 
 .sidebar ul li a:focus{

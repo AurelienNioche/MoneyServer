@@ -3,7 +3,7 @@ from collections import namedtuple
 
 from utils import utils
 
-# Globals
+# Global states
 States = namedtuple('States', ['welcome', 'survey', 'tutorial', 'game', 'end'])
 states = States(welcome='welcome', survey='survey', tutorial='tutorial', game='game', end='end')
 
@@ -11,17 +11,17 @@ states = States(welcome='welcome', survey='survey', tutorial='tutorial', game='g
 def get_progress_for_choices(rm, t, tuto=False):
 
     table = TutorialChoice if tuto else Choice
-
     n_choices = table.objects.filter(room_id=rm.id, t=t).exclude(user_id=None).count()
-    progress = round(n_choices / rm.n_user * 100)
 
-    return progress
+    return round(n_choices / rm.n_user * 100)
 
 
 def next_state(rm, state):
 
     rm.state = state
 
+    # If room's state is end
+    # definitely close the room
     if state == states.end:
         rm.opened = False
 
