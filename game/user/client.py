@@ -205,7 +205,9 @@ def _create_new_user(rm, device_id):
 
     with transaction.atomic():
 
-        player_id = User.objects.select_for_update().filter(room_id=rm.id).count()
+        users = User.objects.select_for_update().all()
+
+        player_id = users.filter(room_id=rm.id).count()
 
         pseudo = parameters.pseudo[player_id]
 
