@@ -59,7 +59,7 @@ def client_request(request):
 
     to_reply = func(args)
 
-    utils.log("Post request: {}".format(list(to_reply.items())), f=client_request)
+    # utils.log("Post request: {}".format(list(to_reply.items())), f=client_request)
 
     to_reply["demand"] = demand
     to_reply["skipSurvey"] = skip_survey
