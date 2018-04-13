@@ -365,5 +365,5 @@ def _check_choice_validity(u, desired_good, t):
 
             if relative_good_in_hand == desired_good:
 
-                raise Exception("User can't choose the same good as he is carrying!")
+                raise Exception("User {} can't choose the same good as he is carrying!".format(u.pseudo))
 
