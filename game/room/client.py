@@ -208,7 +208,6 @@ def _compute_score_and_final_good(c):
 
             # else the resulting is the desired good
             else:
-                print("WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWw")
                 next_choice.good_in_hand = c.desired_good
 
             next_choice.save(update_fields=["good_in_hand"])
