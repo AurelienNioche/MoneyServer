@@ -71,6 +71,9 @@ class BotClient:
         self.tuto_t_max = None
         self.choice_made = None
         self.type = None
+        self.success_list = []
+        self.desired_good_list = []
+        self.good_in_hand_list = []
 
         self.game_state = None
 
@@ -90,9 +93,9 @@ class BotClient:
 
     def set_desired_good(self):
 
-        self.desired_good = np.random.choice([1, 2])
+        self.desired_good = np.random.choice([0, 1, 2])
         while self.desired_good == self.good_in_hand:
-            self.desired_good = np.random.choice([1, 2])
+            self.desired_good = np.random.choice([0, 1, 2])
 
     # --------------------- Init ------------------------------------ #
 
@@ -197,12 +200,30 @@ class BotClient:
                     else:
                         self.good_in_hand = self.desired_good
 
+                self.success_list.append(args["success"])
+                self.desired_good_list.append(self.desired_good)
+                self.good_in_hand_list.append(self.good_in_hand)
+
                 self.t = args["t"]
+                print(
+                    {
+                        "user_id": self.user_id,
+                        "success": [(i, t) for i, t in zip(self.success_list, range(self.t))],
+                        "goods": [(i, j, t) for i, j, t in zip(self.good_in_hand_list, self.desired_good_list, range(self.t))]
+
+                    }
+                )
 
             else:
                 raise Exception("Do not wait but success is None")
 
         return True, args["wait"], args["end"]
+
+    def get_success(self):
+        return {
+            "user_id": self.user_id,
+            "success": [(i, t) for i, t in zip(self.success_list, range(self.t))]
+        }
 
 
 def bot_factory(base, device_id, delay, url, wait_event):
@@ -335,6 +356,7 @@ def main(args):
     else:
 
         n = int(args.number)
+        bots = []
 
         for b in range(n):
 
@@ -348,7 +370,20 @@ def main(args):
                 delay=3
             )
 
+            bots.append(b)
+
             b.start()
+
+    while True:
+
+        success = []
+        for b in bots:
+            if b.b.t:
+                success.append(b.b.get_success())
+
+        if success:
+            print("saving")
+            json.dump(success, fp="success_debug.json")
 
 
 if __name__ == "__main__":

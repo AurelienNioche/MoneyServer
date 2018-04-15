@@ -161,7 +161,8 @@ def submit_choice(rm, u, desired_good, t):
 
     if not current_choice:
 
-        current_choice = Choice.objects.filter(room_id=rm.id, t=t, player_id=u.player_id).first()
+        current_choice = Choice.objects.select_for_update(nowait=True)\
+            .filter(room_id=rm.id, t=t, player_id=u.player_id).first()
 
         current_choice.user_id = u.id
         current_choice.desired_good = desired_good
@@ -349,5 +350,5 @@ def _check_choice_validity(u, desired_good, t):
 
     if choice and choice.good_in_hand and choice.good_in_hand == desired_good:
 
-        raise Exception("User {} can't choose the same good as he is carrying!".format(u.pseudo))
+        raise Exception("User {} with id {} can't choose the same good as he is carrying!".format(u.pseudo, u.id))
 
