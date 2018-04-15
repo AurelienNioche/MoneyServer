@@ -75,7 +75,7 @@ def connect(device_id, skip_survey, skip_tutorial):
         else:
             skip_state = None
 
-        return {
+        info = {
             "pseudo": u.pseudo,
             "user_id": u.id,
             "state": u.state if not skip_state else skip_state,
@@ -91,7 +91,9 @@ def connect(device_id, skip_survey, skip_tutorial):
             "tuto_t_max": rm.tutorial_t_max,
             "tuto_t": rm.tutorial_t,
             "tuto_score": u.tutorial_score
-        }, u, rm
+        }
+
+        return info, u, rm
 
     else:
         raise Exception("Error: No room found.")
@@ -138,7 +140,7 @@ def submit_tutorial_choice(u, rm, desired_good, t):
             raise Exception("Error in 'submit_tutorial_choice': Did not found a choice entry.")
 
         choice.user_id = u.id
-        choice.desired_good = _get_absolute_good(good=desired_good, u=u)
+        choice.desired_good = get_absolute_good(good=desired_good, u=u)
         choice.good_in_hand = _get_user_last_known_goods(u=u, rm=rm, t=t, tuto=True)["good_in_hand"]
         choice.success = bool(np.random.choice([False, True]))
         u.tutorial_score += choice.success
@@ -153,7 +155,6 @@ def submit_tutorial_choice(u, rm, desired_good, t):
 def submit_choice(rm, u, desired_good, t):
 
     # ------- Check if current choice has been set or not ------ #
-
     _check_choice_validity(u=u, desired_good=desired_good, t=t)
 
     current_choice = Choice.objects.filter(room_id=rm.id, t=t, user_id=u.id).first()
@@ -166,6 +167,9 @@ def submit_choice(rm, u, desired_good, t):
         current_choice.desired_good = desired_good
 
         current_choice.save(update_fields=["user_id", "desired_good"])
+
+    elif current_choice.success is not None:
+        return current_choice.success, u.score
 
     n = Choice.objects.filter(room_id=rm.id, t=t).exclude(desired_good=None).count()
 
@@ -187,11 +191,10 @@ def submit_choice(rm, u, desired_good, t):
 def _create_new_user(rm, device_id):
 
     """
-    Creates a new user and returns goods he is carrying
+    Creates a new user and returns its instance
     :param rm:
     :param device_id:
     :return: user object (django model),
-    choice_made (bool), good_in_hand, desired_good
     """
 
     with transaction.atomic():
@@ -309,10 +312,9 @@ def _get_user_last_known_goods(u, rm, t, tuto=False):
 
     # Get the right table
     table = TutorialChoice if tuto else Choice
+    choice = table.objects.filter(user_id=u.id, room_id=rm.id, t=t).first()
 
     goods = {}
-
-    choice = table.objects.filter(user_id=u.id, room_id=rm.id, t=t).first()
 
     if choice:
 

@@ -206,11 +206,11 @@ def choice(args):
     progress = game.room.client.get_progression(u=u, rm=rm, t=args.t)
 
     wait, t, end = game.room.client.state_verification(
-        rm=rm, u=u, t=args.t, progress=progress, demand=choice
+        rm=rm, u=u, t=args.t, progress=progress, demand=choice, success=success
     )
 
     to_reply = {
-        "wait": wait if success is not None else True,
+        "wait": wait,
         "progress": progress,
         "success": success,
         "end": end,

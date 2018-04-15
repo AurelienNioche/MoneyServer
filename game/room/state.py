@@ -11,7 +11,7 @@ states = States(welcome='welcome', survey='survey', tutorial='tutorial', game='g
 def get_progress_for_choices(rm, t, tuto=False):
 
     table = TutorialChoice if tuto else Choice
-    n_choices = table.objects.filter(room_id=rm.id, t=t).exclude(user_id=None).count()
+    n_choices = table.objects.filter(room_id=rm.id, t=t).exclude(desired_good=None).count()
 
     return round(n_choices / rm.n_user * 100)
 

@@ -57,7 +57,8 @@ def create(data):
             user_id=None,
             good_in_hand=types[n],
             desired_good=None,
-            success=None
+            success=None,
+            locked=False
         )
         for n in range(n_user) for t in range(t_max)
     ])
@@ -82,8 +83,7 @@ def create(data):
             player_id=n,
             user_id=None
         )
-        for g, n in zip(types, range(n_user)
-        )
+        for g, n in zip(types, range(n_user))
     ])
 
 

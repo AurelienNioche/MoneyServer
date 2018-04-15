@@ -116,7 +116,7 @@ class BotClient:
         self.tuto_desired_good = args["tutoGoodDesired"]
         self.tuto_t_max = args["tutoTMax"]
 
-        self.game_state = args["step"] + "_choice" if args["step"] in ('tutorial', ) else args["step"]
+        self.game_state = args["step"] + "_choice" if args["step"] == 'tutorial' else args["step"]
 
         if args["skipSurvey"]:
             self.game_state = "tutorial_choice"
@@ -188,14 +188,19 @@ class BotClient:
 
         if not args["wait"]:
 
-            if args["success"]:
+            if args["success"] is not None:
 
-                if self.desired_good == 1:
-                    self.good_in_hand = 0
-                else:
-                    self.good_in_hand = self.desired_good
+                if args["success"]:
 
-            self.t = args["t"]
+                    if self.desired_good == 1:
+                        self.good_in_hand = 0
+                    else:
+                        self.good_in_hand = self.desired_good
+
+                self.t = args["t"]
+
+            else:
+                raise Exception("Do not wait but success is None")
 
         return True, args["wait"], args["end"]
 
