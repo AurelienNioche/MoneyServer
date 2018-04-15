@@ -1,5 +1,4 @@
 import requests
-import json
 import time
 import numpy as np
 import multiprocessing as ml
@@ -70,10 +69,6 @@ class BotClient:
         self.tuto_desired_good = None
         self.tuto_t_max = None
         self.choice_made = None
-        self.type = None
-        self.success_list = []
-        self.desired_good_list = []
-        self.good_in_hand_list = []
 
         self.game_state = None
 
@@ -193,10 +188,6 @@ class BotClient:
 
             if args["success"] is not None:
 
-                self.desired_good_list.append(self.desired_good)
-                self.good_in_hand_list.append(self.good_in_hand)
-                self.success_list.append(args["success"])
-
                 if args["success"]:
 
                     if self.desired_good == 1:
@@ -204,14 +195,6 @@ class BotClient:
                     else:
                         self.good_in_hand = self.desired_good
 
-                print(
-                    {
-                        "user_id": self.user_id,
-                        "success": [(i, t) for i, t in zip(self.success_list, range(self.t))],
-                        "goods": [(i, j, t) for i, j, t in zip(self.good_in_hand_list, self.desired_good_list, range(self.t))]
-
-                    }
-                )
                 self.t = args["t"]
 
                 self.set_desired_good()
@@ -221,14 +204,8 @@ class BotClient:
 
         return args["wait"], args["end"]
 
-    def get_success(self):
-        return {
-            "user_id": self.user_id,
-            "success": [(i, t) for i, t in zip(self.success_list, range(self.t))]
-        }
 
-
-def bot_factory(base, device_id, delay, url, wait_event):
+def bot_factory(base, device_id, delay, url, wait_event, seed):
 
     class BotProcess(base):
 
@@ -236,6 +213,7 @@ def bot_factory(base, device_id, delay, url, wait_event):
             super().__init__()
             self.b = BotClient(url=url, device_id=device_id)
             self.delay = delay
+            np.random.seed(seed)
 
         def _wait(self):
 
@@ -346,7 +324,6 @@ def main(args):
     else:
 
         n = int(args.number)
-        bots = []
 
         for b in range(n):
 
@@ -357,10 +334,9 @@ def main(args):
                 wait_event=ml.Event().wait,
                 url=url,
                 device_id=device_id,
-                delay=1
+                delay=1,
+                seed=n,
             )
-
-            bots.append(b)
 
             b.start()
 
