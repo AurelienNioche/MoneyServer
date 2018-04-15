@@ -143,20 +143,20 @@ def matching(rm, t):
 
                 # Get exchanges for goods e.g 0, 1 and 1, 0
                 pools = [
-                    choices.select_for_update(nowait=True).filter(desired_good=g1, good_in_hand=g2).only('success', 'user_id'),
-                    choices.select_for_update(nowait=True).filter(desired_good=g2, good_in_hand=g1).only('success', 'user_id')
+                    list(choices.filter(desired_good=g1, good_in_hand=g2).only('success', 'user_id')),
+                    list(choices.filter(desired_good=g2, good_in_hand=g1).only('success', 'user_id'))
                 ]
 
                 # We sort 'pools' of choices in order to get the shortest pool first
-                idx_min, idx_max = np.argsort([p.count() for p in pools])
+                idx_min, idx_max = np.argsort([len(p) for p in pools])
 
-                print([p.count() for p in pools], t)
+                print([len(p) for p in pools], t)
 
                 # Then we have two pools with different sizes
                 min_pool, max_pool = pools[idx_min], pools[idx_max]
 
                 # Randomize the max pool
-                max_pool = max_pool.order_by('?')
+                np.random.shuffle(max_pool)
 
                 # The firsts succeed to exchange
                 for c1, c2 in zip(min_pool, max_pool):
@@ -171,7 +171,7 @@ def matching(rm, t):
                     _compute_score_and_final_good(c=c1)
                     _compute_score_and_final_good(c=c2)
 
-                idx = min_pool.count()
+                idx = len(min_pool)
 
                 # The lasts fail
                 for c in max_pool[idx:]:

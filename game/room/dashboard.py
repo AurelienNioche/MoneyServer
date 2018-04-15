@@ -55,7 +55,7 @@ def create(data):
             t=t,
             player_id=n,
             user_id=None,
-            good_in_hand=types[n],
+            good_in_hand=types[n] if not t else None,
             desired_good=None,
             success=None,
         )
