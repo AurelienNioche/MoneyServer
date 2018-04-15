@@ -79,17 +79,19 @@ class BotClient:
 
     def _request(self, data):
 
-        try:
+        while True:
+            try:
 
-            r = requests.post(self.url, data=data)
-            args = json.loads(r.text)
+                r = requests.post(self.url, data=data)
+                args = r.json()
 
-            # return execution of reply function with response
-            func = getattr(self, "reply_" + args["demand"])
-            return func(args)
+                # return execution of reply function with response
+                func = getattr(self, "reply_" + args["demand"])
+                return func(args)
 
-        except Exception as e:
-            print("Error while treating request: {}".format(e.with_traceback(e.__traceback__)))
+            except Exception as e:
+                print("Error while treating request: {}".format(e))
+                continue
 
     def set_desired_good(self):
 
@@ -126,7 +128,7 @@ class BotClient:
         if args["skipTutorial"]:
             self.game_state = "game"
 
-        return True, args["wait"]
+        return args["wait"]
 
     def survey(self):
 
@@ -140,7 +142,7 @@ class BotClient:
     @print_reply
     def reply_survey(self, args):
 
-        return True, args["wait"]
+        return args["wait"]
 
     # --------------------- tuto  ------------------------------------ #
 
@@ -159,7 +161,7 @@ class BotClient:
 
         self.tuto_t = args["tutoT"]
 
-        return True, args["wait"], args["tutoEnd"]
+        return args["wait"], args["tutoEnd"]
 
     def tutorial_done(self):
 
@@ -171,13 +173,11 @@ class BotClient:
     @print_reply
     def reply_tutorial_done(self, args):
 
-        return True, args["wait"]
+        return args["wait"]
 
     # --------------------- choice ------------------------------------ #
 
     def choice(self):
-
-        self.set_desired_good()
 
         return self._request({
             KeyChoice.demand: "choice",
@@ -193,6 +193,10 @@ class BotClient:
 
             if args["success"] is not None:
 
+                self.desired_good_list.append(self.desired_good)
+                self.good_in_hand_list.append(self.good_in_hand)
+                self.success_list.append(args["success"])
+
                 if args["success"]:
 
                     if self.desired_good == 1:
@@ -200,11 +204,6 @@ class BotClient:
                     else:
                         self.good_in_hand = self.desired_good
 
-                self.success_list.append(args["success"])
-                self.desired_good_list.append(self.desired_good)
-                self.good_in_hand_list.append(self.good_in_hand)
-
-                self.t = args["t"]
                 print(
                     {
                         "user_id": self.user_id,
@@ -213,11 +212,14 @@ class BotClient:
 
                     }
                 )
+                self.t = args["t"]
+
+                self.set_desired_good()
 
             else:
                 raise Exception("Do not wait but success is None")
 
-        return True, args["wait"], args["end"]
+        return args["wait"], args["end"]
 
     def get_success(self):
         return {
@@ -239,49 +241,37 @@ def bot_factory(base, device_id, delay, url, wait_event):
 
             wait_event(self.delay)
 
-        def wait_for_a_response(self, f):
-
-            self._wait()
-
-            r = f()
-
-            while not r:
-                self._wait()
-                r = f()
-
-            return r[1:]
-
         def welcome(self):
 
-            wait, = self.wait_for_a_response(f=self.b.init)
+            wait = self.b.init()
             while wait:
-                wait, = self.wait_for_a_response(f=self.b.init)
+                wait = self.b.init()
 
         def survey(self):
 
-            wait, = self.wait_for_a_response(f=self.b.survey)
+            wait = self.b.survey()
             while wait:
-                wait, = self.wait_for_a_response(f=self.b.survey)
+                wait = self.b.survey()
 
         def tutorial_choice(self):
 
-            wait, end = self.wait_for_a_response(f=self.b.tutorial)
+            wait, end = self.b.tutorial()
             while not end:
                 print("Tutorial: t = {}".format(self.b.tuto_t))
-                wait, end = self.wait_for_a_response(f=self.b.tutorial)
+                wait, end = self.b.tutorial()
 
         def tutorial_done(self):
 
-            wait, = self.wait_for_a_response(f=self.b.tutorial_done)
+            wait = self.b.tutorial_done()
             while wait:
-                wait, = self.wait_for_a_response(f=self.b.tutorial_done)
+                wait = self.b.tutorial_done()
 
         def game(self):
 
-            wait, end = self.wait_for_a_response(f=self.b.choice)
+            wait, end = self.b.choice()
             while not end:
                 print("Game: t = {}".format(self.b.t))
-                wait, end = self.wait_for_a_response(f=self.b.choice)
+                wait, end = self.b.choice()
 
         def end(self):
 
@@ -367,23 +357,12 @@ def main(args):
                 wait_event=ml.Event().wait,
                 url=url,
                 device_id=device_id,
-                delay=3
+                delay=1
             )
 
             bots.append(b)
 
             b.start()
-
-    while True:
-
-        success = []
-        for b in bots:
-            if b.b.t:
-                success.append(b.b.get_success())
-
-        if success:
-            print("saving")
-            json.dump(success, fp="success_debug.json")
 
 
 if __name__ == "__main__":

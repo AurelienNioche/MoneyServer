@@ -155,14 +155,13 @@ def submit_tutorial_choice(u, rm, desired_good, t):
 def submit_choice(rm, u, desired_good, t):
 
     # ------- Check if current choice has been set or not ------ #
-    _check_choice_validity(u=u, desired_good=desired_good, t=t)
-
     current_choice = Choice.objects.filter(room_id=rm.id, t=t, user_id=u.id).first()
 
     if not current_choice:
 
-        current_choice = Choice.objects.select_for_update(nowait=True)\
-            .filter(room_id=rm.id, t=t, player_id=u.player_id).first()
+        current_choice = Choice.objects.filter(room_id=rm.id, t=t, player_id=u.player_id).first()
+
+        _check_choice_validity(u=u, choice=current_choice, desired_good=desired_good)
 
         current_choice.user_id = u.id
         current_choice.desired_good = desired_good
@@ -344,11 +343,11 @@ def _get_user_last_known_goods(u, rm, t, tuto=False):
     return goods
 
 
-def _check_choice_validity(u, desired_good, t):
+def _check_choice_validity(u, choice, desired_good):
 
-    choice = Choice.objects.filter(user_id=u.id, t=t).first()
-
-    if choice and choice.good_in_hand and choice.good_in_hand == desired_good:
+    if choice.good_in_hand == desired_good:
 
         raise Exception("User {} with id {} can't choose the same good as he is carrying!".format(u.pseudo, u.id))
 
+    elif choice.good_in_hand is None:
+        raise Exception("User {} with id {} asks for choice recording but good in hand is None".format(u.pseudo, u.id))
