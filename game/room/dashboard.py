@@ -58,7 +58,6 @@ def create(data):
             good_in_hand=types[n],
             desired_good=None,
             success=None,
-            locked=False
         )
         for n in range(n_user) for t in range(t_max)
     ])

@@ -150,7 +150,7 @@ def matching(rm, t):
                 # We sort 'pools' of choices in order to get the shortest pool first
                 idx_min, idx_max = np.argsort([p.count() for p in pools])
 
-                print([p.count() for p in pools])
+                print([p.count() for p in pools], t)
 
                 # Then we have two pools with different sizes
                 min_pool, max_pool = pools[idx_min], pools[idx_max]
