@@ -5,7 +5,7 @@ import numpy as np
 
 from parameters import parameters
 
-from game.models import User, Room, Choice, TutorialChoice, Type
+from game.models import User, Room, Choice, TutorialChoice
 import game.room.state
 import game.room.client
 import game.user.state
