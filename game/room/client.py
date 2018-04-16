@@ -65,62 +65,75 @@ def state_verification(u, rm, progress, t, demand, success=None):
 
     elif demand == game.views.init:
 
-        wait = progress != 100
+        if u.state == game.room.state.states.welcome:
+
+            wait = progress != 100
+
+            if not wait:
+
+                if rm.state == game.room.state.states.welcome:
+                    game.room.state.next_state(
+                        rm=rm,
+                        state=game.room.state.states.survey
+                    )
+
+                if u.state == game.room.state.states.welcome:
+                    u = game.user.state.next_state(
+                        u=u,
+                        state=game.room.state.states.survey
+                    )
+
+        else:
+            wait = False
         
-        if not wait:
-
-            if rm.state == game.room.state.states.welcome:
-                game.room.state.next_state(
-                    rm=rm,
-                    state=game.room.state.states.survey
-                )
-
-            if u.state == game.room.state.states.welcome:
-                u = game.user.state.next_state(
-                    u=u,
-                    state=game.room.state.states.survey
-                )
-
         return wait, u.state
 
     elif demand == game.views.survey:
-        
-        wait = progress != 100
 
-        if not wait:
+        if u.state == game.room.state.states.survey:
 
-            if rm.state == game.room.state.states.survey:
-                game.room.state.next_state(
-                    rm=rm,
-                    state=game.room.state.states.tutorial
-                )
+            wait = progress != 100
 
-            if u.state == game.room.state.states.survey:
-                u = game.user.state.next_state(
-                    u=u,
-                    state=game.room.state.states.tutorial,
-                )
+            if not wait:
+
+                if rm.state == game.room.state.states.survey:
+                    game.room.state.next_state(
+                        rm=rm,
+                        state=game.room.state.states.tutorial
+                    )
+
+                if u.state == game.room.state.states.survey:
+                    u = game.user.state.next_state(
+                        u=u,
+                        state=game.room.state.states.tutorial,
+                    )
+        else:
+            wait = False
 
         return wait, u.state
 
     elif demand == game.views.tutorial_done:
 
-        wait = progress != 100
+        if u.state == game.room.state.states.tutorial:
+            wait = progress != 100
 
-        if not wait:
+            if not wait:
 
-            if rm.state == game.room.state.states.tutorial:
+                if rm.state == game.room.state.states.tutorial:
 
-                game.room.state.next_state(
-                    rm=rm,
-                    state=game.room.state.states.game
-                )
+                    game.room.state.next_state(
+                        rm=rm,
+                        state=game.room.state.states.game
+                    )
 
-            if u.state == game.room.state.states.tutorial:
-                u = game.user.state.next_state(
-                    u=u,
-                    state=game.room.state.states.game
-                )
+                if u.state == game.room.state.states.tutorial:
+                    u = game.user.state.next_state(
+                        u=u,
+                        state=game.room.state.states.game
+                    )
+
+        else:
+            wait = False
 
         return wait, u.state
 
