@@ -1,20 +1,20 @@
-from game.models import User, Choice, TutorialChoice, Room, Type
+from game.models import User, Choice, TutorialChoice, Room
 import game.room.dashboard
 
 
 def reset_all():
 
-    for table in (User, Choice, TutorialChoice, Room, Type):
+    for table in (User, Choice, TutorialChoice, Room):
         table.objects.all().delete()
 
-    data = {}
-
-    data["x0"] = 15
-    data["x1"] = 15
-    data["x2"] = 20
-    data['trial'] = False
-    data["t_max"] = 20
-    data["tutorial_t_max"] = 5
+    data = {
+       "x0": 15,
+       "x1": 15,
+       "x2": 20,
+       'trial': False,
+       "t_max": 20,
+       "tutorial_t_max": 5
+    }
 
     game.room.dashboard.create(data)
 
