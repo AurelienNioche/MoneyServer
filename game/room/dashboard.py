@@ -5,7 +5,7 @@ import os
 import subprocess
 import pickle
 
-from game.models import Room, Choice, TutorialChoice, Type
+from game.models import Room, Choice, TutorialChoice
 import game.room.state
 
 

@@ -1,7 +1,7 @@
 from django.contrib import admin
 
 # # Register your models here.
-from . models import User, BoolParameter, Choice, TutorialChoice, Room, Type
+from . models import User, BoolParameter, Choice, TutorialChoice, Room
 
 
 class UserAdmin(admin.ModelAdmin):
@@ -33,14 +33,6 @@ class TutorialChoiceAdmin(admin.ModelAdmin):
         'id', 'desired_good', 'good_in_hand', 'user_id', 'player_id','room_id', 'success', 't'
     )
 
-
-class TypeAdmin(admin.ModelAdmin):
-    list_display = (
-        'id', 'production_good', 'player_id', 'room_id'
-    )
-
-
-admin.site.register(Type, TypeAdmin)
 admin.site.register(User, UserAdmin)
 admin.site.register(BoolParameter, BoolParameterAdmin)
 admin.site.register(Choice, ChoiceAdmin)
