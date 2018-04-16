@@ -68,7 +68,7 @@ def create(data):
             t=t,
             player_id=n,
             user_id=None,
-            good_in_hand=types[n],
+            good_in_hand=types[n] if not t else None,
             desired_good=None,
             success=None
         )
@@ -127,7 +127,7 @@ def convert_data_to_sqlite():
     db_source = settings.DATABASES["default"]["NAME"]
 
     sql_file = get_path("sql")
-    db_name = "duopoly.sqlite3"
+    db_name = "money.sqlite3"
     db_path = sql_file.folder_path + "/" + db_name
     to_return = sql_file.folder_name + "/" + db_name
 

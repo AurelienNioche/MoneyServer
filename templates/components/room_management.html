@@ -1,14 +1,17 @@
 {% extends "dashboard/base.html" %}
+{% load staticfiles %}
 {% block page_content %}
 
-<script>
-    // set room_management tab active if coming from new_room
-    if (document.referrer.indexOf("new_room") !== -1) {
-        setTabActive();
-    }
-</script>
+    <script src="{% static "js/room_management.js" %}"></script>
 
-    <!-- Modal pop up window used in order to inform that -->
+    <script>
+        // set room_management tab active if coming from new_room
+        if (document.referrer.indexOf("new_room") !== -1) {
+            setTabActive();
+        }
+    </script>
+
+    <!-- Modal pop up window used in order to inform that room will be deleted-->
     <div class="modal fade" id="myModal" role="dialog">
         <input style="display: none;" id="roomToDelete" value="">
         <div class="modal-dialog modal-sm">
@@ -19,7 +22,6 @@
                     <h4 class="modal-title"> Warning! </h4>
                 </div>
                 <div class="modal-body">
-                    <p> Do you want to delete this room? </p>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
@@ -82,8 +84,6 @@
                                                     <strong> Opened: </strong> <img src="/static/admin/img/icon-no.svg" alt="False">
                                                 {% endif %}
                                                 <br>
-                                                <strong> Missing players: </strong>{{ room.att.missing_players }}
-                                                <br>
                                                 {% if room.att.trial %}
                                                     <strong> Trial: </strong> <img src="/static/admin/img/icon-yes.svg" alt="True">
                                                 {% else %}
@@ -91,36 +91,21 @@
                                                 {% endif %}
                                                 <br>
                                                 <br>
+                                                <strong> Total players: </strong>{{ room.att.n_user }}
+                                                <br>
+                                                <strong> Type 0: </strong>{{ room.att.x0 }}
+                                                <br>
+                                                <strong> Type 1: </strong>{{ room.att.x1 }}
+                                                <br>
+                                                <strong> Type 2: </strong>{{ room.att.x2 }}
+                                                <br>
+                                                <br>
                                                 <strong> State: </strong>{{ room.att.state }}
                                                 <br>
                                                 <strong> Duration: </strong>{{ room.att.t_max }}
                                                 <br>
-                                                <br>
                                                 <strong> Duration Tutorial: </strong>{{ room.att.tutorial_t_max }}
                                                 <br>
-                                                <strong> Current t: </strong>{{ room.att.t }}
-                                            </li>
-                                            <li class="list-group-item">
-                                                <h4>Connected players</h4>
-                                                    {% for player in room.connected_players %}
-                                                        {% if player %}
-
-                                                            {% if player.deserter == 1 %}
-                                                                <i class="fa fa-circle" style="color: #0f0f0f"></i>
-                                                            {% elif player.connected == 1%}
-                                                                <i class="fa fa-circle" style="color: #5CB85C"></i>
-                                                            {% else %}
-                                                                <i class="fa fa-circle" style="color: #D9534F"></i>
-                                                            {% endif %}
-
-                                                            <strong>{{ player.username }}</strong>
-                                                            in state <strong>{{ player.state }}</strong>
-                                                            with last request <strong>{{ player.last_request }}</strong>
-                                                            at time <strong>{{ player.time_last_request }}</strong>
-
-                                                            <br>
-                                                        {% endif %}
-                                                    {% endfor %}
                                             </li>
                                         </ul>
 
@@ -152,22 +137,6 @@
                 <!-- /.panel -->
             <!-- /.col-lg-12 -->
         </div>
-
-    <script>
-    function showModal(room_id) {
-        $("#roomToDelete").val(room_id);
-        $('#myModal').modal();
-
-    }
-
-    function deleteRoom(room_id) {
-        document.getElementById("delete-room-" + room_id).submit()
-    }
-
-    function setTabActive(){
-        document.getElementById("room_management_tab").setAttribute("class", "active")
-    }
-    </script>
 
 {% endblock page_content %}
 </div>
