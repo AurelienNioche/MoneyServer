@@ -231,7 +231,7 @@ def _get_user_production_good(rm, u):
     types = (0, ) * rm.x0 + (1, ) * rm.x1 + (2, ) * rm.x2
 
     try:
-        value = types[u.player_id]
+        return types[u.player_id]
 
     except IndexError:
         raise Exception("Too much players.")
