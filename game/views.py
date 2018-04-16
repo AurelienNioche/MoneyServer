@@ -86,7 +86,7 @@ def init(args):
 
     to_reply = {
 
-        "wait": wait if u.state in ("welcome", ) else False,
+        "wait": wait,
         "progress": progress,
 
         "step": state,
@@ -131,7 +131,7 @@ def survey(args):
     )
 
     to_reply = {
-        "wait": wait if state in ("survey", ) else False,
+        "wait": wait,
         "progress": progress
     }
 
@@ -182,7 +182,7 @@ def tutorial_done(args):
     )
 
     to_reply = {
-        "wait": wait if state in ("tutorial", ) else False,
+        "wait": wait,
         "progress": progress
     }
 

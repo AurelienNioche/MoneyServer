@@ -75,16 +75,6 @@ def create(data):
         for n in range(n_user) for t in range(tutorial_t_max)
     ])
 
-    Type.objects.bulk_create([
-        Type(
-            room_id=rm.id,
-            production_good=g,
-            player_id=n,
-            user_id=None
-        )
-        for g, n in zip(types, range(n_user))
-    ])
-
 
 def get_list():
 

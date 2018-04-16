@@ -37,13 +37,6 @@ class User(models.Model):
         ]
 
 
-class Type(models.Model):
-    room_id = models.IntegerField()
-    player_id = models.IntegerField()
-    user_id = models.IntegerField(null=True)
-    production_good = models.IntegerField()
-
-
 class TutorialChoice(models.Model):
     room_id = models.IntegerField()
     player_id = models.IntegerField()

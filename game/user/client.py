@@ -228,14 +228,12 @@ def _create_new_user(rm, device_id):
 
 def _get_user_production_good(rm, u):
 
-    t = Type.objects.filter(room_id=rm.id, player_id=u.player_id).first()
+    types = (0, ) * rm.x0 + (1, ) * rm.x1 + (2, ) * rm.x2
 
-    if t:
-        t.user_id = u.id
-        t.save(update_fields=["user_id"])
-        return t.production_good
+    try:
+        value = types[u.player_id]
 
-    else:
+    except IndexError:
         raise Exception("Too much players.")
 
 

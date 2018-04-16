@@ -75,6 +75,7 @@ class BotClient:
     def _request(self, data):
 
         while True:
+
             try:
 
                 r = requests.post(self.url, data=data)
@@ -108,7 +109,13 @@ class BotClient:
 
         self.user_id = args["userId"]
         self.good_in_hand = int(args["goodInHand"])
-        self.desired_good = int(args["goodDesired"]) if args["goodDesired"] else 1
+
+        if args["goodDesired"]:
+            self.desired_good = args["goodDesired"]
+
+        else:
+            self.set_desired_good()
+
         self.t = int(args["t"])
         self.choice_made = args["choiceMade"]
         self.tuto_t = args["tutoT"]
@@ -173,7 +180,7 @@ class BotClient:
     # --------------------- choice ------------------------------------ #
 
     def choice(self):
-
+        print(self.desired_good)
         return self._request({
             KeyChoice.demand: "choice",
             KeyChoice.user_id: self.user_id,
@@ -210,10 +217,11 @@ def bot_factory(base, device_id, delay, url, wait_event, seed):
     class BotProcess(base):
 
         def __init__(self):
+
             super().__init__()
+
             self.b = BotClient(url=url, device_id=device_id)
             self.delay = delay
-            np.random.seed(seed)
 
         def _wait(self):
 
@@ -251,11 +259,14 @@ def bot_factory(base, device_id, delay, url, wait_event, seed):
                 print("Game: t = {}".format(self.b.t))
                 wait, end = self.b.choice()
 
-        def end(self):
+        @staticmethod
+        def end():
 
             print("It is the end, my only friend, the end.")
 
         def run(self):
+
+            np.random.seed(seed)
 
             if not isinstance(self, ml.Process):
                 input("Run? Press a key.")
@@ -303,8 +314,8 @@ def bot_factory(base, device_id, delay, url, wait_event, seed):
 
 def main(args):
 
-    # url = "http://money.getz.fr/client_request/"
-    url = "http://127.0.0.1:8000/client_request/"
+    url = "http://money.getz.fr/client_request/"
+    # url = "http://127.0.0.1:8000/client_request/"
 
     if not args.multiprocessing:
 
@@ -316,7 +327,8 @@ def main(args):
             wait_event=time.sleep,
             url=url,
             device_id=device_id,
-            delay=2
+            delay=2,
+            seed=1
         )
 
         b.run()
