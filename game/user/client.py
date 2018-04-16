@@ -48,7 +48,7 @@ def connect(device_id, skip_survey, skip_tutorial):
             good_in_hand = goods["good_in_hand"]
             desired_good = goods["desired_good"]
 
-            tuto_goods = _get_user_last_known_goods(u=u, rm=rm, t=rm.t, tuto=True)
+            tuto_goods = _get_user_last_known_goods(u=u, rm=rm, t=rm.tutorial_t, tuto=True)
 
             tuto_choice_made = tuto_goods["choice_made"]
             tuto_good_in_hand = tuto_goods["good_in_hand"]
@@ -323,20 +323,16 @@ def _get_user_last_known_goods(u, rm, t, tuto=False):
 
     else:
 
-        goods["choice_made"] = False
+        choice = table.objects.filter(player_id=u.player_id, room_id=rm.id, t=t).first()
 
-        last_choice = table.objects.filter(user_id=u.id, room_id=rm.id, t=t-1).first()
+        if choice:
 
-        if last_choice:
-
+            goods["choice_made"] = False
             goods["desired_good"] = None
-            goods["good_in_hand"] = last_choice.good_in_hand
+            goods["good_in_hand"] = choice.good_in_hand
 
         else:
-            # If last choice is not found, it means it means that t < 1
-            # and user has in hand production good
-            goods["desired_good"] = None
-            goods["good_in_hand"] = u.production_good
+            raise Exception("Choice cannot be found!")
 
     return goods
 
