@@ -9,26 +9,6 @@ class ParametersForm(forms.Form):
     class Meta:
         abstract = True
 
-    error_css_class = 'has-error'
-
-    x0 = forms.IntegerField(
-        label="x0",
-        initial=15,
-        required=True
-    )
-
-    x1 = forms.IntegerField(
-        label="x1",
-        initial=15,
-        required=True
-    )
-
-    x2 = forms.IntegerField(
-        label="x2",
-        initial=20,
-        required=True
-    )
-
     t_max = forms.IntegerField(
         label="Duration",
         required=True,
@@ -41,18 +21,35 @@ class ParametersForm(forms.Form):
         initial=5,
     )
 
-    trial = forms.BooleanField(
-        label="Trial",
-        initial=False,
-        required=False,
-    )
-
 
 class RoomForm(ParametersForm):
 
-    def __init__(self, *args):
+    def __init__(self, *args, **kwargs):
 
         super().__init__(*args)
+
+        if kwargs.get("n_type"):
+
+            for i in range(int(kwargs["n_type"])):
+
+                self.fields[f"x{i}"] = forms.IntegerField(
+                    required=True,
+                    label=f"x{i}",
+                    initial=1
+                )
+        else:
+
+            request = args[0]
+
+            self.n_type = self.count_n_type(request)
+
+            for i in range(self.n_type):
+
+                self.fields[f"x{i}"] = forms.IntegerField(
+                    required=True,
+                    label=f"x{i}",
+                    initial=1
+                )
 
         self.helper = FormHelper()
         self.helper.form_tag = False
@@ -75,20 +72,12 @@ class RoomForm(ParametersForm):
 
         self.cleaned_data = super().clean()
 
-        cleaned_data = self.cleaned_data.copy()
-
-        if cleaned_data.get("trial") is None:
-            self.cleaned_data["trial"] = False
-
-        else:
-            cleaned_data.pop("trial")
-
-        if not all(cleaned_data.get(field) for field in cleaned_data.keys()):
-
-            raise forms.ValidationError(
-                message="You must fill in all the required fields!",
-            )
+        self.cleaned_data["n_good"] = self.n_type
 
     def get_data(self):
 
         return self.cleaned_data
+
+    @staticmethod
+    def count_n_type(dic):
+        return len([k for k in dic.keys() if k.startswith("x")])

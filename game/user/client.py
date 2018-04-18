@@ -11,6 +11,8 @@ import game.room.client
 import game.user.state
 
 
+# ------------------------------  Public functions (called by views) ----------------------------------- #
+
 @transaction.atomic
 def get_user(user_id):
     u = User.objects.select_for_update().filter(id=user_id).first()
@@ -55,13 +57,16 @@ def connect(device_id, skip_survey, skip_tutorial):
             tuto_desired_good = tuto_goods["desired_good"]
 
         # Get relative good_in_hand
-        relative_good_in_hand = _get_relative_good(u=u, good=good_in_hand)
-        relative_tuto_good_in_hand = _get_relative_good(u=u, good=tuto_good_in_hand)
+        relative_good_in_hand = _get_relative_good(u=u, good=good_in_hand, rm=rm)
+        relative_tuto_good_in_hand = _get_relative_good(u=u, good=tuto_good_in_hand, rm=rm)
 
         # only get desired good if it exists
         # (meaning it is a reconnection and not a first connection)
-        relative_desired_good = _get_relative_good(u, desired_good) if desired_good else None
-        relative_tuto_desired_good = _get_relative_good(u, tuto_desired_good) if tuto_desired_good else None
+        relative_desired_good = \
+            _get_relative_good(u=u, good=desired_good, rm=rm) if desired_good else None
+
+        relative_tuto_desired_good = \
+            _get_relative_good(u=u, good=tuto_desired_good, rm=rm) if tuto_desired_good else None
 
         if skip_survey or skip_tutorial:
 
@@ -82,6 +87,7 @@ def connect(device_id, skip_survey, skip_tutorial):
             "choice_made": choice_made,
             "tuto_choice_made": tuto_choice_made,
             "score": u.score,
+            "n_good": rm.n_type,
             "t": rm.t,
             "t_max": rm.t_max,
             "good_in_hand": relative_good_in_hand,
@@ -159,17 +165,30 @@ def submit_choice(rm, u, desired_good, t):
 
     if not current_choice:
 
-        current_choice = Choice.objects.filter(room_id=rm.id, t=t, player_id=u.player_id).first()
-
-        _check_choice_validity(u=u, choice=current_choice, desired_good=desired_good)
-
-        current_choice.user_id = u.id
-        current_choice.desired_good = desired_good
-
-        current_choice.save(update_fields=["user_id", "desired_good"])
+        _set_current_choice(rm=rm, u=u, desired_good=desired_good, t=t)
 
     elif current_choice.success is not None:
         return current_choice.success, u.score
+
+    _triggers_matching(rm=rm, t=t)
+
+    # Reload choice
+    choice = Choice.objects.filter(user_id=u.id, room_id=rm.id, t=t).first()
+    u = User.objects.filter(id=u.id).first()
+
+    return choice.success, u.score
+
+
+# ------------------------------  Private functions (called inside the script) ----------------------------------- #
+
+
+def _triggers_matching(rm, t):
+
+    """
+    Checks if user is the last
+    one to record its choice.
+    If so, he triggers the matching.
+    """
 
     n = Choice.objects.filter(room_id=rm.id, t=t).exclude(desired_good=None).count()
 
@@ -182,10 +201,17 @@ def submit_choice(rm, u, desired_good, t):
         except (psycopg2.OperationalError, django.db.utils.OperationalError):
             pass
 
-    choice = Choice.objects.filter(user_id=u.id, room_id=rm.id, t=t).first()
-    u = User.objects.filter(id=u.id).first()
 
-    return choice.success, u.score
+def _set_current_choice(rm, u, desired_good, t):
+
+    current_choice = Choice.objects.filter(room_id=rm.id, t=t, player_id=u.player_id).first()
+
+    _check_choice_validity(u=u, choice=current_choice, desired_good=desired_good)
+
+    current_choice.user_id = u.id
+    current_choice.desired_good = desired_good
+
+    current_choice.save(update_fields=["user_id", "desired_good"])
 
 
 def _create_new_user(rm, device_id):
@@ -219,7 +245,7 @@ def _create_new_user(rm, device_id):
         u.save()
 
         u.production_good = _get_user_production_good(rm, u)
-        u.consumption_good = (u.production_good + 1) % 3
+        u.consumption_good = (u.production_good - 1) % rm.n_type
 
         u.save(update_fields=["production_good", "consumption_good"])
 
@@ -228,7 +254,10 @@ def _create_new_user(rm, device_id):
 
 def _get_user_production_good(rm, u):
 
-    types = (0, ) * rm.x0 + (1, ) * rm.x1 + (2, ) * rm.x2
+    count_type = [int(i) for i in rm.types.split("/")]
+
+    types = [i for i in range(rm.n_type)
+             for _ in range(count_type[i])]
 
     try:
         return types[u.player_id]
@@ -254,39 +283,43 @@ def _handle_skip_options(u, rm, skip_tutorial, skip_survey):
     return skip_state
 
 
-def _get_relative_good(u, good):
-
-    # Get medium good
-    goods = np.array([0, 1, 2])
-
-    cond0 = goods != u.production_good
-    cond1 = goods != u.consumption_good
-    medium_good = goods[cond0 * cond1][0]
+def _get_relative_good(u, rm, good):
 
     mapping = {
         u.production_good: 0,
         u.consumption_good: 1,
-        medium_good: 2,
     }
+
+    # Get medium good
+    goods = np.arange(rm.n_type)
+
+    cond0 = goods != u.production_good
+    cond1 = goods != u.consumption_good
+    medium_goods = goods[cond0 * cond1]
+
+    for g in medium_goods:
+        mapping[g] = len(mapping)
 
     # np.int64 is not json serializable
     return int(mapping[good])
 
 
-def get_absolute_good(u, good):
-
-    # Get medium good
-    goods = np.array([0, 1, 2])
-
-    cond0 = goods != u.production_good
-    cond1 = goods != u.consumption_good
-    medium_good = goods[cond0 * cond1][0]
+def get_absolute_good(u, rm, good):
 
     mapping = {
         0: u.production_good,
         1: u.consumption_good,
-        2: medium_good
     }
+
+    # Get medium good
+    goods = np.arange(rm.n_type)
+
+    cond0 = goods != u.production_good
+    cond1 = goods != u.consumption_good
+    medium_goods = goods[cond0 * cond1]
+
+    for g in medium_goods:
+        mapping[len(mapping)] = g
 
     # np.int64 is not json serializable
     return int(mapping[good])
@@ -341,7 +374,7 @@ def _check_choice_validity(u, choice, desired_good):
 
     if choice.good_in_hand == desired_good:
 
-        raise Exception("User {} with id {} can't choose the same good as he is carrying!".format(u.pseudo, u.id))
+        raise Exception(f"User {u.pseudo} with id {u.id} can't choose the same good as he is carrying!")
 
     elif choice.good_in_hand is None:
-        raise Exception("User {} with id {} asks for choice recording but good in hand is None".format(u.pseudo, u.id))
+        raise Exception(f"User {u.pseudo} with id {u.id} asks for choice recording but good in hand is None")

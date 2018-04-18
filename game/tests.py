@@ -8,10 +8,11 @@ def reset_all():
         table.objects.all().delete()
 
     data = {
-       "x0": 15,
-       "x1": 15,
-       "x2": 20,
-       'trial': False,
+       "n_type": 4,
+        "x0": 10,
+        "x1": 10,
+        "x2": 10,
+        "x3": 20,
        "t_max": 20,
        "tutorial_t_max": 5
     }

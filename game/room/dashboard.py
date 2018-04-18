@@ -22,32 +22,30 @@ def delete(room_id):
 
 def create(data):
 
-    x0 = int(data["x0"])
-    x1 = int(data["x1"])
-    x2 = int(data["x2"])
-    trial = bool(data['trial'])
     t_max = int(data["t_max"])
     tutorial_t_max = int(data["tutorial_t_max"])
 
-    n_user = sum([x0, x1, x2])
+    count_type = [int(v) for k, v in data.items() if k.startswith("x")]
+    n_user = sum(count_type)
+    n_type = len(count_type)
+
+    types = [i for i in range(n_type) for _ in range(count_type[i])]
 
     rm = Room(
-        x0=x0,
-        x1=x1,
-        x2=x2,
-        trial=trial,
         t_max=t_max,
         tutorial_t_max=tutorial_t_max,
         t=0,
         tutorial_t=0,
         state=game.room.state.states.welcome,
         opened=True,
-        n_user=n_user
+        n_user=n_user,
+        n_type=n_type,
+        types="/".join([str(i) for i in count_type])
     )
 
     rm.save()
 
-    types = (0, ) * rm.x0 + (1, ) * rm.x1 + (2, ) * rm.x2
+    types = [i for i in range(n_type) for _ in range(count_type[i])]
 
     Choice.objects.bulk_create([
         Choice(

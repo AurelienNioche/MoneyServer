@@ -98,6 +98,7 @@ def init(args):
         "choiceMade": info["choice_made"],
         "goodInHand": info["good_in_hand"],
         "goodDesired": info["desired_good"],
+        "nGood": info["n_good"],
 
         "userId": info["user_id"],
         "pseudo": info["pseudo"],
@@ -194,7 +195,7 @@ def choice(args):
     u = game.user.client.get_user(user_id=args.user_id)
     rm = game.room.client.get_room(room_id=u.room_id)
 
-    absolute_desired_good = game.user.client.get_absolute_good(u=u, good=args.desired_good)
+    absolute_desired_good = game.user.client.get_absolute_good(u=u, good=args.desired_good, rm=rm)
 
     success, score = game.user.client.submit_choice(
         u=u,

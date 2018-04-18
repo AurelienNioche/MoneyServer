@@ -1,7 +1,8 @@
 {% extends "dashboard/base.html" %}
+{% load staticfiles %}
 
 {% block page_content %}
-
+<script src="{% static "js/new_room.js" %}"></script>
     <!-- Make sure that section is selected -->
     <script>
         document.getElementById("room_management_tab").setAttribute("class", "active")
@@ -47,15 +48,8 @@
             <div class="panel-body">
                 <div class="row">
                     <div class="col-md-6 col-lg-offset-3">
-                    <div class="form-group">
-                         <form  method="post" action="/new_room/">
-                             {% csrf_token %}
-                             {% load crispy_forms_tags %}
-                             {% crispy form %}
-                             <br>
-                             <br>
-                             <button type="submit" class="btn btn-success" style="font-size: 20px;">Create</button>
-                         </form>
+                    <div id="form-div" class="form-group">
+                        {% include "components/new_room_form.html" %}
                     </div>
                     <!-- /.col-lg-6 (nested) -->
                 </div>

@@ -2,10 +2,9 @@ from django.db import models
 
 
 class Room(models.Model):
-    x0 = models.IntegerField()
-    x1 = models.IntegerField()
-    x2 = models.IntegerField()
     n_user = models.IntegerField()
+    n_type = models.IntegerField()
+    types = models.TextField()
     t = models.IntegerField()
     t_max = models.IntegerField()
     tutorial_t = models.IntegerField()

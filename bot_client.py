@@ -69,6 +69,7 @@ class BotClient:
         self.tuto_desired_good = None
         self.tuto_t_max = None
         self.choice_made = None
+        self.n_good = None
 
         self.game_state = None
 
@@ -80,6 +81,7 @@ class BotClient:
 
                 r = requests.post(self.url, data=data)
                 args = r.json()
+                print("hey")
 
                 # return execution of reply function with response
                 func = getattr(self, "reply_" + args["demand"])
@@ -91,9 +93,9 @@ class BotClient:
 
     def set_desired_good(self):
 
-        self.desired_good = np.random.choice([0, 1, 2])
+        self.desired_good = np.random.randint(self.n_good)
         while self.desired_good == self.good_in_hand:
-            self.desired_good = np.random.choice([0, 1, 2])
+            self.desired_good = np.random.randint(self.n_good)
 
     # --------------------- Init ------------------------------------ #
 
@@ -108,7 +110,9 @@ class BotClient:
     def reply_init(self, args):
 
         self.user_id = args["userId"]
-        self.good_in_hand = int(args["goodInHand"])
+        self.good_in_hand = args["goodInHand"]
+
+        self.n_good = args["nGood"]
 
         if args["goodDesired"]:
             self.desired_good = args["goodDesired"]
@@ -116,7 +120,7 @@ class BotClient:
         else:
             self.set_desired_good()
 
-        self.t = int(args["t"])
+        self.t = args["t"]
         self.choice_made = args["choiceMade"]
         self.tuto_t = args["tutoT"]
         self.tuto_good = args["tutoGoodInHand"]
@@ -154,7 +158,7 @@ class BotClient:
             KeyTuto.demand: "tutorial_choice",
             KeyTuto.progress: 100,
             KeyTuto.user_id: self.user_id,
-            KeyTuto.desired_good: np.random.choice([1, 2]),
+            KeyTuto.desired_good: np.random.randint(self.n_good),
             KeyTuto.t: self.tuto_t,
         })
 
@@ -180,7 +184,7 @@ class BotClient:
     # --------------------- choice ------------------------------------ #
 
     def choice(self):
-        print(self.desired_good)
+
         return self._request({
             KeyChoice.demand: "choice",
             KeyChoice.user_id: self.user_id,
@@ -314,8 +318,8 @@ def bot_factory(base, device_id, delay, url, wait_event, seed):
 
 def main(args):
 
-    url = "http://money.getz.fr/client_request/"
-    # url = "http://127.0.0.1:8000/client_request/"
+    # url = "http://money.getz.fr/client_request/"
+    url = "http://127.0.0.1:8000/client_request/"
 
     if not args.multiprocessing:
 

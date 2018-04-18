@@ -24,7 +24,7 @@ class ChoiceAdmin(admin.ModelAdmin):
 
 class RoomAdmin(admin.ModelAdmin):
     list_display = (
-        'id', 'x0', 'x1', 'x2', 'n_user', 'opened', 't', 'tutorial_t', 't_max', 'tutorial_t_max', "state"
+        'id', 'n_user', 'opened', 't', 'tutorial_t', 't_max', 'tutorial_t_max', "state", "n_type", "types"
     )
 
 

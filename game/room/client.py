@@ -1,4 +1,5 @@
 from django.db import transaction
+import itertools
 
 import numpy as np
 
@@ -20,7 +21,7 @@ def get_room(room_id):
 
 def get_progression(u, rm, t, tuto=False):
 
-    if u.state in (game.room.state.states.game, ):
+    if u.state == game.room.state.states.game:
 
         return game.room.state.get_progress_for_choices(rm=rm, t=t, tuto=tuto)
 
@@ -31,39 +32,14 @@ def get_progression(u, rm, t, tuto=False):
 
 def state_verification(u, rm, progress, t, demand, success=None):
 
-    if demand == game.views.tutorial_choice:
+    """
 
-        t += 1
-        wait = False
-        end = t == rm.tutorial_t_max
+    Manage room and user states
+    depending on demand made by client.
 
-        return wait, t, end
+    """
 
-    elif demand == game.views.choice:
-
-        wait = progress != 100 or success is None
-        t += not wait
-        rm = game.room.state.set_rm_timestep(rm=rm, t=t, tuto=False)
-
-        end = rm.t == rm.t_max
-
-        if end:
-
-            if rm.state == game.room.state.states.game:
-                game.room.state.next_state(
-                    rm=rm,
-                    state=game.room.state.states.end
-                )
-
-            if u.state == game.room.state.states.game:
-                game.user.state.next_state(
-                    u=u,
-                    state=game.room.state.states.end
-                )
-
-        return wait, t, end
-
-    elif demand == game.views.init:
+    if demand == game.views.init:
 
         if u.state == game.room.state.states.welcome:
 
@@ -112,6 +88,14 @@ def state_verification(u, rm, progress, t, demand, success=None):
 
         return wait, u.state
 
+    elif demand == game.views.tutorial_choice:
+
+        t += 1
+        wait = False
+        end = t == rm.tutorial_t_max
+
+        return wait, t, end
+
     elif demand == game.views.tutorial_done:
 
         if u.state == game.room.state.states.tutorial:
@@ -137,18 +121,43 @@ def state_verification(u, rm, progress, t, demand, success=None):
 
         return wait, u.state
 
+    elif demand == game.views.choice:
+
+        wait = progress != 100 or success is None
+        t += not wait
+        rm = game.room.state.set_rm_timestep(rm=rm, t=t, tuto=False)
+
+        end = rm.t == rm.t_max
+
+        if end:
+
+            if rm.state == game.room.state.states.game:
+                game.room.state.next_state(
+                    rm=rm,
+                    state=game.room.state.states.end
+                )
+
+            if u.state == game.room.state.states.game:
+                game.user.state.next_state(
+                    u=u,
+                    state=game.room.state.states.end
+                )
+
+        return wait, t, end
+
 
 def matching(rm, t):
 
     # List possible markets
-    markets = (0, 1), (1, 2), (2, 0)
+    markets = itertools.combinations_with_replacement(range(rm.n_type), r=2)
 
     with transaction.atomic():
 
         # Get choices for room and time
         # No wait argument allows to raise an exception when another process
         # tries to select these entries
-        choices = Choice.objects.all().select_for_update(nowait=True).filter(room_id=rm.id, t=t, success=None)
+        choices = \
+            Choice.objects.all().select_for_update(nowait=True).filter(room_id=rm.id, t=t, success=None)
 
         if choices:
 

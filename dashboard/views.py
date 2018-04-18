@@ -57,10 +57,7 @@ class NewRoomView(TemplateView):
     def get_context_data(self, **kwargs):
 
         context = super().get_context_data(**kwargs)
-        context.update({"subtitle": "Set parameters and create a room"})
-        form = RoomForm()
-
-        context.update({'form': form})
+        context.update({"subtitle": "Set number of types"})
 
         return context
 
@@ -71,10 +68,14 @@ class NewRoomView(TemplateView):
         :param request: using POST request
         :return: html room form template (success or fail)
         """
+        n_type = request.POST.get("n_type")
 
-        form = RoomForm(request.POST)
+        if n_type:
+            form = RoomForm(n_type=n_type)
+        else:
+            form = RoomForm(request.POST)
 
-        if form.is_valid():
+        if form.is_valid() and not n_type:
 
             with transaction.atomic():
                 # Create room
