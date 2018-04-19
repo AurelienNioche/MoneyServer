@@ -321,7 +321,7 @@ def main(args):
     # url = "http://money.getz.fr/client_request/"
     url = "http://127.0.0.1:8000/client_request/"
 
-    if not args.multiprocessing:
+    if not args.number:
 
         n = input("Bot id? > ")
         device_id = "bot{}".format(n)
@@ -361,11 +361,8 @@ if __name__ == "__main__":
 
     parser = argparse.ArgumentParser(description='Run bots.')
 
-    parser.add_argument('-n', '--number', action="store", default=3,
+    parser.add_argument('-n', '--number', action="store", default=None,
                         help="number of bots")
-
-    parser.add_argument('-ml', '--multiprocessing', action="store_true", default=False,
-                        help="multiprocessed bots")
 
     parsed_args = parser.parse_args()
 
