@@ -2,31 +2,31 @@ from django.db import models
 
 
 class Room(models.Model):
-    n_user = models.IntegerField()
-    n_type = models.IntegerField()
-    types = models.TextField()
-    t = models.IntegerField()
-    t_max = models.IntegerField()
-    tutorial_t = models.IntegerField()
-    tutorial_t_max = models.IntegerField()
+    n_user = models.IntegerField(default=None, null=True)
+    n_type = models.IntegerField(default=None, null=True)
+    types = models.TextField(default=None, null=True)
+    t = models.IntegerField(default=None, null=True)
+    t_max = models.IntegerField(default=None, null=True)
+    tutorial_t = models.IntegerField(default=None, null=True)
+    tutorial_t_max = models.IntegerField(default=None, null=True)
     trial = models.BooleanField(default=False)
     opened = models.BooleanField(default=True)
-    state = models.TextField()
+    state = models.TextField(default=None, null=True)
 
 
 class User(models.Model):
-    room_id = models.IntegerField()
-    device_id = models.TextField()
-    player_id = models.IntegerField()
-    pseudo = models.TextField()
-    age = models.IntegerField(null=True)
-    gender = models.TextField(null=True)
-    production_good = models.IntegerField(null=True)
-    consumption_good = models.IntegerField(null=True)
+    room_id = models.IntegerField(default=None, null=True)
+    device_id = models.TextField(default=None, null=True)
+    player_id = models.IntegerField(default=None, null=True)
+    pseudo = models.TextField(default=None, null=True)
+    age = models.IntegerField(default=None, null=True)
+    gender = models.TextField(default=None, null=True)
+    production_good = models.IntegerField(default=None, null=True)
+    consumption_good = models.IntegerField(default=None, null=True)
     score = models.IntegerField(default=0)
-    tutorial_done = models.NullBooleanField()
-    tutorial_score = models.IntegerField()
-    state = models.TextField(null=True)
+    tutorial_done = models.NullBooleanField(default=None, null=True)
+    tutorial_score = models.IntegerField(default=None, null=True)
+    state = models.TextField(default=None, null=True)
 
     class Meta:
         unique_together = [
@@ -37,23 +37,23 @@ class User(models.Model):
 
 
 class TutorialChoice(models.Model):
-    room_id = models.IntegerField()
-    player_id = models.IntegerField()
-    t = models.IntegerField()
-    user_id = models.IntegerField(null=True)
-    good_in_hand = models.IntegerField(null=True)
-    desired_good = models.IntegerField(null=True)
-    success = models.NullBooleanField(null=True)
+    room_id = models.IntegerField(default=None, null=True)
+    player_id = models.IntegerField(default=None, null=True)
+    t = models.IntegerField(default=None, null=True)
+    user_id = models.IntegerField(default=None, null=True)
+    good_in_hand = models.IntegerField(default=None, null=True)
+    desired_good = models.IntegerField(default=None, null=True)
+    success = models.NullBooleanField(default=None, null=True)
 
 
 class Choice(models.Model):
-    room_id = models.IntegerField()
-    player_id = models.IntegerField()
-    t = models.IntegerField()
-    user_id = models.IntegerField(null=True)
-    good_in_hand = models.IntegerField(null=True)
-    desired_good = models.IntegerField(null=True)
-    success = models.NullBooleanField(null=True)
+    room_id = models.IntegerField(default=None, null=True)
+    player_id = models.IntegerField(default=None, null=True)
+    t = models.IntegerField(default=None, null=True)
+    user_id = models.IntegerField(default=None, null=True)
+    good_in_hand = models.IntegerField(default=None, null=True)
+    desired_good = models.IntegerField(default=None, null=True)
+    success = models.NullBooleanField(default=None, null=True)
 
     class Meta:
         unique_together = [
@@ -62,7 +62,7 @@ class Choice(models.Model):
 
 
 class BoolParameter(models.Model):
-    name = models.TextField(unique=True)
-    value = models.BooleanField()
+    name = models.TextField(default=None, null=True)
+    value = models.NullBooleanField(default=None, null=True)
 
 
