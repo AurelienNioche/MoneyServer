@@ -27,3 +27,17 @@ def is_trial():
             skip_tutorial.save()
 
         return trial.value, skip_survey.value, skip_tutorial.value
+
+
+def create_default_room():
+
+    with transaction.atomic():
+
+        auto_room = BoolParameter.objects.filter(name="auto_room").first()
+
+        if not auto_room:
+
+            auto_room = BoolParameter(name="auto_room", value=True)
+            auto_room.save()
+
+        return auto_room.value

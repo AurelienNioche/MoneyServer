@@ -3,10 +3,14 @@ import itertools
 
 import numpy as np
 
-from game.models import User, Room, Choice
+from game.models import User, Room, Choice, TutorialChoice
 import game.user.client
 import game.room.state
+import game.room.dashboard
 import game.views
+import game.params.client
+
+from parameters import parameters
 
 
 def get_room(room_id):
@@ -14,7 +18,73 @@ def get_room(room_id):
     rm = Room.objects.filter(id=room_id).first()
 
     if not rm:
-        raise Exception("Error: Room not found.")
+        raise Exception("Room not found.")
+
+    return rm
+
+
+def create_room():
+
+    if game.params.client.create_default_room():
+
+        rm = create(parameters.default_room)
+
+        return rm
+
+    else:
+        raise Exception("No room available. Auto room creation is disabled.")
+
+
+def create(data):
+
+    t_max = int(data["t_max"])
+    tutorial_t_max = int(data["tutorial_t_max"])
+
+    count_type = [int(v) for k, v in data.items() if k.startswith("x")]
+    n_user = sum(count_type)
+    n_type = len(count_type)
+
+    types = [i for i in range(n_type) for _ in range(count_type[i])]
+
+    rm = Room(
+        t_max=t_max,
+        tutorial_t_max=tutorial_t_max,
+        t=0,
+        tutorial_t=0,
+        state=game.room.state.states.welcome,
+        opened=True,
+        n_user=n_user,
+        n_type=n_type,
+        types="/".join([str(i) for i in count_type])
+    )
+
+    rm.save()
+
+    Choice.objects.bulk_create([
+        Choice(
+            room_id=rm.id,
+            t=t,
+            player_id=n,
+            user_id=None,
+            good_in_hand=types[n] if not t else None,
+            desired_good=None,
+            success=None,
+        )
+        for n in range(n_user) for t in range(t_max)
+    ])
+
+    TutorialChoice.objects.bulk_create([
+        TutorialChoice(
+            room_id=rm.id,
+            t=t,
+            player_id=n,
+            user_id=None,
+            good_in_hand=types[n] if not t else None,
+            desired_good=None,
+            success=None
+        )
+        for n in range(n_user) for t in range(tutorial_t_max)
+    ])
 
     return rm
 

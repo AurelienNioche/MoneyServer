@@ -95,9 +95,7 @@
                                                 <strong> Total players: </strong>{{ room.att.n_user }}
                                                 <br>
                                                 {% for i, n in room.count_type.items  %}
-                                                    <br>
-                                                    <strong> Type {{ i }}: </strong>{{ n }}
-                                                    <br>
+                                                    <strong> Type {{ i }}: </strong>{{ n }}<br>
                                                 {% endfor%}
                                                 <br>
                                                 <strong> State: </strong>{{ room.att.state }}

@@ -4,7 +4,16 @@ import os
 # Where we save logs
 logs_path = os.getcwd() + "/log/"
 
-pseudo = [
+default_room = {
+    "n_type": 3,
+    "x0": 1,
+    "x1": 1,
+    "x2": 1,
+    "t_max": 20,
+    "tutorial_t_max": 5
+}
+
+pseudos = [
     'Arthur',
     'Agrève',
     'Anselin',

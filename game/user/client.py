@@ -23,86 +23,84 @@ def get_user(user_id):
 
 def connect(device_id, skip_survey, skip_tutorial):
 
-    with transaction.atomic():
-        rm = Room.objects.select_for_update().filter(opened=True).first()
+    rm = Room.objects.filter(opened=True).first()
 
-    if rm:
+    if not rm:
 
-        u = User.objects.filter(device_id=device_id, room_id=rm.id).first()
+        rm = game.room.client.create_room()
 
-        if not u:
+    u = User.objects.filter(device_id=device_id, room_id=rm.id).first()
 
-            u = _create_new_user(rm, device_id)
+    if not u:
 
-            choice_made = None
-            good_in_hand = u.production_good
-            desired_good = None
+        u = _create_new_user(rm, device_id)
 
-            tuto_choice_made = None
-            tuto_good_in_hand = u.production_good
-            tuto_desired_good = None
+        choice_made = None
+        good_in_hand = u.production_good
+        desired_good = None
 
-        else:
-
-            goods = _get_user_last_known_goods(u=u, rm=rm, t=rm.t)
-
-            choice_made = goods["choice_made"]
-            good_in_hand = goods["good_in_hand"]
-            desired_good = goods["desired_good"]
-
-            tuto_goods = _get_user_last_known_goods(u=u, rm=rm, t=rm.tutorial_t, tuto=True)
-
-            tuto_choice_made = tuto_goods["choice_made"]
-            tuto_good_in_hand = tuto_goods["good_in_hand"]
-            tuto_desired_good = tuto_goods["desired_good"]
-
-        # Get relative good_in_hand
-        relative_good_in_hand = _get_relative_good(u=u, good=good_in_hand, rm=rm)
-        relative_tuto_good_in_hand = _get_relative_good(u=u, good=tuto_good_in_hand, rm=rm)
-
-        # only get desired good if it exists
-        # (meaning it is a reconnection and not a first connection)
-        relative_desired_good = \
-            _get_relative_good(u=u, good=desired_good, rm=rm) if desired_good else None
-
-        relative_tuto_desired_good = \
-            _get_relative_good(u=u, good=tuto_desired_good, rm=rm) if tuto_desired_good else None
-
-        if skip_survey or skip_tutorial:
-
-            skip_state = _handle_skip_options(
-                u=u,
-                rm=rm,
-                skip_tutorial=skip_tutorial,
-                skip_survey=skip_survey
-            )
-
-        else:
-            skip_state = None
-
-        info = {
-            "pseudo": u.pseudo,
-            "user_id": u.id,
-            "state": u.state if not skip_state else skip_state,
-            "choice_made": choice_made,
-            "tuto_choice_made": tuto_choice_made,
-            "score": u.score,
-            "n_good": rm.n_type,
-            "t": rm.t,
-            "t_max": rm.t_max,
-            "good_in_hand": relative_good_in_hand,
-            "tuto_good_in_hand": relative_tuto_good_in_hand,
-            "desired_good": relative_desired_good,
-            "tuto_desired_good": relative_tuto_desired_good,
-            "tuto_t_max": rm.tutorial_t_max,
-            "tuto_t": rm.tutorial_t,
-            "tuto_score": u.tutorial_score
-        }
-
-        return info, u, rm
+        tuto_choice_made = None
+        tuto_good_in_hand = u.production_good
+        tuto_desired_good = None
 
     else:
-        raise Exception("Error: No room found.")
+
+        goods = _get_user_last_known_goods(u=u, rm=rm, t=rm.t)
+
+        choice_made = goods["choice_made"]
+        good_in_hand = goods["good_in_hand"]
+        desired_good = goods["desired_good"]
+
+        tuto_goods = _get_user_last_known_goods(u=u, rm=rm, t=rm.tutorial_t, tuto=True)
+
+        tuto_choice_made = tuto_goods["choice_made"]
+        tuto_good_in_hand = tuto_goods["good_in_hand"]
+        tuto_desired_good = tuto_goods["desired_good"]
+
+    # Get relative good_in_hand
+    relative_good_in_hand = _get_relative_good(u=u, good=good_in_hand, rm=rm)
+    relative_tuto_good_in_hand = _get_relative_good(u=u, good=tuto_good_in_hand, rm=rm)
+
+    # only get desired good if it exists
+    # (meaning it is a reconnection and not a first connection)
+    relative_desired_good = \
+        _get_relative_good(u=u, good=desired_good, rm=rm) if desired_good else None
+
+    relative_tuto_desired_good = \
+        _get_relative_good(u=u, good=tuto_desired_good, rm=rm) if tuto_desired_good else None
+
+    if skip_survey or skip_tutorial:
+
+        skip_state = _handle_skip_options(
+            u=u,
+            rm=rm,
+            skip_tutorial=skip_tutorial,
+            skip_survey=skip_survey
+        )
+
+    else:
+        skip_state = None
+
+    info = {
+        "pseudo": u.pseudo,
+        "user_id": u.id,
+        "state": u.state if not skip_state else skip_state,
+        "choice_made": choice_made,
+        "tuto_choice_made": tuto_choice_made,
+        "score": u.score,
+        "n_good": rm.n_type,
+        "t": rm.t,
+        "t_max": rm.t_max,
+        "good_in_hand": relative_good_in_hand,
+        "tuto_good_in_hand": relative_tuto_good_in_hand,
+        "desired_good": relative_desired_good,
+        "tuto_desired_good": relative_tuto_desired_good,
+        "tuto_t_max": rm.tutorial_t_max,
+        "tuto_t": rm.tutorial_t,
+        "tuto_score": u.tutorial_score
+    }
+
+    return info, u, rm
 
 
 def submit_survey(u, age, gender):
@@ -252,7 +250,7 @@ def _create_new_user(rm, device_id):
 
         player_id = users.filter(room_id=rm.id).count()
 
-        pseudo = parameters.pseudo[player_id]
+        pseudo = parameters.pseudos[player_id]
 
         u = User(
             device_id=device_id,

@@ -5,10 +5,10 @@
      {% csrf_token %}
      <br>
      <br>
-     <button type="submit" class="btn btn-success" style="font-size: 20px;">Create</button>
+     <button type="submit" class="btn btn-success" style="font-size: 20px;" autofocus>Create</button>
 {% else %}
      {% csrf_token %}
-    <strong>Number of agents' types</strong>
+    <strong>Number of agents' type</strong>
     <input class="form-control" type="number" name="nType" value="" step="1" required>
 {% endif %}
 </form>
