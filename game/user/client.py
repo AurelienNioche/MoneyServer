@@ -23,10 +23,13 @@ def get_user(user_id):
 
 def connect(device_id, skip_survey, skip_tutorial):
 
+    # Get opened room
     rm = Room.objects.filter(opened=True).first()
 
     if not rm:
 
+        # If no room create room dynamically (if auto_room parameter is enabled)
+        # Else an exception is raised!
         rm = game.room.client.create_room()
 
     u = User.objects.filter(device_id=device_id, room_id=rm.id).first()
