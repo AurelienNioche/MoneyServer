@@ -4,10 +4,11 @@ import os
 logs_path = os.getcwd() + "/log/"
 
 default_room = {
-    "n_type": 3,
+    "n_type": 4,
     "x0": 1,
     "x1": 1,
     "x2": 1,
+    "x3": 1,
     "t_max": 20,
     "tutorial_t_max": 5
 }

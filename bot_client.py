@@ -81,7 +81,6 @@ class BotClient:
 
                 r = requests.post(self.url, data=data)
                 args = r.json()
-                print("hey")
 
                 # return execution of reply function with response
                 func = getattr(self, "reply_" + args["demand"])
@@ -226,6 +225,7 @@ def bot_factory(base, device_id, delay, url, wait_event, seed):
 
             self.b = BotClient(url=url, device_id=device_id)
             self.delay = delay
+            self.ml = isinstance(self, ml.Process)
 
         def _wait(self):
 
@@ -272,7 +272,7 @@ def bot_factory(base, device_id, delay, url, wait_event, seed):
 
             np.random.seed(seed)
 
-            if not isinstance(self, ml.Process):
+            if not self.ml:
                 input("Run? Press a key.")
 
             methods = [
@@ -298,7 +298,7 @@ def bot_factory(base, device_id, delay, url, wait_event, seed):
             next_method = mapping[self.b.game_state]
             idx = methods.index(next_method)
 
-            if not isinstance(self, ml.Process):
+            if not self.ml:
                 input("Go to state {}? Press a key.".format(next_method.__name__))
 
             while True:
@@ -310,7 +310,7 @@ def bot_factory(base, device_id, delay, url, wait_event, seed):
                     self.end()
                     break
 
-            if not isinstance(self, ml.Process):
+            if not self.ml:
                 input("Go to state {}? Press a key.".format(next_method.__name__))
 
     return BotProcess()
@@ -345,16 +345,16 @@ def main(args):
 
             device_id = "bot{}".format(b)
 
-            b = bot_factory(
+            bot = bot_factory(
                 base=ml.Process,
                 wait_event=ml.Event().wait,
                 url=url,
                 device_id=device_id,
                 delay=1.5,
-                seed=n,
+                seed=b,
             )
 
-            b.start()
+            bot.start()
 
 
 if __name__ == "__main__":
