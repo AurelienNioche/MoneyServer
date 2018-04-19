@@ -350,7 +350,7 @@ def main(args):
                 wait_event=ml.Event().wait,
                 url=url,
                 device_id=device_id,
-                delay=1,
+                delay=1.5,
                 seed=n,
             )
 

@@ -144,10 +144,12 @@ def tutorial_choice(args):
     u = game.user.client.get_user(user_id=args.user_id)
     rm = game.room.client.get_room(room_id=u.room_id)
 
+    absolute_good = game.user.client.get_absolute_good(u=u, rm=rm, good=args.desired_good)
+
     success, score = game.user.client.submit_tutorial_choice(
         u=u,
         rm=rm,
-        desired_good=args.desired_good,
+        desired_good=absolute_good,
         t=args.t
     )
 

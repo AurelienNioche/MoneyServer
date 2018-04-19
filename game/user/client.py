@@ -146,15 +146,38 @@ def submit_tutorial_choice(u, rm, desired_good, t):
             raise Exception("Error in 'submit_tutorial_choice': Did not found a choice entry.")
 
         choice.user_id = u.id
-        choice.desired_good = get_absolute_good(good=desired_good, u=u)
-        choice.good_in_hand = _get_user_last_known_goods(u=u, rm=rm, t=t, tuto=True)["good_in_hand"]
+        choice.desired_good = desired_good
         choice.success = bool(np.random.choice([False, True]))
+
+        #  --------------------------------------------------------------------------------------------- #
+
+        if choice.success:
+
+            if choice.desired_good == u.consumption_good:
+                good_in_hand = u.production_good
+            else:
+                good_in_hand = desired_good
+
+        else:
+
+            good_in_hand = choice.good_in_hand
+
+        next_choice = TutorialChoice.objects.filter(room_id=rm.id, player_id=u.player_id, t=t+1).first()
+
+        if next_choice:
+            next_choice.good_in_hand = good_in_hand
+            next_choice.save(update_fields=['good_in_hand'])
+
+        #  --------------------------------------------------------------------------------------------- #
+
         u.tutorial_score += choice.success
-        choice.save(update_fields=['user_id', 'success', 'good_in_hand', 'desired_good'])
+        choice.save(update_fields=['user_id', 'success', 'desired_good'])
         u.save(update_fields=["tutorial_score"])
 
         return choice.success, u.tutorial_score
+
     else:
+
         return choice.success, u.tutorial_score
 
 
@@ -284,21 +307,22 @@ def _handle_skip_options(u, rm, skip_tutorial, skip_survey):
 
 
 def _get_relative_good(u, rm, good):
+    mapping = np.ones(rm.n_type, dtype=int) * - 1
 
-    mapping = {
-        u.production_good: 0,
-        u.consumption_good: 1,
-    }
+    mapping[u.production_good] = 0
+    mapping[u.consumption_good] = 1
 
     # Get medium good
     goods = np.arange(rm.n_type)
 
     cond0 = goods != u.production_good
     cond1 = goods != u.consumption_good
-    medium_goods = goods[cond0 * cond1]
+    medium_goods = np.array(goods[cond0 * cond1])
 
-    for g in medium_goods:
-        mapping[g] = len(mapping)
+    a = int(np.sum(mapping != -1))
+    b = len(mapping)
+
+    mapping[medium_goods] = np.arange(a, b)
 
     # np.int64 is not json serializable
     return int(mapping[good])
@@ -306,20 +330,22 @@ def _get_relative_good(u, rm, good):
 
 def get_absolute_good(u, rm, good):
 
-    mapping = {
-        0: u.production_good,
-        1: u.consumption_good,
-    }
+    mapping = np.ones(rm.n_type, dtype=int) * - 1
+
+    mapping[0] = u.production_good
+    mapping[1] = u.consumption_good
 
     # Get medium good
     goods = np.arange(rm.n_type)
 
     cond0 = goods != u.production_good
     cond1 = goods != u.consumption_good
-    medium_goods = goods[cond0 * cond1]
+    medium_goods = np.array(goods[cond0 * cond1])
 
-    for g in medium_goods:
-        mapping[len(mapping)] = g
+    a = int(np.sum(mapping != -1))
+    b = len(mapping)
+
+    mapping[np.arange(a, b)] = medium_goods
 
     # np.int64 is not json serializable
     return int(mapping[good])

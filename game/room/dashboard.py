@@ -80,7 +80,12 @@ def get_list():
     rooms_list = []
 
     for rm in rooms:
-        dic = {"att": rm}
+
+        dic = {
+            "att": rm,
+            "count_type": {k: v for k, v in enumerate(rm.types.split("/"))}
+        }
+
         rooms_list.append(dic)
 
     return rooms_list

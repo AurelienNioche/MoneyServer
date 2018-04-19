@@ -28,6 +28,23 @@ class RoomForm(ParametersForm):
 
         super().__init__(*args)
 
+        self.n_type = None
+
+        self.generate_types(*args, **kwargs)
+
+        self.helper = FormHelper()
+        self.helper.form_tag = False
+
+        self.group = (Field(field) for field in self.fields)
+
+        self.helper.layout = Accordion(
+            AccordionGroup('Parameters', *self.group),
+        )
+
+        self.cleaned_data = None
+
+    def generate_types(self, *args, **kwargs):
+
         if kwargs.get("n_type"):
 
             for i in range(int(kwargs["n_type"])):
@@ -50,17 +67,6 @@ class RoomForm(ParametersForm):
                     label=f"x{i}",
                     initial=1
                 )
-
-        self.helper = FormHelper()
-        self.helper.form_tag = False
-
-        self.group = (Field(field) for field in self.fields)
-
-        self.helper.layout = Accordion(
-            AccordionGroup('Parameters', *self.group),
-        )
-
-        self.cleaned_data = None
 
     def clean(self):
 

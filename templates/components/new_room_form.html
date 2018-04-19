@@ -1,15 +1,14 @@
-<form  method="post" action="/new_room/">
+<form action="/new_room/" method="POST">
 {% if form %}
      {% load crispy_forms_tags %}
      {% crispy form %}
      {% csrf_token %}
-
      <br>
      <br>
      <button type="submit" class="btn btn-success" style="font-size: 20px;">Create</button>
 {% else %}
      {% csrf_token %}
     <strong>Number of agents' types</strong>
-    <input class="form-control" name="n_type" value="" onkeyup="submitForm(event);">
+    <input class="form-control" type="number" name="nType" value="" step="1" required>
 {% endif %}
 </form>

@@ -68,7 +68,7 @@ class NewRoomView(TemplateView):
         :param request: using POST request
         :return: html room form template (success or fail)
         """
-        n_type = request.POST.get("n_type")
+        n_type = request.POST.get("nType")
 
         if n_type:
             form = RoomForm(n_type=n_type)
