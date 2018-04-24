@@ -39,8 +39,7 @@ class LoginView(TemplateView):
             login(request, user)
             return redirect("/room_management/")
 
-        else:
-            return render(request, cls.template_name, {"fail": True})
+        return render(request, cls.template_name, {"fail": True})
 
     @classmethod
     def logout(cls, request):
@@ -83,9 +82,8 @@ class NewRoomView(TemplateView):
 
             return redirect("/room_management")
 
-        else:
-            context = {"subtitle": "Set parameters and create a room", "form": form}
-            return render(request, self.template_name, context)
+        context = {"subtitle": "Set parameters and create a room", "form": form}
+        return render(request, self.template_name, context)
 
 
 @method_decorator(login_required, name='dispatch')
@@ -105,7 +103,8 @@ class RoomManagementView(TemplateView):
 
         return context
 
-    def post(self, request, *args, **kwargs):
+    @staticmethod
+    def post(request, *args, **kwargs):
 
         if "delete" in request.POST:
             room_id = request.POST["delete"]
@@ -177,11 +176,9 @@ class LogsView(TemplateView):
                 filename = request.GET["filename"]
                 n_lines = int(request.GET["n_lines"])
 
-                return JsonResponse(
-                    {
-                        "logs": self.refresh_logs(filename, n_lines)
-                     }
-                )
+                return JsonResponse({
+                    "logs": self.refresh_logs(filename, n_lines)
+                })
 
         return super().dispatch(request, *args, **kwargs)
 

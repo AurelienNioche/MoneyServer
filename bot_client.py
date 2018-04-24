@@ -164,7 +164,23 @@ class BotClient:
     @print_reply
     def reply_tutorial_choice(self, args):
 
-        self.tuto_t = args["tutoT"]
+        if not args["wait"]:
+
+            if args["tutoSuccess"] is not None:
+
+                if args["tutoSuccess"]:
+
+                    if self.desired_good == 1:
+                        self.good_in_hand = 0
+                    else:
+                        self.good_in_hand = self.desired_good
+
+                self.tuto_t = args["tutoT"]
+
+                self.set_desired_good()
+
+            else:
+                raise Exception("Do not wait but success is None")
 
         return args["wait"], args["tutoEnd"]
 

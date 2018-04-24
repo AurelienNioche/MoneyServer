@@ -39,26 +39,20 @@ def connect(device_id, skip_survey, skip_tutorial):
         u = _create_new_user(rm, device_id)
 
         choice_made = None
-        good_in_hand = u.production_good
         desired_good = None
+        good_in_hand = u.production_good
 
         tuto_choice_made = None
-        tuto_good_in_hand = u.production_good
         tuto_desired_good = None
+        tuto_good_in_hand = u.production_good
 
     else:
 
-        goods = _get_user_last_known_goods(u=u, rm=rm, t=rm.t)
+        choice_made, good_in_hand, desired_good = \
+            _get_user_last_known_goods(u=u, rm=rm, t=rm.t)
 
-        choice_made = goods["choice_made"]
-        good_in_hand = goods["good_in_hand"]
-        desired_good = goods["desired_good"]
-
-        tuto_goods = _get_user_last_known_goods(u=u, rm=rm, t=rm.tutorial_t, tuto=True)
-
-        tuto_choice_made = tuto_goods["choice_made"]
-        tuto_good_in_hand = tuto_goods["good_in_hand"]
-        tuto_desired_good = tuto_goods["desired_good"]
+        tuto_choice_made, tuto_good_in_hand, tuto_desired_good = \
+            _get_user_last_known_goods(u=u, rm=rm, t=rm.tutorial_t, tuto=True)
 
     # Get relative good_in_hand
     relative_good_in_hand = _get_relative_good(u=u, good=good_in_hand, rm=rm)
@@ -72,17 +66,12 @@ def connect(device_id, skip_survey, skip_tutorial):
     relative_tuto_desired_good = \
         _get_relative_good(u=u, good=tuto_desired_good, rm=rm) if tuto_desired_good else None
 
-    if skip_survey or skip_tutorial:
-
-        skip_state = _handle_skip_options(
-            u=u,
-            rm=rm,
-            skip_tutorial=skip_tutorial,
-            skip_survey=skip_survey
-        )
-
-    else:
-        skip_state = None
+    skip_state = _handle_skip_options(
+        u=u,
+        rm=rm,
+        skip_tutorial=skip_tutorial,
+        skip_survey=skip_survey
+    )
 
     info = {
         "pseudo": u.pseudo,
@@ -175,11 +164,7 @@ def submit_tutorial_choice(u, rm, desired_good, t):
         choice.save(update_fields=['user_id', 'success', 'desired_good'])
         u.save(update_fields=["tutorial_score"])
 
-        return choice.success, u.tutorial_score
-
-    else:
-
-        return choice.success, u.tutorial_score
+    return choice.success, u.tutorial_score
 
 
 def submit_choice(rm, u, desired_good, t):
@@ -290,45 +275,6 @@ def _get_user_production_good(rm, u):
         raise Exception("Too much players.")
 
 
-def _handle_skip_options(u, rm, skip_tutorial, skip_survey):
-
-    if skip_survey:
-        skip_state = game.room.state.states.tutorial
-
-    if skip_tutorial:
-        skip_state = game.room.state.states.game
-
-    if rm.state != skip_state:
-        game.room.state.next_state(rm, skip_state)
-
-    if u.state != skip_state:
-        game.user.state.next_state(u, skip_state)
-
-    return skip_state
-
-
-def _get_relative_good(u, rm, good):
-    mapping = np.ones(rm.n_type, dtype=int) * - 1
-
-    mapping[u.production_good] = 0
-    mapping[u.consumption_good] = 1
-
-    # Get medium good
-    goods = np.arange(rm.n_type)
-
-    cond0 = goods != u.production_good
-    cond1 = goods != u.consumption_good
-    medium_goods = np.array(goods[cond0 * cond1])
-
-    a = int(np.sum(mapping != -1))
-    b = len(mapping)
-
-    mapping[medium_goods] = np.arange(a, b)
-
-    # np.int64 is not json serializable
-    return int(mapping[good])
-
-
 def get_absolute_good(u, rm, good):
 
     mapping = np.ones(rm.n_type, dtype=int) * - 1
@@ -347,6 +293,29 @@ def get_absolute_good(u, rm, good):
     b = len(mapping)
 
     mapping[np.arange(a, b)] = medium_goods
+
+    # np.int64 is not json serializable
+    return int(mapping[good])
+
+
+def _get_relative_good(u, rm, good):
+
+    mapping = np.ones(rm.n_type, dtype=int) * - 1
+
+    mapping[u.production_good] = 0
+    mapping[u.consumption_good] = 1
+
+    # Get medium good
+    goods = np.arange(rm.n_type)
+
+    cond0 = goods != u.production_good
+    cond1 = goods != u.consumption_good
+    medium_goods = np.array(goods[cond0 * cond1])
+
+    a = int(np.sum(mapping != -1))
+    b = len(mapping)
+
+    mapping[medium_goods] = np.arange(a, b)
 
     # np.int64 is not json serializable
     return int(mapping[good])
@@ -377,9 +346,9 @@ def _get_user_last_known_goods(u, rm, t, tuto=False):
     if choice:
 
         # Choice has been made, return choice data
-        goods["choice_made"] = True
-        goods["good_in_hand"] = choice.good_in_hand
-        goods["desired_good"] = choice.desired_good
+        choice_made = True
+        good_in_hand = choice.good_in_hand
+        desired_good = choice.desired_good
 
     else:
 
@@ -387,14 +356,14 @@ def _get_user_last_known_goods(u, rm, t, tuto=False):
 
         if choice:
 
-            goods["choice_made"] = False
-            goods["desired_good"] = None
-            goods["good_in_hand"] = choice.good_in_hand
+            choice_made = False
+            good_in_hand = choice.good_in_hand
+            desired_good = None
 
         else:
             raise Exception("Choice cannot be found!")
 
-    return goods
+    return choice_made, good_in_hand, desired_good
 
 
 def _check_choice_validity(u, choice, desired_good):
@@ -405,3 +374,22 @@ def _check_choice_validity(u, choice, desired_good):
 
     elif choice.good_in_hand is None:
         raise Exception(f"User {u.pseudo} with id {u.id} asks for choice recording but good in hand is None")
+
+
+def _handle_skip_options(u, rm, skip_tutorial, skip_survey):
+
+    if skip_tutorial:
+        skip_state = game.room.state.states.game
+    elif skip_survey:
+        skip_state = game.room.state.states.tutorial
+    else:
+        skip_state = None
+
+    if rm.state != skip_state:
+        game.room.state.next_state(rm, skip_state)
+
+    if u.state != skip_state:
+        game.user.state.next_state(u, skip_state)
+
+    return skip_state
+
