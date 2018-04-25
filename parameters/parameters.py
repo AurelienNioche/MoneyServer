@@ -15,6 +15,9 @@ default_room = {
 
 pseudos = [
     'Arthur',
+    'Abrand',
+    'Achard',
+    'Agelmar',
     'Agrève',
     'Anselin',
     'Authaire',
@@ -38,6 +41,7 @@ pseudos = [
     'Fortunat',
     'Foulque',
     'Frajou',
+    'Flocel',
     'Frambault',
     'Frambourg',
     'Frameric',
@@ -70,6 +74,9 @@ pseudos = [
     'Sifard',
     'Sigebert',
     'Taillefer',
-    'Vantelme'
+    'Vantelme',
+
+
 ]
+
 

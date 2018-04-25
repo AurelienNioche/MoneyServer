@@ -90,6 +90,7 @@ class NewRoomView(TemplateView):
 class RoomManagementView(TemplateView):
 
     template_name = "components/room_management.html"
+    room_data_template = "components/room_data.html"
 
     def get_context_data(self, **kwargs):
 
@@ -113,6 +114,16 @@ class RoomManagementView(TemplateView):
             game.room.dashboard.delete(room_id=room_id)
 
         return redirect("/room_management")
+
+    def get(self, request, *args, **kwargs):
+
+        if "room_id" in request.GET:
+            room_id = request.GET["room_id"]
+
+            context = {"subtitles": f"Room {room_id}"}
+            return render(request, self.room_data_template, context)
+
+        return super().get(request, *args, **kwargs)
 
 
 @method_decorator(login_required, name='dispatch')

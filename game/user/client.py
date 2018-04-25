@@ -23,14 +23,16 @@ def get_user(user_id):
 
 def connect(device_id, skip_survey, skip_tutorial):
 
-    # Get opened room
-    rm = Room.objects.filter(opened=True).first()
+    with transaction.atomic():
+        # Get opened room
+        rooms = Room.objects.select_for_update().all()
+        rm = rooms.filter(opened=True).first()
 
-    if not rm:
+        if not rm:
 
-        # If no room create room dynamically (if auto_room parameter is enabled)
-        # Else an exception is raised!
-        rm = game.room.client.create_room()
+            # If no room create room dynamically (if auto_room parameter is enabled)
+            # Else an exception is raised!
+            rm = game.room.client.create_room()
 
     u = User.objects.filter(device_id=device_id, room_id=rm.id).first()
 
@@ -106,11 +108,37 @@ def submit_survey(u, age, gender):
 
 def submit_tutorial_done(u):
 
-    u.tutorial_done = True
+    if not u.tutorial_done:
 
-    u.save(update_fields=["tutorial_done"])
+        u.tutorial_done = True
+        u.save(update_fields=["tutorial_done"])
 
     return u
+
+
+def submit_choice(rm, u, desired_good, t):
+
+    # ------- Check if current choice has been set or not ------ #
+
+    current_choice = Choice.objects.filter(room_id=rm.id, t=t, user_id=u.id).first()
+
+    if not current_choice:
+
+        _set_current_choice(rm=rm, u=u, desired_good=desired_good, t=t)
+
+    elif current_choice.success is not None:
+        return current_choice.success, u.score
+
+    # ---------------------------------------------------------- #
+
+    # Does the player trigger matching?
+    _triggers_matching(rm=rm, t=t)
+
+    # Reload choice and send infos to client
+    choice = Choice.objects.filter(user_id=u.id, room_id=rm.id, t=t).first()
+    u = User.objects.filter(id=u.id).first()
+
+    return choice.success, u.score
 
 
 def submit_tutorial_choice(u, rm, desired_good, t):
@@ -134,6 +162,8 @@ def submit_tutorial_choice(u, rm, desired_good, t):
 
         if not choice:
             raise Exception("Error in 'submit_tutorial_choice': Did not found a choice entry.")
+
+        _check_choice_validity(u=u, choice=choice, desired_good=desired_good)
 
         choice.user_id = u.id
         choice.desired_good = desired_good
@@ -166,28 +196,6 @@ def submit_tutorial_choice(u, rm, desired_good, t):
 
     return choice.success, u.tutorial_score
 
-
-def submit_choice(rm, u, desired_good, t):
-
-    # ------- Check if current choice has been set or not ------ #
-    current_choice = Choice.objects.filter(room_id=rm.id, t=t, user_id=u.id).first()
-
-    if not current_choice:
-
-        _set_current_choice(rm=rm, u=u, desired_good=desired_good, t=t)
-
-    elif current_choice.success is not None:
-        return current_choice.success, u.score
-
-    _triggers_matching(rm=rm, t=t)
-
-    # Reload choice
-    choice = Choice.objects.filter(user_id=u.id, room_id=rm.id, t=t).first()
-    u = User.objects.filter(id=u.id).first()
-
-    return choice.success, u.score
-
-
 # ------------------------------  Private functions (called inside the script) ----------------------------------- #
 
 
@@ -208,6 +216,9 @@ def _triggers_matching(rm, t):
             game.room.client.matching(rm=rm, t=t)
 
         except (psycopg2.OperationalError, django.db.utils.OperationalError):
+            # If an error is raised
+            # It means that another player has launched the matching
+            # Then do nothing
             pass
 
 
@@ -341,8 +352,6 @@ def _get_user_last_known_goods(u, rm, t, tuto=False):
     table = TutorialChoice if tuto else Choice
     choice = table.objects.filter(user_id=u.id, room_id=rm.id, t=t).first()
 
-    goods = {}
-
     if choice:
 
         # Choice has been made, return choice data
@@ -370,13 +379,24 @@ def _check_choice_validity(u, choice, desired_good):
 
     if choice.good_in_hand == desired_good:
 
-        raise Exception(f"User {u.pseudo} with id {u.id} can't choose the same good as he is carrying!")
+        raise Exception(
+            f"User {u.pseudo} with id {u.id} can't choose the same good as he is carrying!"
+        )
 
     elif choice.good_in_hand is None:
-        raise Exception(f"User {u.pseudo} with id {u.id} asks for choice recording but good in hand is None")
+
+        raise Exception(
+            f"User {u.pseudo} with id {u.id} asks for choice recording but good in hand is None"
+        )
 
 
 def _handle_skip_options(u, rm, skip_tutorial, skip_survey):
+
+    """
+    If skip options are enabled
+     (in the settings menu located in the admin interface)
+    Change room's state as well as users' state.
+    """
 
     if skip_tutorial:
         skip_state = game.room.state.states.game
@@ -385,11 +405,12 @@ def _handle_skip_options(u, rm, skip_tutorial, skip_survey):
     else:
         skip_state = None
 
-    if rm.state != skip_state:
-        game.room.state.next_state(rm, skip_state)
+    if skip_state is not None:
+        if rm.state != skip_state:
+            game.room.state.next_state(rm, skip_state)
 
-    if u.state != skip_state:
-        game.user.state.next_state(u, skip_state)
+        if u.state != skip_state:
+            game.user.state.next_state(u, skip_state)
 
     return skip_state
 

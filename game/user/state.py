@@ -5,6 +5,7 @@ from game.models import User
 def get_progress_for_current_state(rm, u):
 
     # ----- Get progress ----------------------------------------------- #
+
     if u.state == states.welcome:
 
         # Count users assigned to the room

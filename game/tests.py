@@ -7,17 +7,6 @@ def reset_all():
     for table in (User, Choice, TutorialChoice, Room):
         table.objects.all().delete()
 
-    data = {
-       "n_type": 3,
-        "x0": 10,
-        "x1": 10,
-        "x2": 30,
-       "t_max": 20,
-       "tutorial_t_max": 5
-    }
-
-    game.room.dashboard.create(data)
-
 
 def check_choices():
 

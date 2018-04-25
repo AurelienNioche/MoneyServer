@@ -67,6 +67,7 @@ class BotClient:
         self.tuto_good = None
         self.tuto_t = None
         self.tuto_desired_good = None
+        self.tuto_good_in_hand = None
         self.tuto_t_max = None
         self.choice_made = None
         self.n_good = None
@@ -90,11 +91,18 @@ class BotClient:
                 print("Error while treating request: {}".format(e))
                 continue
 
-    def set_desired_good(self):
+    def get_desired_good(self, tuto=False):
 
-        self.desired_good = np.random.randint(self.n_good)
-        while self.desired_good == self.good_in_hand:
-            self.desired_good = np.random.randint(self.n_good)
+        desired_good = np.random.randint(self.n_good)
+
+        if tuto:
+            while desired_good == self.tuto_good_in_hand:
+                desired_good = np.random.randint(self.n_good)
+        else:
+            while desired_good == self.good_in_hand:
+                desired_good = np.random.randint(self.n_good)
+
+        return desired_good
 
     # --------------------- Init ------------------------------------ #
 
@@ -117,13 +125,18 @@ class BotClient:
             self.desired_good = args["goodDesired"]
 
         else:
-            self.set_desired_good()
+            self.desired_good = self.get_desired_good()
+
+        if args["tutoGoodDesired"]:
+            self.tuto_desired_good = args["tutoGoodDesired"]
+
+        else:
+            self.tuto_desired_good = self.get_desired_good(tuto=True)
 
         self.t = args["t"]
         self.choice_made = args["choiceMade"]
         self.tuto_t = args["tutoT"]
         self.tuto_good = args["tutoGoodInHand"]
-        self.tuto_desired_good = args["tutoGoodDesired"]
         self.tuto_t_max = args["tutoTMax"]
 
         self.game_state = args["step"] + "_choice" if args["step"] == 'tutorial' else args["step"]
@@ -157,7 +170,7 @@ class BotClient:
             KeyTuto.demand: "tutorial_choice",
             KeyTuto.progress: 100,
             KeyTuto.user_id: self.user_id,
-            KeyTuto.desired_good: np.random.randint(self.n_good),
+            KeyTuto.desired_good: self.tuto_desired_good,
             KeyTuto.t: self.tuto_t,
         })
 
@@ -170,14 +183,14 @@ class BotClient:
 
                 if args["tutoSuccess"]:
 
-                    if self.desired_good == 1:
-                        self.good_in_hand = 0
+                    if self.tuto_desired_good == 1:
+                        self.tuto_good_in_hand = 0
                     else:
-                        self.good_in_hand = self.desired_good
+                        self.tuto_good_in_hand = self.tuto_desired_good
 
                 self.tuto_t = args["tutoT"]
 
-                self.set_desired_good()
+                self.tuto_desired_good = self.get_desired_good(tuto=True)
 
             else:
                 raise Exception("Do not wait but success is None")
@@ -223,7 +236,7 @@ class BotClient:
 
                 self.t = args["t"]
 
-                self.set_desired_good()
+                self.desired_good = self.get_desired_good()
 
             else:
                 raise Exception("Do not wait but success is None")
@@ -366,7 +379,7 @@ def main(args):
                 wait_event=ml.Event().wait,
                 url=url,
                 device_id=device_id,
-                delay=1.5,
+                delay=3,
                 seed=b,
             )
 

@@ -2,6 +2,7 @@
 import os
 import sys
 
+
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 
@@ -28,6 +29,7 @@ INSTALLED_APPS = (
     'dashboard',
     'game',
     'crispy_forms',
+    'channels',
 )
 
 # crispy forms css
@@ -112,3 +114,16 @@ STATIC_URL = '/static/'
 STATICFILES_DIRS = (
     os.path.join(BASE_DIR, "static"),
 )
+
+
+# Channels
+
+CHANNEL_LAYERS = {
+    'default': {
+        'BACKEND': 'asgi_redis.RedisChannelLayer',
+        'CONFIG': {
+            'hosts': [os.environ.get("REDIS_URL", "redis://localhost:6379")],
+        },
+        'ROUTING': 'dashboard.graph_channels.routing.channel_routing',
+    }
+}

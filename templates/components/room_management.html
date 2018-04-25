@@ -69,11 +69,11 @@
                                <div class="panel-group">
                                     <div class="panel panel-default">
                                         <div class="panel-heading" data-toggle="collapse" href="#collapse{{ room.att.id }}"
-                                        style="cursor: pointer; white-space: nowrap;">
+                                        style="cursor: pointer;">
                                             <h4 class="panel-title">
                                                 <a style="font-size: 22px; pointer-events: none; cursor: default;">Room {{ room.att.id }}</a>
                                             </h4>
-{#                                            <button style="white-space: nowrap;" class="btn btn-info">See current data</button>#}
+                                            <a class="btn btn-info" onclick="viewRoomData({{ room.att.id }})">More info</a>
                                         </div>
                                     <div id="collapse{{ room.att.id }}" class="panel-collapse collapse" align="middle">
                                         <ul class="list-group">

@@ -10,7 +10,7 @@ class Room(models.Model):
     tutorial_t = models.IntegerField(default=None, null=True)
     tutorial_t_max = models.IntegerField(default=None, null=True)
     trial = models.BooleanField(default=False)
-    opened = models.BooleanField(default=True)
+    opened = models.BooleanField(default=True, unique=True)
     state = models.TextField(default=None, null=True)
 
 

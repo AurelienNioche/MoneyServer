@@ -15,3 +15,7 @@ function deleteRoom(room_id) {
 function setTabActive(){
     document.getElementById("room_management_tab").setAttribute("class", "active")
 }
+
+function viewRoomData(room_id) {
+    window.location = "/room_management/?room_id=" + room_id;
+}
