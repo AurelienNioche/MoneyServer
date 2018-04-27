@@ -125,6 +125,10 @@ class BotClient:
 
         data = json.loads(args)
 
+        if data.get('group-send'):
+            for _ in range(100):
+                print('IT IS A GROUP SEND')
+
         if isinstance(data, dict):
             # return execution of reply function with response
             if 'demand' in data:

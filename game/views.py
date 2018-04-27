@@ -116,7 +116,7 @@ def init(args):
     if not wait:
         game.consumers.WSDialog.group_send(
             group='welcome',
-            data={'wait': wait, 'progress': progress}
+            data={'wait': wait, 'progress': progress, 'group_send': True}
         )
 
     return to_reply

@@ -7,7 +7,9 @@
 * channels_redis
 * numpy
 * django
-* psycopg2
+* psycopg2-binary
+* websocket-client
+* click
 
 ## Other dependencies
 
