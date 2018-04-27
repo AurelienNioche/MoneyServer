@@ -1,6 +1,3 @@
-from django.http import JsonResponse
-from django.views.decorators.csrf import csrf_exempt
-
 from collections import namedtuple
 
 from utils import utils
@@ -12,9 +9,9 @@ import game.user.client
 import game.room.client
 import game.params.client
 import game.room.state
+import game.consumers
 
 
-@csrf_exempt
 def client_request(request):
 
     """
@@ -25,9 +22,13 @@ def client_request(request):
     """
 
     # Log
-    utils.log("Post request: {}".format(list(request.POST.items())), f=client_request)
+    utils.log("Websocket request: {}".format(list(request.items())), f=client_request)
 
-    demand = request.POST["demand"]
+    demand = request.get('demand')
+
+    if not demand:
+        raise Exception('"demand" key is required.')
+
     trial, skip_survey, skip_tutorial = game.params.client.is_trial()
 
     if not trial:
@@ -38,10 +39,10 @@ def client_request(request):
             if not f_name.startswith("_")
         }
 
-        try:
-            # Retrieve demanded function from current script
-            func = functions[demand]
-        except KeyError:
+        # Retrieve demanded function from current script
+        func = functions.get(demand)
+
+        if not func:
             raise Exception("Bad demand.")
 
     else:
@@ -65,9 +66,9 @@ def client_request(request):
     to_reply["skipSurvey"] = skip_survey
     to_reply["skipTutorial"] = skip_tutorial
 
-    response = JsonResponse(to_reply)
+    response = to_reply
 
-    return _set_headers(response)
+    return response
 
 
 def init(args):
@@ -103,13 +104,20 @@ def init(args):
         "userId": info["user_id"],
         "pseudo": info["pseudo"],
 
-        "tutoGoodInHand": info["tuto_good_in_hand"],
-        "tutoChoiceMade": info["tuto_choice_made"],
-        "tutoGoodDesired": info["tuto_desired_good"],
-        "tutoT": info["tuto_t"],
-        "tutoTMax": info["tuto_t_max"],
-        "tutoScore": info["tuto_score"]
+        "trainingGoodInHand": info["tuto_good_in_hand"],
+        "trainingChoiceMade": info["tuto_choice_made"],
+        "trainingGoodDesired": info["tuto_desired_good"],
+        "trainingT": info["tuto_t"],
+        "trainingTMax": info["tuto_t_max"],
+        "trainingScore": info["tuto_score"],
+
     }
+
+    if not wait:
+        game.consumers.WSDialog.group_send(
+            group='welcome',
+            data={'wait': wait, 'progress': progress}
+        )
 
     return to_reply
 
@@ -130,6 +138,12 @@ def survey(args):
     wait, state = game.room.client.state_verification(
         u=u, rm=rm, t=args.t, progress=progress, demand=survey
     )
+
+    if not wait:
+        game.consumers.WSDialog.group_send(
+            group=state,
+            data={'wait': wait, 'progress': progress}
+        )
 
     to_reply = {
         "wait": wait,
@@ -161,11 +175,11 @@ def tutorial_choice(args):
 
     to_reply = {
         "wait": wait,
-        "tutoSuccess": success,
-        "tutoScore": score,
-        "tutoProgress": progress,
-        "tutoT": t,
-        "tutoEnd": end
+        "trainingSuccess": success,
+        "trainingScore": score,
+        "trainingProgress": progress,
+        "trainingT": t,
+        "trainingEnd": end
     }
 
     return to_reply
@@ -183,6 +197,12 @@ def tutorial_done(args):
     wait, state = game.room.client.state_verification(
         u=u, rm=rm, t=args.t, progress=progress, demand=tutorial_done
     )
+
+    if not wait:
+        game.consumers.WSDialog.group_send(
+            group=state,
+            data={'wait': wait, 'progress': progress}
+        )
 
     to_reply = {
         "wait": wait,
@@ -208,7 +228,7 @@ def choice(args):
 
     progress = game.room.client.get_progression(u=u, rm=rm, t=args.t)
 
-    wait, t, end = game.room.client.state_verification(
+    state, wait, t, end = game.room.client.state_verification(
         rm=rm, u=u, t=args.t, progress=progress, demand=choice, success=success
     )
 
@@ -218,15 +238,39 @@ def choice(args):
         "success": success,
         "end": end,
         "score": score,
-        "t": t
+        "t": t,
     }
+
+    if wait:
+        game.consumers.WSDialog.group_send(
+            group=state,
+            data={'wait': wait, 'progress': progress}
+        )
+
+    else:
+        users = game.room.client.get_results_for_all_users(rm=rm, t=args.t)
+
+        for user_result in users:
+
+            data = {
+                "wait": wait,
+                "progress": progress,
+                "success": user_result.success,
+                "end": end,
+                "score": user_result.score,
+                "t": t,
+            }
+
+            game.consumers.WSDialog.group_send(
+                group=f'user-{user_result.id}', data=data
+            )
 
     return to_reply
 
 
 def _treat_args(request, options):
 
-    form = ClientRequestForm(request.POST)
+    form = ClientRequestForm(request)
 
     if form.is_valid():
 
@@ -238,8 +282,8 @@ def _treat_args(request, options):
 
         args = Args(
             demand=form.cleaned_data.get("demand"),
-            user_id=form.cleaned_data.get("user_id"),
-            device_id=form.cleaned_data.get("device_id"),
+            user_id=form.cleaned_data.get("userId"),
+            device_id=form.cleaned_data.get("deviceId"),
             age=form.cleaned_data.get("age"),
             gender=form.cleaned_data.get("sex"),
             desired_good=form.cleaned_data.get("good"),
@@ -251,7 +295,7 @@ def _treat_args(request, options):
         return args
 
     else:
-        raise Exception('Error while treating POST arguments.')
+        raise Exception('Error while treating request.')
 
 
 def _set_headers(response):

@@ -1,22 +1,27 @@
 import requests
 import time
+import threading
 import numpy as np
 import multiprocessing as ml
 import argparse
+import json
+
+import websocket
+websocket.enableTrace(True)
 
 
 # --------------- Init ----------------- #
 
 class KeyInit:
     demand = "demand"
-    device_id = "device_id"
+    device_id = "deviceId"
 
 # -------------- Survey ----------------- #
 
 
 class KeySurvey:
     demand = "demand"
-    user_id = "user_id"
+    user_id = "userId"
     age = "age"
     sex = "sex"
 
@@ -25,7 +30,7 @@ class KeySurvey:
 
 class KeyTuto:
     demand = "demand"
-    user_id = "user_id"
+    user_id = "userId"
     progress = "progress"
     desired_good = "good"
     t = "t"
@@ -37,24 +42,28 @@ class KeyChoice:
     demand = "demand"
     desired_good = "good"
     t = "t"
-    user_id = "user_id"
+    user_id = "userId"
 
 # ----------------------------------------- #
 
 
-def print_reply(f):
-    def wrapper(obj, args):
-        print("{} {}: {} \n".format(obj.device_id, f.__name__, args.items()))
-        return f(obj, args)
-
-    return wrapper
+# def print_reply(f):
+#     def wrapper(obj, args):
+#         print("{} {}: {} \n".format(obj.device_id, f.__name__, args.items()))
+#         return f(obj, args)
+#
+#     return wrapper
 
 
 class BotClient:
 
     def __init__(self, url, device_id):
 
+        self.ws = None
+        self._connect(url)
+
         self.url = url
+
         self.device_id = device_id
 
         self.t = None
@@ -64,39 +73,74 @@ class BotClient:
         self.desired_good = None
         self.made_choice = None
         self.wait = None
-        self.tuto_good = None
-        self.tuto_t = None
-        self.tuto_desired_good = None
-        self.tuto_good_in_hand = None
-        self.tuto_t_max = None
+        self.training_good = None
+        self.training_t = None
+        self.training_desired_good = None
+        self.training_good_in_hand = None
+        self.training_t_max = None
         self.choice_made = None
         self.n_good = None
 
         self.game_state = None
 
+        self.training_end = None
+        self.game_end = None
+
+        self.wait_for_server = None
+
+    def _connect(self, url):
+
+        self.ws = websocket.WebSocketApp(
+            url=url,
+            on_message=self.on_message,
+            on_error=self.on_error,
+            on_close=self.on_close
+        )
+        self.ws.on_open = self.on_open
+
+        self.t = threading.Thread(target=self.ws.run_forever)
+        self.t.daemon = True
+        self.t.start()
+
     def _request(self, data):
 
-        while True:
+        print("sending ", data)
+        self.ws.send(json.dumps(data))
 
-            try:
+    def on_open(self, *args):
 
-                r = requests.post(self.url, data=data)
-                args = r.json()
+        print('Connection established')
 
-                # return execution of reply function with response
-                func = getattr(self, "reply_" + args["demand"])
-                return func(args)
+    def on_error(self, message):
 
-            except Exception as e:
-                print("Error while treating request: {}".format(e))
-                continue
+        print(message)
+        self._connect(url=self.url)
 
-    def get_desired_good(self, tuto=False):
+    def on_close(self, message):
+
+        print("websocket is closed.")
+        self._connect(self.url)
+
+    def on_message(self, ws, args):
+
+        data = json.loads(args)
+
+        if isinstance(data, dict):
+            # return execution of reply function with response
+            if 'demand' in data:
+                func = getattr(self, "reply_" + data["demand"])
+                func(data)
+            else:
+                self.wait_for_server = data['wait']
+        else:
+            print(data)
+
+    def get_desired_good(self, training=False):
 
         desired_good = np.random.randint(self.n_good)
 
-        if tuto:
-            while desired_good == self.tuto_good_in_hand:
+        if training:
+            while desired_good == self.training_good_in_hand:
                 desired_good = np.random.randint(self.n_good)
         else:
             while desired_good == self.good_in_hand:
@@ -108,15 +152,15 @@ class BotClient:
 
     def init(self):
 
-        return self._request({
+        self._request({
             KeyInit.demand: "init",
             KeyInit.device_id: self.device_id,
         })
 
-    @print_reply
     def reply_init(self, args):
 
         self.user_id = args["userId"]
+
         self.good_in_hand = args["goodInHand"]
 
         self.n_good = args["nGood"]
@@ -127,17 +171,18 @@ class BotClient:
         else:
             self.desired_good = self.get_desired_good()
 
-        if args["tutoGoodDesired"]:
-            self.tuto_desired_good = args["tutoGoodDesired"]
+        if args["trainingGoodDesired"]:
+            self.training_desired_good = args["trainingGoodDesired"]
 
         else:
-            self.tuto_desired_good = self.get_desired_good(tuto=True)
+            self.training_desired_good = self.get_desired_good(training=True)
 
         self.t = args["t"]
         self.choice_made = args["choiceMade"]
-        self.tuto_t = args["tutoT"]
-        self.tuto_good = args["tutoGoodInHand"]
-        self.tuto_t_max = args["tutoTMax"]
+        self.training_t = args["trainingT"]
+        self.training_good_in_hand = args["trainingGoodInHand"]
+        assert self.training_good_in_hand == 0
+        self.training_t_max = args["trainingTMax"]
 
         self.game_state = args["step"] + "_choice" if args["step"] == 'tutorial' else args["step"]
 
@@ -146,81 +191,78 @@ class BotClient:
         if args["skipTutorial"]:
             self.game_state = "game"
 
-        return args["wait"]
+        self.wait_for_server = args['wait']
 
     def survey(self):
 
-        return self._request({
+        self._request({
             KeySurvey.demand: "survey",
             KeySurvey.age: 31,
             KeySurvey.sex: "female",
             KeySurvey.user_id: self.user_id,
         })
 
-    @print_reply
     def reply_survey(self, args):
 
-        return args["wait"]
+        self.wait_for_server = args['wait']
 
     # --------------------- tuto  ------------------------------------ #
 
     def tutorial(self):
 
-        return self._request({
+        self._request({
             KeyTuto.demand: "tutorial_choice",
             KeyTuto.progress: 100,
             KeyTuto.user_id: self.user_id,
-            KeyTuto.desired_good: self.tuto_desired_good,
-            KeyTuto.t: self.tuto_t,
+            KeyTuto.desired_good: self.training_desired_good,
+            KeyTuto.t: self.training_t,
         })
 
-    @print_reply
     def reply_tutorial_choice(self, args):
 
         if not args["wait"]:
 
-            if args["tutoSuccess"] is not None:
+            if args["trainingSuccess"] is not None:
 
-                if args["tutoSuccess"]:
+                if args["trainingSuccess"]:
 
-                    if self.tuto_desired_good == 1:
-                        self.tuto_good_in_hand = 0
+                    if self.training_desired_good == 1:
+                        self.training_good_in_hand = 0
                     else:
-                        self.tuto_good_in_hand = self.tuto_desired_good
+                        self.training_good_in_hand = self.training_desired_good
 
-                self.tuto_t = args["tutoT"]
+                self.training_t = args["trainingT"]
 
-                self.tuto_desired_good = self.get_desired_good(tuto=True)
+                self.training_desired_good = self.get_desired_good(training=True)
 
             else:
                 raise Exception("Do not wait but success is None")
 
-        return args["wait"], args["tutoEnd"]
+        self.training_end = args['trainingEnd']
+        self.wait_for_server = args['wait']
 
     def tutorial_done(self):
 
-        return self._request({
+        self._request({
             "demand": "tutorial_done",
             "user_id": self.user_id
         })
 
-    @print_reply
     def reply_tutorial_done(self, args):
 
-        return args["wait"]
+        self.wait_for_server = args['wait']
 
     # --------------------- choice ------------------------------------ #
 
     def choice(self):
 
-        return self._request({
+        self._request({
             KeyChoice.demand: "choice",
             KeyChoice.user_id: self.user_id,
             KeyChoice.desired_good: self.desired_good,
             KeyChoice.t: self.t
         })
 
-    @print_reply
     def reply_choice(self, args):
 
         if not args["wait"]:
@@ -241,7 +283,8 @@ class BotClient:
             else:
                 raise Exception("Do not wait but success is None")
 
-        return args["wait"], args["end"]
+        self.game_end = args['end']
+        self.wait_for_server = args['wait']
 
 
 def bot_factory(base, device_id, delay, url, wait_event, seed):
@@ -254,43 +297,56 @@ def bot_factory(base, device_id, delay, url, wait_event, seed):
 
             self.b = BotClient(url=url, device_id=device_id)
             self.delay = delay
-            self.ml = isinstance(self, ml.Process)
+            self.ml = isinstance(self, threading.Thread)
+            self.wait_event = wait_event
 
-        def _wait(self):
+        def wait(self):
 
-            wait_event(self.delay)
+            self.wait_event(self.delay)
 
         def welcome(self):
 
-            wait = self.b.init()
-            while wait:
-                wait = self.b.init()
+            self.b.init()
+
+            while self.b.wait_for_server is None:
+                self.wait()
+
+            while self.b.wait_for_server:
+                self.wait()
 
         def survey(self):
 
-            wait = self.b.survey()
-            while wait:
-                wait = self.b.survey()
+            self.b.survey()
+
+            while self.b.wait_for_server:
+                self.wait()
 
         def tutorial_choice(self):
 
-            wait, end = self.b.tutorial()
-            while not end:
-                print("Tutorial: t = {}".format(self.b.tuto_t))
-                wait, end = self.b.tutorial()
+            while not self.b.training_end:
+                self.b.tutorial()
+
+                print("Tutorial: t = {}".format(self.b.training_t))
+
+                while self.b.wait_for_server:
+                    self.wait()
 
         def tutorial_done(self):
 
-            wait = self.b.tutorial_done()
-            while wait:
-                wait = self.b.tutorial_done()
+            self.b.tutorial_done()
+
+            while self.b.wait_for_server:
+                self.wait()
 
         def game(self):
 
-            wait, end = self.b.choice()
-            while not end:
-                print("Game: t = {}".format(self.b.t))
-                wait, end = self.b.choice()
+            while not self.b.game_end:
+                self.b.choice()
+
+                print("Tutorial: t = {}".format(self.b.t))
+
+                while self.b.wait_for_server:
+                    self.wait()
 
         @staticmethod
         def end():
@@ -324,6 +380,8 @@ def bot_factory(base, device_id, delay, url, wait_event, seed):
 
             self.welcome()
 
+            print("Game state is:", self.b.game_state)
+
             next_method = mapping[self.b.game_state]
             idx = methods.index(next_method)
 
@@ -348,7 +406,8 @@ def bot_factory(base, device_id, delay, url, wait_event, seed):
 def main(args):
 
     # url = "http://money.getz.fr/client_request/"
-    url = "http://127.0.0.1:8000/client_request/"
+    # url = "http://127.0.0.1:8000/client_request/"
+    url = 'ws://localhost:8000/'
 
     if not args.number:
 
@@ -375,11 +434,11 @@ def main(args):
             device_id = "bot{}".format(b)
 
             bot = bot_factory(
-                base=ml.Process,
+                base=threading.Thread,
                 wait_event=ml.Event().wait,
                 url=url,
                 device_id=device_id,
-                delay=3,
+                delay=0.5,
                 seed=b,
             )
 
@@ -396,3 +455,5 @@ if __name__ == "__main__":
     parsed_args = parser.parse_args()
 
     main(parsed_args)
+
+

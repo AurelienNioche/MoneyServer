@@ -33,6 +33,7 @@ class TutorialChoiceAdmin(admin.ModelAdmin):
         'id', 'desired_good', 'good_in_hand', 'user_id', 'player_id','room_id', 'success', 't'
     )
 
+
 admin.site.register(User, UserAdmin)
 admin.site.register(BoolParameter, BoolParameterAdmin)
 admin.site.register(Choice, ChoiceAdmin)

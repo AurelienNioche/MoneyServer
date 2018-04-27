@@ -1,11 +1,32 @@
 from game.models import Choice, TutorialChoice
 from collections import namedtuple
 
-from utils import utils
+from channels.layers import get_channel_layer
+channel_layer = get_channel_layer()
 
 # Global states
-States = namedtuple('States', ['welcome', 'survey', 'tutorial', 'game', 'end'])
-states = States(welcome='welcome', survey='survey', tutorial='tutorial', game='game', end='end')
+States = namedtuple(
+    'States',
+    ['welcome', 'survey', 'tutorial', 'game', 'end']
+)
+
+states = States(
+    welcome='welcome',
+    survey='survey',
+    tutorial='tutorial',
+    game='game',
+    end='end'
+)
+
+
+demand_state_mapping = {
+    'init': states.welcome,
+    'survey': states.survey,
+    'tutorial': states.tutorial,
+    'tutorial_choice': states.tutorial,
+    'tutorial_done': states.tutorial,
+    'choice': states.game
+}
 
 
 def get_progress_for_choices(rm, t, tuto=False):

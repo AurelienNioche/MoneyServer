@@ -10,7 +10,7 @@ default_room = {
     "x2": 1,
     "x3": 1,
     "t_max": 20,
-    "tutorial_t_max": 5
+    "tutorial_t_max": 40,
 }
 
 pseudos = [

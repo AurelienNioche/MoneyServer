@@ -6,12 +6,12 @@ class ParametersForm(forms.Form):
     class Meta:
         abstract = True
 
-    user_id = forms.IntegerField(required=False)
+    userId = forms.IntegerField(required=False)
     t = forms.IntegerField(required=False)
     good = forms.IntegerField(required=False)
     sex = forms.CharField(required=False)
     age = forms.CharField(required=False)
-    device_id = forms.CharField(required=False)
+    deviceId = forms.CharField(required=False)
     demand = forms.CharField(required=True)
 
 

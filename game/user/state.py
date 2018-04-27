@@ -47,5 +47,6 @@ def next_state(u, state):
     u.state = state
     # utils.log("User {} goes to state {}".format(u.pseudo, u.state), f=next_state)
     u.save(update_fields=['state'])
+
     return u
 

@@ -23,6 +23,23 @@ def get_room(room_id):
     return rm
 
 
+def get_results_for_all_users(rm, t):
+
+    choices = Choice.objects.filter(room_id=rm.id, t=t)
+    users = User.objects.filter(room_id=rm.id)
+
+    for u in users:
+
+        c = choices.filter(user_id=u.id).first()
+
+        if not c:
+            raise Exception(f'Choice from user {u.id} is not found for t={t} after matching.')
+
+        u.success = c.success
+
+    return users
+
+
 def create_room():
 
     if game.params.client.create_default_room():
@@ -149,7 +166,7 @@ def state_verification(u, rm, progress, t, demand, success=None):
                     )
 
                 if u.state == game.room.state.states.survey:
-                    u = game.user.state.next_state(
+                    game.user.state.next_state(
                         u=u,
                         state=game.room.state.states.tutorial,
                     )
@@ -181,7 +198,7 @@ def state_verification(u, rm, progress, t, demand, success=None):
                     )
 
                 if u.state == game.room.state.states.tutorial:
-                    u = game.user.state.next_state(
+                    game.user.state.next_state(
                         u=u,
                         state=game.room.state.states.game
                     )
@@ -213,7 +230,7 @@ def state_verification(u, rm, progress, t, demand, success=None):
                     state=game.room.state.states.end
                 )
 
-        return wait, t, end
+        return u.state, wait, t, end
 
 
 def matching(rm, t):
