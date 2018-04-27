@@ -1,4 +1,4 @@
-import requests
+# import requests
 import time
 import threading
 import numpy as np
@@ -111,7 +111,7 @@ class BotClient:
 
         print('Connection established')
 
-    def on_error(self, message):
+    def on_error(self, message, *args):
 
         print(message)
         self._connect(url=self.url)
