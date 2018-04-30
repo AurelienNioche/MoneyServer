@@ -38,16 +38,16 @@ class WebSocketConsumer(JsonWebsocketConsumer):
 
             self._group_add(group=f'user-{user_id}')
 
-            state = demand_state_mapping.get(demand)
+        state = demand_state_mapping.get(demand)
 
-            if not state:
-                raise Exception('Bad demand')
+        if not state:
+            raise Exception('Bad demand')
 
-            # Remove user from all other groups
-            for group in demand_state_mapping.values():
-                self._group_discard(group=group)
+        # Remove user from all other groups
+        for group in demand_state_mapping.values():
+            self._group_discard(group=group)
 
-            self._group_add(group=state)
+        self._group_add(group=state)
 
     def _group_send(self, group, data):
 
@@ -59,10 +59,10 @@ class WebSocketConsumer(JsonWebsocketConsumer):
         """
         async_to_sync(self.channel_layer.group_send)(
             group,
-            {'type': '_group.message', 'text': data}
+            {'type': 'group.message', 'text': data}
         )
 
-    def _group_message(self, data):
+    def group_message(self, data):
         """
         Send json to a group, called by group_send
         method.
@@ -103,5 +103,5 @@ class WSDialog:
 
         async_to_sync(channel_layer.group_send)(
             group,
-            {'type': '_group.message', 'text': data}
+            {'type': 'group.message', 'text': data}
         )

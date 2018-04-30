@@ -114,20 +114,16 @@ class BotClient:
     def on_error(self, message, *args):
 
         print(message)
-        self._connect(url=self.url)
+        # self._connect(url=self.url)
 
     def on_close(self, message):
 
         print("websocket is closed.")
-        self._connect(self.url)
+        # self._connect(self.url)
 
     def on_message(self, ws, args):
 
         data = json.loads(args)
-
-        if data.get('group-send'):
-            for _ in range(100):
-                print('IT IS A GROUP SEND')
 
         if isinstance(data, dict):
             # return execution of reply function with response

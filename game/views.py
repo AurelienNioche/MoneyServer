@@ -116,7 +116,7 @@ def init(args):
     if not wait:
         game.consumers.WSDialog.group_send(
             group='welcome',
-            data={'wait': wait, 'progress': progress, 'group_send': True}
+            data={'wait': wait, 'progress': progress}
         )
 
     return to_reply
@@ -141,7 +141,7 @@ def survey(args):
 
     if not wait:
         game.consumers.WSDialog.group_send(
-            group=state,
+            group='survey',
             data={'wait': wait, 'progress': progress}
         )
 
@@ -200,7 +200,7 @@ def tutorial_done(args):
 
     if not wait:
         game.consumers.WSDialog.group_send(
-            group=state,
+            group='tutorial',
             data={'wait': wait, 'progress': progress}
         )
 
@@ -243,7 +243,7 @@ def choice(args):
 
     if wait:
         game.consumers.WSDialog.group_send(
-            group=state,
+            group='game',
             data={'wait': wait, 'progress': progress}
         )
 
