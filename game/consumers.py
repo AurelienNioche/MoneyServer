@@ -27,7 +27,7 @@ class WebSocketConsumer(JsonWebsocketConsumer):
         self.send_json(to_reply)
 
         # Add user to groups
-        # self._on_receive(content)
+        self._on_receive(content)
 
     def _on_receive(self, content):
 
