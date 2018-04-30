@@ -16,3 +16,8 @@
 * redis
 * postgresql
 
+
+## Do not forget
+
+* Launch Postgresql server
+* Launch Redis server
