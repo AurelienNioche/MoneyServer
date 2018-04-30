@@ -35,6 +35,11 @@ class KeyTuto:
     desired_good = "good"
     t = "t"
 
+
+class KeyTutoDone:
+
+    demand ="demand"
+    user_id = "userId"
 # -------------- Play -------------------- #
 
 
@@ -114,7 +119,7 @@ class BotClient:
     def on_error(self, message, *args):
 
         print(message)
-        # self._connect(url=self.url)
+        self._connect(url=self.url)
 
     def on_close(self, message):
 
@@ -126,8 +131,10 @@ class BotClient:
         data = json.loads(args)
 
         if isinstance(data, dict):
-            # return execution of reply function with response
+            # execution of reply function with response
             if 'demand' in data:
+                if 'tamere' in data:
+                    print(data)
                 func = getattr(self, "reply_" + data["demand"])
                 func(data)
             else:
@@ -244,8 +251,8 @@ class BotClient:
     def tutorial_done(self):
 
         self._request({
-            "demand": "tutorial_done",
-            "user_id": self.user_id
+            KeyTutoDone.demand: "tutorial_done",
+            KeyTutoDone.user_id: self.user_id
         })
 
     def reply_tutorial_done(self, args):
@@ -324,12 +331,13 @@ def bot_factory(base, device_id, delay, url, wait_event, seed):
         def tutorial_choice(self):
 
             while not self.b.training_end:
-                self.b.tutorial()
+
+                self.wait()
+
+                if not self.b.wait_for_server and not self.b.training_end:
+                    self.b.tutorial()
 
                 print("Tutorial: t = {}".format(self.b.training_t))
-
-                while self.b.wait_for_server:
-                    self.wait()
 
         def tutorial_done(self):
 
@@ -341,12 +349,13 @@ def bot_factory(base, device_id, delay, url, wait_event, seed):
         def game(self):
 
             while not self.b.game_end:
-                self.b.choice()
 
-                print("Tutorial: t = {}".format(self.b.t))
+                self.wait()
 
-                while self.b.wait_for_server:
-                    self.wait()
+                if not self.b.wait_for_server and not self.b.game_end:
+                    self.b.choice()
+
+                print("Game: t = {}".format(self.b.t))
 
         @staticmethod
         def end():
@@ -438,7 +447,7 @@ def main(args):
                 wait_event=ml.Event().wait,
                 url=url,
                 device_id=device_id,
-                delay=0.5,
+                delay=1,
                 seed=b,
             )
 

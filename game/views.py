@@ -253,7 +253,7 @@ def choice(args):
         for user_result in users:
 
             data = {
-                "wait": wait,
+                "wait": False,
                 "progress": progress,
                 "success": user_result.success,
                 "end": end,
