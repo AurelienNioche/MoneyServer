@@ -171,6 +171,8 @@ class BotClient:
         else:
             self.desired_good = self.get_desired_good()
 
+        self.training_good_in_hand = args["trainingGoodInHand"]
+
         if args["trainingGoodDesired"]:
             self.training_desired_good = args["trainingGoodDesired"]
 
@@ -180,8 +182,6 @@ class BotClient:
         self.t = args["t"]
         self.choice_made = args["choiceMade"]
         self.training_t = args["trainingT"]
-        self.training_good_in_hand = args["trainingGoodInHand"]
-        assert self.training_good_in_hand == 0
         self.training_t_max = args["trainingTMax"]
 
         self.game_state = args["step"] + "_choice" if args["step"] == 'tutorial' else args["step"]
