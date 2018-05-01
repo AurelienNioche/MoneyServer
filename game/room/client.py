@@ -175,7 +175,7 @@ def state_verification(u, rm, progress, t, demand, success=None):
 
         return wait, u.state
 
-    elif demand == game.views.tutorial_choice:
+    elif demand == game.views.training_choice:
 
         t += 1
         wait = False
@@ -183,7 +183,7 @@ def state_verification(u, rm, progress, t, demand, success=None):
 
         return wait, t, end
 
-    elif demand == game.views.tutorial_done:
+    elif demand == game.views.training_done:
 
         if u.state == game.room.state.states.tutorial:
             wait = progress != 100

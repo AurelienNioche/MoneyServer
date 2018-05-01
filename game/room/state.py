@@ -1,9 +1,6 @@
 from game.models import Choice, TutorialChoice
 from collections import namedtuple
 
-from channels.layers import get_channel_layer
-channel_layer = get_channel_layer()
-
 # Global states
 States = namedtuple(
     'States',
@@ -22,9 +19,9 @@ states = States(
 demand_state_mapping = {
     'init': states.welcome,
     'survey': states.survey,
-    'tutorial': states.tutorial,
-    'tutorial_choice': states.tutorial,
-    'tutorial_done': states.tutorial,
+    'training': states.tutorial,
+    'training_choice': states.tutorial,
+    'training_done': states.tutorial,
     'choice': states.game
 }
 

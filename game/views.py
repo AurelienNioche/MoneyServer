@@ -153,7 +153,7 @@ def survey(args):
     return to_reply
 
 
-def tutorial_choice(args):
+def training_choice(args):
 
     u = game.user.client.get_user(user_id=args.user_id)
     rm = game.room.client.get_room(room_id=u.room_id)
@@ -170,7 +170,7 @@ def tutorial_choice(args):
     progress = game.room.client.get_progression(u=u, rm=rm, t=args.t, tuto=True)
 
     wait, t, end = game.room.client.state_verification(
-        rm=rm, u=u, t=args.t, progress=progress, demand=tutorial_choice
+        rm=rm, u=u, t=args.t, progress=progress, demand=training_choice
     )
 
     to_reply = {
@@ -185,7 +185,7 @@ def tutorial_choice(args):
     return to_reply
 
 
-def tutorial_done(args):
+def training_done(args):
 
     u = game.user.client.get_user(user_id=args.user_id)
     u = game.user.client.submit_tutorial_done(u=u)
@@ -195,7 +195,7 @@ def tutorial_done(args):
     progress = game.room.client.get_progression(u=u, rm=rm, t=args.t)
 
     wait, state = game.room.client.state_verification(
-        u=u, rm=rm, t=args.t, progress=progress, demand=tutorial_done
+        u=u, rm=rm, t=args.t, progress=progress, demand=training_done
     )
 
     if not wait:

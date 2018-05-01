@@ -218,14 +218,14 @@ class BotClient:
     def tutorial(self):
 
         self._request({
-            KeyTuto.demand: "tutorial_choice",
+            KeyTuto.demand: "training_choice",
             KeyTuto.progress: 100,
             KeyTuto.user_id: self.user_id,
             KeyTuto.desired_good: self.training_desired_good,
             KeyTuto.t: self.training_t,
         })
 
-    def reply_tutorial_choice(self, args):
+    def reply_training_choice(self, args):
 
         if not args["wait"]:
 
@@ -248,14 +248,14 @@ class BotClient:
         self.training_end = args['trainingEnd']
         self.wait_for_server = args['wait']
 
-    def tutorial_done(self):
+    def training_done(self):
 
         self._request({
-            KeyTutoDone.demand: "tutorial_done",
+            KeyTutoDone.demand: "training_done",
             KeyTutoDone.user_id: self.user_id
         })
 
-    def reply_tutorial_done(self, args):
+    def reply_training_done(self, args):
 
         self.wait_for_server = args['wait']
 
@@ -341,7 +341,7 @@ def bot_factory(base, device_id, delay, url, wait_event, seed):
 
         def tutorial_done(self):
 
-            self.b.tutorial_done()
+            self.b.training_done()
 
             while self.b.wait_for_server:
                 self.wait()
