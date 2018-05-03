@@ -413,7 +413,7 @@ def main(args):
 
     # url = "http://money.getz.fr/client_request/"
     # url = "http://127.0.0.1:8000/client_request/"
-    url = 'ws://localhost:8000/'
+    url = 'ws://51.15.6.148:8018/'
 
     if not args.number:
 

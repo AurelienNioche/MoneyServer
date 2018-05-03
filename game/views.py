@@ -176,7 +176,7 @@ def training_choice(args):
         "trainingSuccess": success,
         "trainingScore": score,
         "trainingProgress": progress,
-        "trainingT": t,
+        "trainingT": args.t,
         "trainingEnd": end
     }
 
