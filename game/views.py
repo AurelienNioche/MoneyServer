@@ -235,14 +235,14 @@ def choice(args):
         "success": success,
         "end": end,
         "score": score,
-        "t": t,
+        "t": args.t,
     }
 
     if wait:
 
         game.consumers.WSDialog.group_send(
             group=f'game-t-{args.t}',
-            data={'wait': True, 'progress': progress}
+            data={'wait': True, 'progress': progress, 't': args.t}
         )
 
     else:
@@ -259,7 +259,7 @@ def choice(args):
                     "success": user_result.success,
                     "end": end,
                     "score": user_result.score,
-                    "t": t,
+                    "t": args.t,
                 }
 
                 game.consumers.WSDialog.group_send(
