@@ -110,7 +110,6 @@ class BotClient:
     def _request(self, data):
 
         print("sending ", data)
-        self.wait_for_server = True
         self.ws.send(json.dumps(data))
 
     def on_open(self, *args):
@@ -138,7 +137,7 @@ class BotClient:
                 func = getattr(self, "reply_" + data["demand"])
                 func(data)
             else:
-                self.wait_for_server = data['wait']
+                print(f'Waiting, progress = {data["progress"]}')
         else:
             print("Received:, ", data)
             print(data)
@@ -192,9 +191,16 @@ class BotClient:
         self.training_t = args["trainingT"]
         self.training_t_max = args["trainingTMax"]
 
-        self.game_state = args["step"] + "_choice" if args["step"] == 'tutorial' else args["step"]
+        mapping = {
+            "survey": self.survey,
+            "tutorial": self.tutorial,
+            "game": self.choice,
+            "end": self.end
+        }
 
-        self.wait_for_server = args['wait']
+        input(f'Go to state {args["step"]}?')
+
+        mapping[args['step']]()
 
     def survey(self):
 
@@ -207,7 +213,9 @@ class BotClient:
 
     def reply_survey(self, args):
 
-        self.wait_for_server = args['wait']
+        if not args['wait']:
+            input('Go to state training?')
+            self.tutorial()
 
     # --------------------- tuto  ------------------------------------ #
 
@@ -234,15 +242,17 @@ class BotClient:
                     else:
                         self.training_good_in_hand = self.training_desired_good
 
-                self.training_t = args["trainingT"]
+                self.training_t = args["trainingT"] + 1
 
                 self.training_desired_good = self.get_desired_good(training=True)
 
+                if not args['trainingEnd']:
+                    self.training_done()
+                else:
+                    self.choice()
+
             else:
                 raise Exception("Do not wait but success is None")
-
-        self.training_end = args['trainingEnd']
-        self.wait_for_server = args['wait']
 
     def training_done(self):
 
@@ -253,7 +263,9 @@ class BotClient:
 
     def reply_training_done(self, args):
 
-        self.wait_for_server = args['wait']
+        if not args['wait']:
+            input('Go to state game?')
+            self.choice()
 
     # --------------------- choice ------------------------------------ #
 
@@ -279,16 +291,20 @@ class BotClient:
                     else:
                         self.good_in_hand = self.desired_good
 
-                self.t = args["t"]
+                self.t = args["t"] + 1
 
                 self.desired_good = self.get_desired_good()
+
+                if args['end']:
+                    self.end()
+                else:
+                    self.choice()
 
             else:
                 raise Exception("Do not wait but success is None")
 
-        self.game_end = args['end']
-        self.wait_for_server = args['wait']
-        print(self.wait_for_server)
+    def end(self):
+        print('this is the end')
 
 
 def bot_factory(base, device_id, delay, url, wait_event, seed):
@@ -308,51 +324,45 @@ def bot_factory(base, device_id, delay, url, wait_event, seed):
 
             self.wait_event(self.delay)
 
-        def welcome(self):
-
-            self.b.init()
-
-            while self.b.wait_for_server is None:
-                self.wait()
-
-            while self.b.wait_for_server:
-                self.wait()
-
-        def survey(self):
-
-            self.b.survey()
-
-            while self.b.wait_for_server:
-                self.wait()
-
-        def tutorial_choice(self):
-
-            while not self.b.training_end:
-
-                self.wait()
-
-                if not self.b.wait_for_server and not self.b.training_end:
-                    self.b.tutorial()
-
-                print("Tutorial: t = {}".format(self.b.training_t))
-
-        def tutorial_done(self):
-
-            self.b.training_done()
-
-            while self.b.wait_for_server:
-                self.wait()
-
-        def game(self):
-
-            while not self.b.game_end:
-
-                self.wait()
-
-                if not self.b.wait_for_server and not self.b.game_end:
-                    self.b.choice()
-
-                print("Game: t = {}".format(self.b.t))
+        # def welcome(self):
+        #
+        #     self.b.init()
+        #
+        # def survey(self):
+        #
+        #     self.b.survey()
+        #
+        #     while self.b.wait_for_server:
+        #         self.wait()
+        #
+        # def tutorial_choice(self):
+        #
+        #     while not self.b.training_end:
+        #
+        #         self.wait()
+        #
+        #         if not self.b.wait_for_server and not self.b.training_end:
+        #             self.b.tutorial()
+        #
+        #         print("Tutorial: t = {}".format(self.b.training_t))
+        #
+        # def tutorial_done(self):
+        #
+        #     self.b.training_done()
+        #
+        #     while self.b.wait_for_server:
+        #         self.wait()
+        #
+        # def game(self):
+        #
+        #     while not self.b.game_end:
+        #
+        #         self.wait()
+        #
+        #         if not self.b.wait_for_server and not self.b.game_end:
+        #             self.b.choice()
+        #
+        #         print("Game: t = {}".format(self.b.t))
 
         @staticmethod
         def end():
@@ -366,45 +376,49 @@ def bot_factory(base, device_id, delay, url, wait_event, seed):
             if not self.ml:
                 input("Run? Press a key.")
 
-            methods = [
-                self.welcome,
-                self.survey,
-                self.tutorial_choice,
-                self.tutorial_done,
-                self.game,
-                self.end
-            ]
-
-            mapping = {
-                "welcome": self.welcome,
-                "survey": self.survey,
-                "tutorial_choice": self.tutorial_choice,
-                "tutorial_done": self.tutorial_done,
-                "game": self.game,
-                "end": self.end
-            }
-
-            self.welcome()
-
-            print("Game state is:", self.b.game_state)
-
-            next_method = mapping[self.b.game_state]
-            idx = methods.index(next_method)
-
-            if not self.ml:
-                input("Go to state {}? Press a key.".format(next_method.__name__))
+            self.b.init()
 
             while True:
-                next_method()
-                idx += 1
-                next_method = methods[idx]
+                self.wait()
 
-                if next_method.__name__ == "end":
-                    self.end()
-                    break
-
-                if not self.ml:
-                    input("Go to state {}? Press a key.".format(next_method.__name__))
+            # methods = [
+            #     self.welcome,
+            #     self.survey,
+            #     self.tutorial_choice,
+            #     self.tutorial_done,
+            #     self.game,
+            #     self.end
+            # ]
+            #
+            # mapping = {
+            #     "welcome": self.welcome,
+            #     "survey": self.survey,
+            #     "tutorial_choice": self.tutorial_choice,
+            #     "tutorial_done": self.tutorial_done,
+            #     "game": self.game,
+            #     "end": self.end
+            # }
+            #
+            # self.welcome()
+            #
+            # print("Game state is:", self.b.game_state)
+            #
+            # next_method = mapping[self.b.game_state]
+            # idx = methods.index(next_method)
+            #
+            # if not self.ml:
+            #     input("Go to state {}? Press a key.".format(next_method.__name__))
+            #
+            # while True:
+            #     next_method()
+            #     idx += 1
+            #     next_method = methods[idx]
+            #
+            #     if next_method.__name__ == "end":
+            #         self.end()
+            #         break
+            #
+            #     if not self.ml:
 
     return BotProcess()
 
