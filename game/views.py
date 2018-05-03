@@ -134,11 +134,10 @@ def survey(args):
         u=u, rm=rm, t=args.t, progress=progress, demand=survey
     )
 
-    if not wait:
-        game.consumers.WSDialog.group_send(
-            group='survey',
-            data={'wait': False, 'progress': progress}
-        )
+    game.consumers.WSDialog.group_send(
+        group='survey',
+        data={'wait': wait, 'progress': progress}
+    )
 
     to_reply = {
         "wait": wait,
@@ -193,11 +192,10 @@ def training_done(args):
         u=u, rm=rm, t=args.t, progress=progress, demand=training_done
     )
 
-    if not wait:
-        game.consumers.WSDialog.group_send(
-            group='tutorial',
-            data={'wait': False, 'progress': progress}
-        )
+    game.consumers.WSDialog.group_send(
+        group='tutorial',
+        data={'wait': wait, 'progress': progress}
+    )
 
     to_reply = {
         "wait": wait,
