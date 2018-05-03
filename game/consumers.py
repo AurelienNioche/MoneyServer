@@ -33,19 +33,25 @@ class WebSocketConsumer(JsonWebsocketConsumer):
 
         user_id = content.get('userId')
         demand = content.get('demand')
+        t = content.get('t')
 
         if user_id:
 
             self._group_add(group=f'user-{user_id}')
 
+        # Remove user from all other groups
+        for group in demand_state_mapping.keys():
+            self._group_discard(group=group)
+
+        if demand == 'choice':
+
+            self._group_add('game-t-{t}')
+            self._group_discard(f'game-t-{t-1}')
+
         state = demand_state_mapping.get(demand)
 
         if not state:
             raise Exception('Bad demand')
-
-        # Remove user from all other groups
-        for group in demand_state_mapping.keys():
-            self._group_discard(group=group)
 
         self._group_add(group=state)
 
@@ -105,3 +111,4 @@ class WSDialog:
             group,
             {'type': 'group.message', 'text': data}
         )
+

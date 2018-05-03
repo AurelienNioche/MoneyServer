@@ -234,14 +234,13 @@ def choice(args):
     }
 
     if wait:
+
         game.consumers.WSDialog.group_send(
-            group='game',
+            group=f'game-t-{args.t}',
             data={'wait': True, 'progress': progress}
         )
 
     else:
-
-
         users = game.room.client.get_results_for_all_users(rm=rm, t=args.t)
 
         for user_result in users:
