@@ -245,18 +245,20 @@ def choice(args):
 
         for user_result in users:
 
-            data = {
-                "wait": False,
-                "progress": progress,
-                "success": user_result.success,
-                "end": end,
-                "score": user_result.score,
-                "t": t,
-            }
+            if user_result != u.id:
 
-            game.consumers.WSDialog.group_send(
-                group=f'user-{user_result.id}', data=data
-            )
+                data = {
+                    "wait": False,
+                    "progress": progress,
+                    "success": user_result.success,
+                    "end": end,
+                    "score": user_result.score,
+                    "t": t,
+                }
+
+                game.consumers.WSDialog.group_send(
+                    group=f'user-{user_result.id}', data=data
+                )
 
     return to_reply
 

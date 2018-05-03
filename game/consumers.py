@@ -45,8 +45,8 @@ class WebSocketConsumer(JsonWebsocketConsumer):
 
         if demand == 'choice':
 
-            self._group_add('game-t-{t}')
-            self._group_discard(f'game-t-{t-1}')
+            self._group_add(f'game-t-{t-1}')
+            self._group_discard(f'game-t-{t-2}')
 
         state = demand_state_mapping.get(demand)
 

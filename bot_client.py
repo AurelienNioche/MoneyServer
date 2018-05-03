@@ -134,11 +134,13 @@ class BotClient:
         if isinstance(data, dict):
             # execution of reply function with response
             if 'demand' in data:
+                print("Received:, ", data)
                 func = getattr(self, "reply_" + data["demand"])
                 func(data)
             else:
                 self.wait_for_server = data['wait']
         else:
+            print("Received:, ", data)
             print(data)
 
     def get_desired_good(self, training=False):
@@ -291,6 +293,7 @@ class BotClient:
 
         self.game_end = args['end']
         self.wait_for_server = args['wait']
+        print(self.wait_for_server)
 
 
 def bot_factory(base, device_id, delay, url, wait_event, seed):
@@ -405,8 +408,8 @@ def bot_factory(base, device_id, delay, url, wait_event, seed):
                     self.end()
                     break
 
-            if not self.ml:
-                input("Go to state {}? Press a key.".format(next_method.__name__))
+                if not self.ml:
+                    input("Go to state {}? Press a key.".format(next_method.__name__))
 
     return BotProcess()
 
