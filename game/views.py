@@ -88,6 +88,9 @@ def init(args):
 
     to_reply.update({'wait': wait})
 
+    if state != to_reply['step']:
+        to_reply.update({'step': state})
+
     if wait:
 
         game.consumers.WSDialog.group_send(
