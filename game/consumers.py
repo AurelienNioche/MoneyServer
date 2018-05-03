@@ -111,10 +111,18 @@ class WSDialog:
             {'type': 'group.message', 'text': data}
         )
 
-    # @staticmethod
-    # def group_add(group):
-    #
-    #     channel_layer = get_channel_layer()
-    #
-    #
+    @staticmethod
+    def group_add(group):
+
+        channel_layer = get_channel_layer()
+
+        async_to_sync(channel_layer.group_add)(
+            group,
+            channel_layer.channel_name
+        )
+
+
+
+
+
 

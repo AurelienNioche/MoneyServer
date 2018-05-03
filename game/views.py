@@ -185,6 +185,8 @@ def training_choice(args):
 
 def training_done(args):
 
+    game.consumers.WSDialog.group_add(group='tutorial-done')
+
     u = game.user.client.get_user(user_id=args.user_id)
     u = game.user.client.submit_tutorial_done(u=u)
 
@@ -197,7 +199,7 @@ def training_done(args):
     )
 
     game.consumers.WSDialog.group_send(
-        group='tutorial',
+        group='tutorial-done',
         data={'wait': wait, 'progress': progress}
     )
 
