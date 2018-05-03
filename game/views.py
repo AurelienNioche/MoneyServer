@@ -105,7 +105,7 @@ def init(args):
         for user in users:
 
             if user.id != u.id\
-                    and user.state != game.room.state.states.survey:
+                    and user.state == game.room.state.states.survey:
 
                 info = game.user.client.connect(
                     device_id=user.device_id,
