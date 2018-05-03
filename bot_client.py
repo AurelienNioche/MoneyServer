@@ -194,11 +194,6 @@ class BotClient:
 
         self.game_state = args["step"] + "_choice" if args["step"] == 'tutorial' else args["step"]
 
-        if args["skipSurvey"]:
-            self.game_state = "tutorial_choice"
-        if args["skipTutorial"]:
-            self.game_state = "game"
-
         self.wait_for_server = args['wait']
 
     def survey(self):
