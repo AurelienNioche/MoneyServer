@@ -104,15 +104,18 @@ def init(args):
 
         for user in users:
 
-            info = game.user.client.connect(
-                device_id=user.device_id,
-                skip_survey=args.skip_survey,
-                skip_tutorial=args.skip_tutorial
-            )[0]
+            if user.id != u.id\
+                    and user.state != game.room.state.states.survey:
 
-            info.update({'wait': False})
+                info = game.user.client.connect(
+                    device_id=user.device_id,
+                    skip_survey=args.skip_survey,
+                    skip_tutorial=args.skip_tutorial
+                )[0]
 
-            game.consumers.WSDialog.group_send(group=f'user-{user.id}', data=info)
+                info.update({'wait': False})
+
+                game.consumers.WSDialog.group_send(group=f'user-{user.id}', data=info)
 
     return to_reply
 
