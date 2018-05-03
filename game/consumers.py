@@ -22,7 +22,7 @@ class WebSocketConsumer(JsonWebsocketConsumer):
 
         to_reply = game.views.client_request(content)
 
-        print(f"Sending {to_reply}")
+        print(f"\nSending: {to_reply}")
 
         self.send_json(to_reply)
 
@@ -63,6 +63,7 @@ class WebSocketConsumer(JsonWebsocketConsumer):
         :param data:
         :return:
         """
+        print(f'\nSending to group {group}: {data}')
         async_to_sync(self.channel_layer.group_send)(
             group,
             {'type': 'group.message', 'text': data}
@@ -75,6 +76,7 @@ class WebSocketConsumer(JsonWebsocketConsumer):
         :param data:
         :return:
         """
+
         self.send_json(data['text'])
 
     def _group_add(self, group):
