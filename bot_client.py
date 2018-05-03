@@ -52,14 +52,6 @@ class KeyChoice:
 # ----------------------------------------- #
 
 
-# def print_reply(f):
-#     def wrapper(obj, args):
-#         print("{} {}: {} \n".format(obj.device_id, f.__name__, args.items()))
-#         return f(obj, args)
-#
-#     return wrapper
-
-
 class BotClient:
 
     def __init__(self, url, device_id):
@@ -90,6 +82,8 @@ class BotClient:
 
         self.training_end = None
         self.game_end = None
+
+        self.last_request = None
 
         self.wait_for_server = None
 
@@ -133,9 +127,17 @@ class BotClient:
         if isinstance(data, dict):
             # execution of reply function with response
             if 'demand' in data:
+
                 print("Received:, ", data)
                 func = getattr(self, "reply_" + data["demand"])
                 func(data)
+
+            elif not data['wait']:
+
+                reply = 'reply_' + self.last_request
+
+                getattr(self, reply)(data)
+
             else:
                 print(f'Waiting, progress = {data["progress"]}')
         else:
@@ -163,6 +165,8 @@ class BotClient:
             KeyInit.demand: "init",
             KeyInit.device_id: self.device_id,
         })
+
+        self.last_request = self.init.__name__
 
     def reply_init(self, args):
 
@@ -211,6 +215,8 @@ class BotClient:
             KeySurvey.user_id: self.user_id,
         })
 
+        self.last_request = self.survey.__name__
+
     def reply_survey(self, args):
 
         if not args['wait']:
@@ -228,6 +234,8 @@ class BotClient:
             KeyTuto.desired_good: self.training_desired_good,
             KeyTuto.t: self.training_t,
         })
+
+        self.last_request = self.tutorial.__name__
 
     def reply_training_choice(self, args):
 
@@ -261,6 +269,8 @@ class BotClient:
             KeyTutoDone.user_id: self.user_id
         })
 
+        self.last_request = self.training_done.__name__
+
     def reply_training_done(self, args):
 
         if not args['wait']:
@@ -277,6 +287,8 @@ class BotClient:
             KeyChoice.desired_good: self.desired_good,
             KeyChoice.t: self.t
         })
+
+        self.last_request = self.choice.__name__
 
     def reply_choice(self, args):
 
@@ -324,51 +336,6 @@ def bot_factory(base, device_id, delay, url, wait_event, seed):
 
             self.wait_event(self.delay)
 
-        # def welcome(self):
-        #
-        #     self.b.init()
-        #
-        # def survey(self):
-        #
-        #     self.b.survey()
-        #
-        #     while self.b.wait_for_server:
-        #         self.wait()
-        #
-        # def tutorial_choice(self):
-        #
-        #     while not self.b.training_end:
-        #
-        #         self.wait()
-        #
-        #         if not self.b.wait_for_server and not self.b.training_end:
-        #             self.b.tutorial()
-        #
-        #         print("Tutorial: t = {}".format(self.b.training_t))
-        #
-        # def tutorial_done(self):
-        #
-        #     self.b.training_done()
-        #
-        #     while self.b.wait_for_server:
-        #         self.wait()
-        #
-        # def game(self):
-        #
-        #     while not self.b.game_end:
-        #
-        #         self.wait()
-        #
-        #         if not self.b.wait_for_server and not self.b.game_end:
-        #             self.b.choice()
-        #
-        #         print("Game: t = {}".format(self.b.t))
-
-        @staticmethod
-        def end():
-
-            print("It is the end, my only friend, the end.")
-
         def run(self):
 
             np.random.seed(seed)
@@ -380,45 +347,6 @@ def bot_factory(base, device_id, delay, url, wait_event, seed):
 
             while True:
                 self.wait()
-
-            # methods = [
-            #     self.welcome,
-            #     self.survey,
-            #     self.tutorial_choice,
-            #     self.tutorial_done,
-            #     self.game,
-            #     self.end
-            # ]
-            #
-            # mapping = {
-            #     "welcome": self.welcome,
-            #     "survey": self.survey,
-            #     "tutorial_choice": self.tutorial_choice,
-            #     "tutorial_done": self.tutorial_done,
-            #     "game": self.game,
-            #     "end": self.end
-            # }
-            #
-            # self.welcome()
-            #
-            # print("Game state is:", self.b.game_state)
-            #
-            # next_method = mapping[self.b.game_state]
-            # idx = methods.index(next_method)
-            #
-            # if not self.ml:
-            #     input("Go to state {}? Press a key.".format(next_method.__name__))
-            #
-            # while True:
-            #     next_method()
-            #     idx += 1
-            #     next_method = methods[idx]
-            #
-            #     if next_method.__name__ == "end":
-            #         self.end()
-            #         break
-            #
-            #     if not self.ml:
 
     return BotProcess()
 
