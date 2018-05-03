@@ -100,7 +100,7 @@ def connect(device_id, skip_survey, skip_tutorial):
         "trainingScore": u.tutorial_score,
 
         "skipSurvey": skip_survey,
-        "SkipTutorial": skip_tutorial
+        "skipTutorial": skip_tutorial
     }
 
     return info, u, rm
