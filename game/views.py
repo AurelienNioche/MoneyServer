@@ -246,7 +246,7 @@ def choice(args):
 
         for user_result in users:
 
-            if user_result != u.id:
+            if user_result.id != u.id:
 
                 data = {
                     "wait": False,
