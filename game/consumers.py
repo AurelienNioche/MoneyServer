@@ -22,9 +22,8 @@ class WebSocketConsumer(JsonWebsocketConsumer):
 
         to_reply = game.views.client_request(content)
 
-        print(f"\nSending: {to_reply}")
-
         self.send_json(to_reply)
+        print(f"\nSending: {to_reply}\n")
 
         # Add user to groups
         self._on_receive(to_reply)
@@ -34,24 +33,20 @@ class WebSocketConsumer(JsonWebsocketConsumer):
         user_id = content.get('userId')
         demand = content.get('demand')
         t = content.get('t')
+        state = demand_state_mapping.get(demand)
 
         if user_id:
 
             self._group_add(group=f'user-{user_id}')
-
-        # Remove user from all other groups
-        for group in demand_state_mapping.keys():
-            self._group_discard(group=group)
 
         if demand == 'choice':
 
             self._group_add(f'game-t-{t-1}')
             self._group_discard(f'game-t-{t-2}')
 
-        state = demand_state_mapping.get(demand)
-
-        if not state:
-            raise Exception('Bad demand')
+        # Remove user from all other groups
+        for group in demand_state_mapping.keys():
+            self._group_discard(group=group)
 
         self._group_add(group=state)
 
@@ -63,7 +58,7 @@ class WebSocketConsumer(JsonWebsocketConsumer):
         :param data:
         :return:
         """
-        print(f'\nSending to group {group}: {data}')
+        print(f'\nSending to group {group}: {data}\n')
         async_to_sync(self.channel_layer.group_send)(
             group,
             {'type': 'group.message', 'text': data}
@@ -109,8 +104,17 @@ class WSDialog:
 
         channel_layer = get_channel_layer()
 
+        print(f'\nSending to group {group}: {data}\n')
+
         async_to_sync(channel_layer.group_send)(
             group,
             {'type': 'group.message', 'text': data}
         )
+
+    # @staticmethod
+    # def group_add(group):
+    #
+    #     channel_layer = get_channel_layer()
+    #
+    #
 

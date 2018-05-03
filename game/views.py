@@ -246,6 +246,7 @@ def choice(args):
         )
 
     else:
+
         users = game.room.client.get_results_for_all_users(rm=rm, t=args.t)
 
         for user_result in users:
@@ -265,7 +266,7 @@ def choice(args):
                     group=f'user-{user_result.id}', data=data
                 )
 
-        return to_reply
+    return to_reply
 
 
 def _treat_args(request, options):

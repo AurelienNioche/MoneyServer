@@ -103,9 +103,9 @@ class BotClient:
         )
         self.ws.on_open = self.on_open
 
-        self.t = threading.Thread(target=self.ws.run_forever)
-        self.t.daemon = True
-        self.t.start()
+        thread = threading.Thread(target=self.ws.run_forever)
+        thread.daemon = True
+        thread.start()
 
     def _request(self, data):
 
