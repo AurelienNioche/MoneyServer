@@ -15,7 +15,7 @@ class WebSocketConsumer(JsonWebsocketConsumer):
 
     def disconnect(self, close_code):
 
-        for state in demand_state_mapping.values():
+        for state in demand_state_mapping.keys():
             self._group_discard(group=state)
 
     def receive_json(self, content, **kwargs):

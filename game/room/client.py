@@ -135,6 +135,11 @@ def state_verification(u, rm, progress, t, demand, success=None):
 
         if u.state == game.room.state.states.welcome:
 
+            u = game.user.state.next_state(
+                        u=u,
+                        state=game.room.state.states.survey
+            )
+
             wait = progress != 100
 
             if not wait:
@@ -142,12 +147,6 @@ def state_verification(u, rm, progress, t, demand, success=None):
                 if rm.state == game.room.state.states.welcome:
                     game.room.state.next_state(
                         rm=rm,
-                        state=game.room.state.states.survey
-                    )
-
-                if u.state == game.room.state.states.welcome:
-                    u = game.user.state.next_state(
-                        u=u,
                         state=game.room.state.states.survey
                     )
 
@@ -160,6 +159,11 @@ def state_verification(u, rm, progress, t, demand, success=None):
 
         if u.state == game.room.state.states.survey:
 
+            u = game.user.state.next_state(
+                            u=u,
+                            state=game.room.state.states.tutorial,
+            )
+
             wait = progress != 100
 
             if not wait:
@@ -170,16 +174,6 @@ def state_verification(u, rm, progress, t, demand, success=None):
                         state=game.room.state.states.tutorial
                     )
 
-                if u.state == game.room.state.states.survey:
-
-                    users = User.objects.filter(room_id=rm.id)
-
-                    for u in users:
-
-                        game.user.state.next_state(
-                            u=u,
-                            state=game.room.state.states.tutorial,
-                        )
         else:
             wait = False
 
@@ -196,6 +190,12 @@ def state_verification(u, rm, progress, t, demand, success=None):
     elif demand == game.views.training_done:
 
         if u.state == game.room.state.states.tutorial:
+
+            u = game.user.state.next_state(
+                            u=u,
+                            state=game.room.state.states.game,
+            )
+
             wait = progress != 100
 
             if not wait:
@@ -207,16 +207,6 @@ def state_verification(u, rm, progress, t, demand, success=None):
                         state=game.room.state.states.game
                     )
 
-                if u.state == game.room.state.states.tutorial:
-                    users = User.objects.filter(room_id=rm.id)
-
-                    for u in users:
-
-                        game.user.state.next_state(
-                            u=u,
-                            state=game.room.state.states.game,
-                        )
-
         else:
             wait = False
 
@@ -224,7 +214,7 @@ def state_verification(u, rm, progress, t, demand, success=None):
 
     elif demand == game.views.choice:
 
-        wait = progress != 100 or success is None
+        wait = progress != 100 or success == -2
         t += not wait
         rm = game.room.state.set_rm_timestep(rm=rm, t=t, tuto=False)
 
@@ -239,7 +229,7 @@ def state_verification(u, rm, progress, t, demand, success=None):
                 )
 
             if u.state == game.room.state.states.game:
-                game.user.state.next_state(
+                u = game.user.state.next_state(
                     u=u,
                     state=game.room.state.states.end
                 )
