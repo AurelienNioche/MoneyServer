@@ -40,11 +40,11 @@ def connect(device_id, skip_survey, skip_tutorial):
 
         u = _create_new_user(rm, device_id)
 
-        choice_made = None
+        choice_made = False
         desired_good = None
         good_in_hand = u.production_good
 
-        tuto_choice_made = None
+        tuto_choice_made = False
         tuto_desired_good = None
         tuto_good_in_hand = u.production_good
 
@@ -63,10 +63,10 @@ def connect(device_id, skip_survey, skip_tutorial):
     # only get desired good if it exists
     # (meaning it is a reconnection and not a first connection)
     relative_desired_good = \
-        _get_relative_good(u=u, good=desired_good, rm=rm) if desired_good is not None else None
+        _get_relative_good(u=u, good=desired_good, rm=rm) if desired_good is not None else -2
 
     relative_tuto_desired_good = \
-        _get_relative_good(u=u, good=tuto_desired_good, rm=rm) if tuto_desired_good is not None else None
+        _get_relative_good(u=u, good=tuto_desired_good, rm=rm) if tuto_desired_good is not None else -2
 
     skip_state = _handle_skip_options(
         u=u,
@@ -77,21 +77,27 @@ def connect(device_id, skip_survey, skip_tutorial):
 
     info = {
         "pseudo": u.pseudo,
-        "user_id": u.id,
-        "state": u.state if not skip_state else skip_state,
-        "choice_made": choice_made,
-        "tuto_choice_made": tuto_choice_made,
+        "userId": u.id,
+
+        "step": u.state if not skip_state else skip_state,
+
+        "choiceMade": choice_made,
+        "trainingChoiceMade": tuto_choice_made,
+
         "score": u.score,
-        "n_good": rm.n_type,
+
+        "nGood": rm.n_type,
+
         "t": rm.t,
-        "t_max": rm.t_max,
-        "good_in_hand": relative_good_in_hand,
-        "tuto_good_in_hand": relative_tuto_good_in_hand,
-        "desired_good": relative_desired_good,
-        "tuto_desired_good": relative_tuto_desired_good,
-        "tuto_t_max": rm.tutorial_t_max,
-        "tuto_t": rm.tutorial_t,
-        "tuto_score": u.tutorial_score
+        "tMax": rm.t_max,
+        "goodInHand": relative_good_in_hand,
+        "goodDesired": relative_desired_good,
+
+        "trainingGoodInHand": relative_tuto_good_in_hand,
+        "trainingGoodDesired": relative_tuto_desired_good,
+        "trainingTMax": rm.tutorial_t_max,
+        "trainingT": rm.tutorial_t,
+        "trainingScore": u.tutorial_score
     }
 
     return info, u, rm
@@ -138,7 +144,7 @@ def submit_choice(rm, u, desired_good, t):
     choice = Choice.objects.filter(user_id=u.id, room_id=rm.id, t=t).first()
     u = User.objects.filter(id=u.id).first()
 
-    return choice.success, u.score
+    return -2 if choice.success is None else choice.success, u.score
 
 
 def submit_tutorial_choice(u, rm, desired_good, t):

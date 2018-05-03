@@ -23,6 +23,11 @@ def get_room(room_id):
     return rm
 
 
+def get_all_users(rm):
+
+    return User.objects.filter(room_id=rm.id)
+
+
 def get_results_for_all_users(rm, t):
 
     choices = Choice.objects.filter(room_id=rm.id, t=t)
@@ -166,10 +171,15 @@ def state_verification(u, rm, progress, t, demand, success=None):
                     )
 
                 if u.state == game.room.state.states.survey:
-                    game.user.state.next_state(
-                        u=u,
-                        state=game.room.state.states.tutorial,
-                    )
+
+                    users = User.objects.filter(room_id=rm.id)
+
+                    for u in users:
+
+                        game.user.state.next_state(
+                            u=u,
+                            state=game.room.state.states.tutorial,
+                        )
         else:
             wait = False
 
@@ -198,10 +208,14 @@ def state_verification(u, rm, progress, t, demand, success=None):
                     )
 
                 if u.state == game.room.state.states.tutorial:
-                    game.user.state.next_state(
-                        u=u,
-                        state=game.room.state.states.game
-                    )
+                    users = User.objects.filter(room_id=rm.id)
+
+                    for u in users:
+
+                        game.user.state.next_state(
+                            u=u,
+                            state=game.room.state.states.game,
+                        )
 
         else:
             wait = False

@@ -73,7 +73,7 @@ def client_request(request):
 
 def init(args):
 
-    info, u, rm = game.user.client.connect(
+    to_reply, u, rm = game.user.client.connect(
         device_id=args.device_id,
         skip_tutorial=args.skip_tutorial,
         skip_survey=args.skip_survey,
@@ -85,39 +85,30 @@ def init(args):
         u=u, rm=rm, t=args.t, progress=progress, demand=init,
     )
 
-    to_reply = {
+    to_reply.update({'wait': wait})
 
-        "wait": wait,
-        "progress": progress,
+    if wait:
 
-        "step": state,
-        "score": info["score"],
-
-        "t": info["t"],
-        "tMax": info["t_max"],
-
-        "choiceMade": info["choice_made"],
-        "goodInHand": info["good_in_hand"],
-        "goodDesired": info["desired_good"],
-        "nGood": info["n_good"],
-
-        "userId": info["user_id"],
-        "pseudo": info["pseudo"],
-
-        "trainingGoodInHand": info["tuto_good_in_hand"],
-        "trainingChoiceMade": info["tuto_choice_made"],
-        "trainingGoodDesired": info["tuto_desired_good"],
-        "trainingT": info["tuto_t"],
-        "trainingTMax": info["tuto_t_max"],
-        "trainingScore": info["tuto_score"],
-
-    }
-
-    if not wait:
         game.consumers.WSDialog.group_send(
             group='welcome',
-            data={'wait': wait, 'progress': progress}
+            data={'wait': True, 'progress': progress}
         )
+
+    else:
+
+        users = game.room.client.get_all_users(rm=rm)
+
+        for user in users:
+
+            info = game.user.client.connect(
+                device_id=user.device_id,
+                skip_survey=args.skip_survey,
+                skip_tutorial=args.skip_tutorial
+            )[0]
+
+            info.update({'wait': False})
+
+            game.consumers.WSDialog.group_send(group=f'user-{user.id}', data=info)
 
     return to_reply
 
@@ -142,7 +133,7 @@ def survey(args):
     if not wait:
         game.consumers.WSDialog.group_send(
             group='survey',
-            data={'wait': wait, 'progress': progress}
+            data={'wait': False, 'progress': progress}
         )
 
     to_reply = {
@@ -201,7 +192,7 @@ def training_done(args):
     if not wait:
         game.consumers.WSDialog.group_send(
             group='tutorial',
-            data={'wait': wait, 'progress': progress}
+            data={'wait': False, 'progress': progress}
         )
 
     to_reply = {
@@ -244,7 +235,7 @@ def choice(args):
     if wait:
         game.consumers.WSDialog.group_send(
             group='game',
-            data={'wait': wait, 'progress': progress}
+            data={'wait': True, 'progress': progress}
         )
 
     else:

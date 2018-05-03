@@ -44,7 +44,7 @@ class WebSocketConsumer(JsonWebsocketConsumer):
             raise Exception('Bad demand')
 
         # Remove user from all other groups
-        for group in demand_state_mapping.values():
+        for group in demand_state_mapping.keys():
             self._group_discard(group=group)
 
         self._group_add(group=state)

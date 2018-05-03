@@ -38,7 +38,7 @@ class KeyTuto:
 
 class KeyTutoDone:
 
-    demand ="demand"
+    demand = "demand"
     user_id = "userId"
 # -------------- Play -------------------- #
 
@@ -110,6 +110,7 @@ class BotClient:
     def _request(self, data):
 
         print("sending ", data)
+        self.wait_for_server = True
         self.ws.send(json.dumps(data))
 
     def on_open(self, *args):
@@ -133,8 +134,6 @@ class BotClient:
         if isinstance(data, dict):
             # execution of reply function with response
             if 'demand' in data:
-                if 'tamere' in data:
-                    print(data)
                 func = getattr(self, "reply_" + data["demand"])
                 func(data)
             else:
@@ -172,7 +171,7 @@ class BotClient:
 
         self.n_good = args["nGood"]
 
-        if args["goodDesired"]:
+        if args["goodDesired"] != -2:
             self.desired_good = args["goodDesired"]
 
         else:
@@ -180,7 +179,7 @@ class BotClient:
 
         self.training_good_in_hand = args["trainingGoodInHand"]
 
-        if args["trainingGoodDesired"]:
+        if args["trainingGoodDesired"] != -2:
             self.training_desired_good = args["trainingGoodDesired"]
 
         else:
@@ -229,7 +228,7 @@ class BotClient:
 
         if not args["wait"]:
 
-            if args["trainingSuccess"] is not None:
+            if args["trainingSuccess"] != -2:
 
                 if args["trainingSuccess"]:
 
@@ -274,7 +273,7 @@ class BotClient:
 
         if not args["wait"]:
 
-            if args["success"] is not None:
+            if args["success"] != -2:
 
                 if args["success"]:
 
