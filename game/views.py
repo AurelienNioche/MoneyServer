@@ -4,6 +4,8 @@ from utils import utils
 
 from game.forms import ClientRequestForm
 
+from dashboard.models import IntParameter
+
 import game.trial_views
 import game.user.client
 import game.room.client
@@ -62,9 +64,8 @@ def client_request(request):
 
     # utils.log("Post request: {}".format(list(to_reply.items())), f=client_request)
 
-    to_reply["demand"] = demand
-    to_reply["skipSurvey"] = skip_survey
-    to_reply["skipTutorial"] = skip_tutorial
+    to_reply['demand'] = demand
+    to_reply['messageId'] = _increment_message_id()
 
     response = to_reply
 
@@ -297,4 +298,25 @@ def _set_headers(response):
     response["Access-Control-Allow-Origin"] = "*"
 
     return response
+
+
+def _increment_message_id():
+
+    message_count = IntParameter.objects.filter(name="message_count").first()
+
+    if not message_count:
+
+        message_count = IntParameter(name="message_count", value=0, unit="int")
+
+        message_count.save()
+
+    message_count.value += 1
+
+    message_count.save()
+
+    return message_count.value
+
+
+
+
 
