@@ -40,13 +40,12 @@ class WebSocketConsumer(JsonWebsocketConsumer):
             self._group_add(group=f'user-{user_id}')
 
         if demand == 'choice':
-
             self._group_add(f'game-t-{t}')
             self._group_discard(f'game-t-{t-1}')
-            self._group_discard('tutorial-done')
+            self._group_discard('training-done')
 
-        if demand == 'tutorial-done':
-            self._group_add('tutorial-done')
+        if demand == 'training_done':
+            self._group_add('training-done')
 
         # Remove user from all other groups
         for group in demand_state_mapping.keys():

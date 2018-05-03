@@ -197,7 +197,7 @@ def training_done(args):
     )
 
     game.consumers.WSDialog.group_send(
-        group='tutorial-done',
+        group='training-done',
         data={'wait': wait, 'progress': progress}
     )
 
