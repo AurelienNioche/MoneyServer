@@ -87,6 +87,7 @@ def init(args):
     )
 
     to_reply.update({'wait': wait})
+    to_reply.update({'progress': progress})
 
     if state != to_reply['step']:
         to_reply.update({'step': state})
