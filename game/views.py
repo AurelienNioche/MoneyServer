@@ -240,6 +240,8 @@ def choice(args):
         )
 
     else:
+
+
         users = game.room.client.get_results_for_all_users(rm=rm, t=args.t)
 
         for user_result in users:

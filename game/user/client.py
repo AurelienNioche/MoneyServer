@@ -63,10 +63,12 @@ def connect(device_id, skip_survey, skip_tutorial):
     # only get desired good if it exists
     # (meaning it is a reconnection and not a first connection)
     relative_desired_good = \
-        _get_relative_good(u=u, good=desired_good, rm=rm) if desired_good is not None else -2
+        _get_relative_good(u=u, good=desired_good, rm=rm)\
+        if desired_good is not None else -2
 
     relative_tuto_desired_good = \
-        _get_relative_good(u=u, good=tuto_desired_good, rm=rm) if tuto_desired_good is not None else -2
+        _get_relative_good(u=u, good=tuto_desired_good, rm=rm)\
+        if tuto_desired_good is not None else -2
 
     skip_state = _handle_skip_options(
         u=u,
