@@ -15,8 +15,9 @@ class WebSocketConsumer(JsonWebsocketConsumer):
 
     def disconnect(self, close_code):
 
-        for state in demand_state_mapping.keys():
-            self._group_discard(group=state)
+        pass
+        # for state in demand_state_mapping.keys():
+        #     self._group_discard(group=state)
 
     def receive_json(self, content, **kwargs):
 
@@ -28,15 +29,14 @@ class WebSocketConsumer(JsonWebsocketConsumer):
         # Add user to groups
         self._on_receive(to_reply)
 
-    def _on_receive(self, content):
+    def _on_receive(self, to_reply):
 
-        user_id = content.get('userId')
-        demand = content.get('demand')
-        t = content.get('t')
+        user_id = to_reply.get('userId')
+        demand = to_reply.get('demand')
+        t = to_reply.get('t')
         state = demand_state_mapping.get(demand)
 
         if user_id:
-
             self._group_add(group=f'user-{user_id}')
 
         if demand == 'choice':
