@@ -4,5 +4,5 @@ from . import consumers
 
 
 websocket_urlpatterns = [
-    path('', consumers.WebSocketConsumer)
+    path('/ws/', consumers.WebSocketConsumer)
 ]
