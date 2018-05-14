@@ -6,21 +6,21 @@ def get_progress_for_current_state(rm, u):
 
     # ----- Get progress ----------------------------------------------- #
 
-    if u.state == states.welcome:
+    if u.state == states.WELCOME:
 
         # Count users assigned to the room
         n_user = User.objects.filter(room_id=rm.id).count()
 
         return round(n_user / rm.n_user * 100)
 
-    elif u.state == states.survey:
+    elif u.state == states.SURVEY:
 
         # Get player with age and gender assigned
         n_user = User.objects.filter(room_id=rm.id).exclude(age=None).count()
 
         return round(n_user / rm.n_user * 100)
 
-    elif u.state == states.tutorial:
+    elif u.state == states.TRAINING:
 
         if u.tutorial_done:
 
@@ -34,7 +34,7 @@ def get_progress_for_current_state(rm, u):
             # players don't wait for other's choices
             return 100
 
-    elif u.state in (states.game, states.end, ):
+    elif u.state in (states.GAME, states.END, ):
 
         return round(rm.t / rm.t_max * 100)
 

@@ -133,21 +133,21 @@ def state_verification(u, rm, progress, t, demand, success=None):
 
     if demand == game.views.init:
 
-        if u.state == game.room.state.states.welcome:
+        if u.state == game.room.state.states.WELCOME:
 
             u = game.user.state.next_state(
                         u=u,
-                        state=game.room.state.states.survey
+                        state=game.room.state.states.SURVEY
             )
 
             wait = progress != 100
 
             if not wait:
 
-                if rm.state == game.room.state.states.welcome:
+                if rm.state == game.room.state.states.WELCOME:
                     game.room.state.next_state(
                         rm=rm,
-                        state=game.room.state.states.survey
+                        state=game.room.state.states.SURVEY
                     )
 
         else:
@@ -157,21 +157,21 @@ def state_verification(u, rm, progress, t, demand, success=None):
 
     elif demand == game.views.survey:
 
-        if u.state == game.room.state.states.survey:
+        if u.state == game.room.state.states.SURVEY:
 
             u = game.user.state.next_state(
                             u=u,
-                            state=game.room.state.states.tutorial,
+                            state=game.room.state.states.TRAINING,
             )
 
             wait = progress != 100
 
             if not wait:
 
-                if rm.state == game.room.state.states.survey:
+                if rm.state == game.room.state.states.SURVEY:
                     game.room.state.next_state(
                         rm=rm,
-                        state=game.room.state.states.tutorial
+                        state=game.room.state.states.TRAINING
                     )
 
         else:
@@ -189,22 +189,22 @@ def state_verification(u, rm, progress, t, demand, success=None):
 
     elif demand == game.views.training_done:
 
-        if u.state == game.room.state.states.tutorial:
+        if u.state == game.room.state.states.TRAINING:
 
             u = game.user.state.next_state(
                             u=u,
-                            state=game.room.state.states.game,
+                            state=game.room.state.states.GAME,
             )
 
             wait = progress != 100
 
             if not wait:
 
-                if rm.state == game.room.state.states.tutorial:
+                if rm.state == game.room.state.states.TRAINING:
 
                     game.room.state.next_state(
                         rm=rm,
-                        state=game.room.state.states.game
+                        state=game.room.state.states.GAME
                     )
 
         else:
@@ -222,16 +222,16 @@ def state_verification(u, rm, progress, t, demand, success=None):
 
         if end:
 
-            if rm.state == game.room.state.states.game:
+            if rm.state == game.room.state.states.GAME:
                 game.room.state.next_state(
                     rm=rm,
-                    state=game.room.state.states.end
+                    state=game.room.state.states.END
                 )
 
-            if u.state == game.room.state.states.game:
+            if u.state == game.room.state.states.GAME:
                 u = game.user.state.next_state(
                     u=u,
-                    state=game.room.state.states.end
+                    state=game.room.state.states.END
                 )
 
         return u.state, wait, t, end

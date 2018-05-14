@@ -4,25 +4,25 @@ from collections import namedtuple
 # Global states
 States = namedtuple(
     'States',
-    ['welcome', 'survey', 'tutorial', 'game', 'end']
+    ['WELCOME', 'SURVEY', 'TRAINING', 'GAME', 'END']
 )
 
 states = States(
-    welcome='welcome',
-    survey='survey',
-    tutorial='tutorial',
-    game='game',
-    end='end'
+    WELCOME='welcome',
+    SURVEY='survey',
+    TRAINING='training',
+    GAME='game',
+    END='end'
 )
 
 
 demand_state_mapping = {
-    'init': states.welcome,
-    'survey': states.survey,
-    'training': states.tutorial,
-    'training_choice': states.tutorial,
-    'training_done': states.tutorial,
-    'choice': states.game
+    'init': states.WELCOME,
+    'survey': states.SURVEY,
+    'training': states.TRAINING,
+    'training_choice': states.TRAINING,
+    'training_done': states.TRAINING,
+    'choice': states.GAME
 }
 
 
@@ -40,7 +40,7 @@ def next_state(rm, state):
 
     # If room's state is end
     # definitely close the room
-    if state == states.end:
+    if state == states.END:
         rm.opened = False
 
     # utils.log("Room {} goes to state {}".format(rm.id, rm.state), f=next_state)

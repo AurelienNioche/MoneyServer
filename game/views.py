@@ -95,18 +95,17 @@ def init(args):
     if wait:
 
         game.consumers.WSDialog.group_send(
-            group='welcome',
+            group=game.room.state.states.WELCOME,
             data={'wait': True, 'progress': progress}
         )
 
     else:
 
-        users = game.room.client.get_all_users(rm=rm)
+        users = game.room.client.get_all_users(rm=rm).exclude(id=u.id)
 
         for user in users:
 
-            if user.id != u.id\
-                    and user.state == game.room.state.states.survey:
+            if user.state == game.room.state.states.SURVEY:
 
                 info = game.user.client.connect(
                     device_id=user.device_id,
@@ -139,7 +138,7 @@ def survey(args):
     )
 
     game.consumers.WSDialog.group_send(
-        group='survey',
+        group=game.room.state.states.SURVEY,
         data={'wait': wait, 'progress': progress}
     )
 
@@ -247,11 +246,10 @@ def choice(args):
 
     else:
 
-        users = game.room.client.get_results_for_all_users(rm=rm, t=args.t)
+        # Get results for all users except the one asking
+        users = game.room.client.get_results_for_all_users(rm=rm, t=args.t).exclude(id=u.id)
 
         for user_result in users:
-
-            if user_result.id != u.id:
 
                 data = {
                     "wait": False,

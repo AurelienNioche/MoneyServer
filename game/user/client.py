@@ -299,7 +299,7 @@ def _get_user_production_good(rm, u):
 
 def get_absolute_good(u, rm, good):
 
-    mapping = np.ones(rm.n_type, dtype=int) * - 1
+    mapping = np.ones(rm.n_type, dtype=int) * -5
 
     mapping[0] = u.production_good
     mapping[1] = u.consumption_good
@@ -311,7 +311,7 @@ def get_absolute_good(u, rm, good):
     cond1 = goods != u.consumption_good
     medium_goods = np.array(goods[cond0 * cond1])
 
-    a = int(np.sum(mapping != -1))
+    a = int(np.sum(mapping != -5))
     b = len(mapping)
 
     mapping[np.arange(a, b)] = medium_goods
@@ -322,7 +322,7 @@ def get_absolute_good(u, rm, good):
 
 def _get_relative_good(u, rm, good):
 
-    mapping = np.ones(rm.n_type, dtype=int) * - 1
+    mapping = np.ones(rm.n_type, dtype=int) * -5
 
     mapping[u.production_good] = 0
     mapping[u.consumption_good] = 1
@@ -334,7 +334,7 @@ def _get_relative_good(u, rm, good):
     cond1 = goods != u.consumption_good
     medium_goods = np.array(goods[cond0 * cond1])
 
-    a = int(np.sum(mapping != -1))
+    a = int(np.sum(mapping != -5))
     b = len(mapping)
 
     mapping[medium_goods] = np.arange(a, b)
@@ -410,9 +410,9 @@ def _handle_skip_options(u, rm, skip_tutorial, skip_survey):
     """
 
     if skip_tutorial:
-        skip_state = game.room.state.states.game
+        skip_state = game.room.state.states.GAME
     elif skip_survey:
-        skip_state = game.room.state.states.tutorial
+        skip_state = game.room.state.states.TRAINING
     else:
         skip_state = None
 
