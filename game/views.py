@@ -31,7 +31,7 @@ def client_request(request):
     if not demand:
         raise Exception('"demand" key is required.')
 
-    trial, skip_survey, skip_tutorial = game.params.client.is_trial()
+    trial, skip_survey, skip_training = game.params.client.is_trial()
 
     if not trial:
 
@@ -57,7 +57,7 @@ def client_request(request):
 
     args = _treat_args(
         request,
-        {"skip_tutorial": skip_tutorial, "skip_survey": skip_survey}
+        {"skip_training": skip_training, "skip_survey": skip_survey}
     )
 
     to_reply = func(args)
@@ -76,7 +76,7 @@ def init(args):
 
     to_reply, u, rm = game.user.client.connect(
         device_id=args.device_id,
-        skip_tutorial=args.skip_tutorial,
+        skip_training=args.skip_training,
         skip_survey=args.skip_survey,
     )
 
@@ -110,7 +110,7 @@ def init(args):
                 info = game.user.client.connect(
                     device_id=user.device_id,
                     skip_survey=args.skip_survey,
-                    skip_tutorial=args.skip_tutorial
+                    skip_training=args.skip_training
                 )[0]
 
                 info.update({'wait': False})
@@ -157,7 +157,7 @@ def training_choice(args):
 
     absolute_good = game.user.client.get_absolute_good(u=u, rm=rm, good=args.desired_good)
 
-    success, score = game.user.client.submit_tutorial_choice(
+    success, score = game.user.client.submit_training_choice(
         u=u,
         rm=rm,
         desired_good=absolute_good,
@@ -185,7 +185,7 @@ def training_choice(args):
 def training_done(args):
 
     u = game.user.client.get_user(user_id=args.user_id)
-    u = game.user.client.submit_tutorial_done(u=u)
+    u = game.user.client.submit_training_done(u=u)
 
     rm = game.room.client.get_room(room_id=u.room_id)
 
@@ -276,7 +276,7 @@ def _treat_args(request, options):
         Args = namedtuple(
             "Args",
             ["demand", "device_id", "user_id",
-             "age", "gender", "desired_good", "t", "skip_survey", "skip_tutorial"]
+             "age", "gender", "desired_good", "t", "skip_survey", "skip_training"]
         )
 
         args = Args(
@@ -287,7 +287,7 @@ def _treat_args(request, options):
             gender=form.cleaned_data.get("sex"),
             desired_good=form.cleaned_data.get("good"),
             t=form.cleaned_data.get("t"),
-            skip_tutorial=options["skip_tutorial"],
+            skip_training=options["skip_training"],
             skip_survey=options["skip_survey"]
         )
 

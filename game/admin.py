@@ -7,8 +7,8 @@ from . models import User, BoolParameter, Choice, TutorialChoice, Room
 class UserAdmin(admin.ModelAdmin):
     list_display = (
         "id", "room_id", "device_id", "pseudo", "consumption_good",
-        "production_good", "tutorial_done", "gender", "age", "state", 'score',
-        'tutorial_score', 'player_id'
+        "production_good", "training_done", "gender", "age", "state", 'score',
+        'training_score', 'player_id'
     )
 
 
@@ -24,7 +24,7 @@ class ChoiceAdmin(admin.ModelAdmin):
 
 class RoomAdmin(admin.ModelAdmin):
     list_display = (
-        'id', 'n_user', 'opened', 't', 'tutorial_t', 't_max', 'tutorial_t_max', "state", "n_type", "types"
+        'id', 'n_user', 'opened', 't', 'training_t', 't_max', 'training_t_max', "state", "n_type", "types"
     )
 
 

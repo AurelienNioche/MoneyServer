@@ -9,7 +9,7 @@ def init(request):
         "wait": False,
         "progress": 50,
 
-        "step": "tutorial",
+        "step": "training",
 
         "tutoT": 0,
         "tutoTMax": 5,
@@ -37,14 +37,14 @@ def survey(request):
     }
 
 
-def tutorial_done(request):
+def training_done(request):
     return {
         "wait": False,
         "progress": 100
     }
 
 
-def tutorial_choice(request):
+def training_choice(request):
     return {
         "wait": False,
         "progress": 100,

@@ -7,8 +7,8 @@ class Room(models.Model):
     types = models.TextField(default=None, null=True)
     t = models.IntegerField(default=None, null=True)
     t_max = models.IntegerField(default=None, null=True)
-    tutorial_t = models.IntegerField(default=None, null=True)
-    tutorial_t_max = models.IntegerField(default=None, null=True)
+    training_t = models.IntegerField(default=None, null=True)
+    training_t_max = models.IntegerField(default=None, null=True)
     trial = models.BooleanField(default=False)
     opened = models.BooleanField(default=True)
     state = models.TextField(default=None, null=True)
@@ -24,8 +24,8 @@ class User(models.Model):
     production_good = models.IntegerField(default=None, null=True)
     consumption_good = models.IntegerField(default=None, null=True)
     score = models.IntegerField(default=0)
-    tutorial_done = models.NullBooleanField(default=None, null=True)
-    tutorial_score = models.IntegerField(default=None, null=True)
+    training_done = models.NullBooleanField(default=None, null=True)
+    training_score = models.IntegerField(default=None, null=True)
     state = models.TextField(default=None, null=True)
 
     class Meta:

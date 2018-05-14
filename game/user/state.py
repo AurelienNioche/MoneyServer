@@ -22,15 +22,15 @@ def get_progress_for_current_state(rm, u):
 
     elif u.state == states.TRAINING:
 
-        if u.tutorial_done:
+        if u.training_done:
 
-            n_user = User.objects.filter(room_id=rm.id, tutorial_done=True).count()
+            n_user = User.objects.filter(room_id=rm.id, training_done=True).count()
 
             return round(n_user / rm.n_user * 100)
 
         else:
 
-            # During tutorial, progression is always 100 because
+            # During training, progression is always 100 because
             # players don't wait for other's choices
             return 100
 

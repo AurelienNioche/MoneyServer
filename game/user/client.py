@@ -21,7 +21,7 @@ def get_user(user_id):
     return u
 
 
-def connect(device_id, skip_survey, skip_tutorial):
+def connect(device_id, skip_survey, skip_training):
 
     with transaction.atomic():
         # Get opened room
@@ -54,7 +54,7 @@ def connect(device_id, skip_survey, skip_tutorial):
             _get_user_last_known_goods(u=u, rm=rm, t=rm.t)
 
         tuto_choice_made, tuto_good_in_hand, tuto_desired_good = \
-            _get_user_last_known_goods(u=u, rm=rm, t=rm.tutorial_t, tuto=True)
+            _get_user_last_known_goods(u=u, rm=rm, t=rm.training_t, tuto=True)
 
     # Get relative good_in_hand
     relative_good_in_hand = _get_relative_good(u=u, good=good_in_hand, rm=rm)
@@ -73,7 +73,7 @@ def connect(device_id, skip_survey, skip_tutorial):
     skip_state = _handle_skip_options(
         u=u,
         rm=rm,
-        skip_tutorial=skip_tutorial,
+        skip_training=skip_training,
         skip_survey=skip_survey
     )
 
@@ -97,12 +97,12 @@ def connect(device_id, skip_survey, skip_tutorial):
 
         "trainingGoodInHand": relative_tuto_good_in_hand,
         "trainingGoodDesired": relative_tuto_desired_good,
-        "trainingTMax": rm.tutorial_t_max,
-        "trainingT": rm.tutorial_t,
-        "trainingScore": u.tutorial_score,
+        "trainingTMax": rm.training_t_max,
+        "trainingT": rm.training_t,
+        "trainingScore": u.training_score,
 
         # "skipSurvey": skip_survey,
-        # "skipTutorial": skip_tutorial
+        # "skipTutorial": skip_training
     }
 
     return info, u, rm
@@ -117,12 +117,12 @@ def submit_survey(u, age, gender):
         u.save(update_fields=["age", "gender"])
 
 
-def submit_tutorial_done(u):
+def submit_training_done(u):
 
-    if not u.tutorial_done:
+    if not u.training_done:
 
-        u.tutorial_done = True
-        u.save(update_fields=["tutorial_done"])
+        u.training_done = True
+        u.save(update_fields=["training_done"])
 
     return u
 
@@ -152,7 +152,7 @@ def submit_choice(rm, u, desired_good, t):
     return -2 if choice.success is None else choice.success, u.score
 
 
-def submit_tutorial_choice(u, rm, desired_good, t):
+def submit_training_choice(u, rm, desired_good, t):
 
     """
     TODO: Increase indirect exchange prob of success
@@ -172,7 +172,7 @@ def submit_tutorial_choice(u, rm, desired_good, t):
         choice = TutorialChoice.objects.filter(room_id=u.room_id, player_id=u.player_id, t=t).first()
 
         if not choice:
-            raise Exception("Error in 'submit_tutorial_choice': Did not found a choice entry.")
+            raise Exception("Error in 'submit_training_choice': Did not found a choice entry.")
 
         _check_choice_validity(u=u, choice=choice, desired_good=desired_good)
 
@@ -201,11 +201,11 @@ def submit_tutorial_choice(u, rm, desired_good, t):
 
         #  --------------------------------------------------------------------------------------------- #
 
-        u.tutorial_score += choice.success
+        u.training_score += choice.success
         choice.save(update_fields=['user_id', 'success', 'desired_good'])
-        u.save(update_fields=["tutorial_score"])
+        u.save(update_fields=["training_score"])
 
-    return choice.success, u.tutorial_score
+    return choice.success, u.training_score
 
 # ------------------------------  Private functions (called inside the script) ----------------------------------- #
 
@@ -267,9 +267,9 @@ def _create_new_user(rm, device_id):
             player_id=player_id,
             pseudo=pseudo,
             room_id=rm.id,
-            tutorial_done=False,
+            training_done=False,
             score=0,
-            tutorial_score=0,
+            training_score=0,
             state=game.room.state.states.welcome
         )
 
@@ -355,7 +355,7 @@ def _get_user_last_known_goods(u, rm, t, tuto=False):
     :param u: user
     :param rm: room
     :param t: time
-    :param tuto: is it tutorial or not
+    :param tuto: is it training or not
     :return: choice_made, good_in_hand, desired_good
     """
 
@@ -401,7 +401,7 @@ def _check_choice_validity(u, choice, desired_good):
         )
 
 
-def _handle_skip_options(u, rm, skip_tutorial, skip_survey):
+def _handle_skip_options(u, rm, skip_training, skip_survey):
 
     """
     If skip options are enabled
@@ -409,7 +409,7 @@ def _handle_skip_options(u, rm, skip_tutorial, skip_survey):
     Change room's state as well as users' state.
     """
 
-    if skip_tutorial:
+    if skip_training:
         skip_state = game.room.state.states.GAME
     elif skip_survey:
         skip_state = game.room.state.states.TRAINING

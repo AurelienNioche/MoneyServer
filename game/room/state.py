@@ -50,8 +50,8 @@ def next_state(rm, state):
 def set_rm_timestep(rm, t, tuto):
 
     if tuto:
-        rm.tutorial_t = t
-        rm.save(update_fields=['tutorial_t'])
+        rm.training_t = t
+        rm.save(update_fields=['training_t'])
 
     else:
         rm.t = t

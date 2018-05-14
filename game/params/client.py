@@ -9,7 +9,7 @@ def is_trial():
 
         trial = BoolParameter.objects.filter(name="trial").first()
         skip_survey = BoolParameter.objects.filter(name="skip_survey").first()
-        skip_tutorial = BoolParameter.objects.filter(name="skip_tutorial").first()
+        skip_training = BoolParameter.objects.filter(name="skip_training").first()
 
         if not trial:
 
@@ -21,12 +21,12 @@ def is_trial():
             skip_survey = BoolParameter(name="skip_survey", value=True)
             skip_survey.save()
 
-        if not skip_tutorial:
+        if not skip_training:
 
-            skip_tutorial = BoolParameter(name="skip_tutorial", value=True)
-            skip_tutorial.save()
+            skip_training = BoolParameter(name="skip_training", value=True)
+            skip_training.save()
 
-        return trial.value, skip_survey.value, skip_tutorial.value
+        return trial.value, skip_survey.value, skip_training.value
 
 
 def create_default_room():

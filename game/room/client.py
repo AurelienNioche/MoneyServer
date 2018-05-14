@@ -60,7 +60,7 @@ def create_room():
 def create(data):
 
     t_max = int(data["t_max"])
-    tutorial_t_max = int(data["tutorial_t_max"])
+    training_t_max = int(data["training_t_max"])
 
     count_type = [int(v) for k, v in data.items() if k.startswith("x")]
     n_user = sum(count_type)
@@ -70,9 +70,9 @@ def create(data):
 
     rm = Room(
         t_max=t_max,
-        tutorial_t_max=tutorial_t_max,
+        training_t_max=training_t_max,
         t=0,
-        tutorial_t=0,
+        training_t=0,
         state=game.room.state.states.welcome,
         opened=True,
         n_user=n_user,
@@ -105,7 +105,7 @@ def create(data):
             desired_good=None,
             success=None
         )
-        for n in range(n_user) for t in range(tutorial_t_max)
+        for n in range(n_user) for t in range(training_t_max)
     ])
 
     return rm
@@ -183,7 +183,7 @@ def state_verification(u, rm, progress, t, demand, success=None):
 
         t += 1
         wait = False
-        end = t == rm.tutorial_t_max
+        end = t == rm.training_t_max
 
         return wait, t, end
 
