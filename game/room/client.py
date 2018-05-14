@@ -28,10 +28,10 @@ def get_all_users(rm):
     return User.objects.filter(room_id=rm.id)
 
 
-def get_results_for_all_users(rm, t):
+def get_results_for_all_users(rm, t, user_id):
 
-    choices = Choice.objects.filter(room_id=rm.id, t=t)
-    users = User.objects.filter(room_id=rm.id)
+    choices = Choice.objects.filter(room_id=rm.id, t=t).exclude(user_id=user_id)
+    users = User.objects.filter(room_id=rm.id).exclude(id=user_id)
 
     for u in users:
 

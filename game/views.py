@@ -247,7 +247,7 @@ def choice(args):
     else:
 
         # Get results for all users except the one asking
-        users = game.room.client.get_results_for_all_users(rm=rm, t=args.t).exclude(id=u.id)
+        users = game.room.client.get_results_for_all_users(rm=rm, t=args.t, user_id=u.id)
 
         for user_result in users:
 
