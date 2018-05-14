@@ -113,7 +113,7 @@ def create(data):
 
 def get_progression(u, rm, t, tuto=False):
 
-    if u.state == game.room.state.states.game:
+    if u.state == game.room.state.states.GAME:
 
         return game.room.state.get_progress_for_choices(rm=rm, t=t, tuto=tuto)
 
