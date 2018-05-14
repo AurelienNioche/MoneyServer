@@ -270,7 +270,7 @@ def _create_new_user(rm, device_id):
             training_done=False,
             score=0,
             training_score=0,
-            state=game.room.state.states.welcome
+            state=game.room.state.states.WELCOME
         )
 
         u.save()
