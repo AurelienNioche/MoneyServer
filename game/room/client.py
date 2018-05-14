@@ -73,7 +73,7 @@ def create(data):
         training_t_max=training_t_max,
         t=0,
         training_t=0,
-        state=game.room.state.states.welcome,
+        state=game.room.state.states.WELCOME,
         opened=True,
         n_user=n_user,
         n_type=n_type,
