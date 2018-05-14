@@ -169,10 +169,11 @@ class LogsView(TemplateView):
                 [f for f in os.listdir(parameters.logs_path)
                  if os.path.isfile("".join([parameters.logs_path, f]))]
             )
+            current_file = files[-1]
         else:
             files = []
+            current_file = []
 
-        current_file = files[-1]
         context.update({"current_file": current_file})
         context.update({"logs": self.refresh_logs(current_file)})
         context.update({"files": files})
@@ -221,7 +222,7 @@ class SettingsView(TemplateView):
     def post(self, request, *args, **kwargs):
 
         for k, v in request.POST.items():
-            value = True if v == "on" else False
+            value = v == "on"
             game.params.dashboard.set_parameter(k, value)
 
         return HttpResponse("Ok")

@@ -1,4 +1,5 @@
 #!/bin/bash
+
 #   set -e
 #   dirname=/home/getz/DuopolyDjango
 #   LOGFILE=./log/$(date +%F).log
