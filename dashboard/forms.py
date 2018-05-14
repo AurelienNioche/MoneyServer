@@ -15,7 +15,7 @@ class ParametersForm(forms.Form):
         initial=20,
     )
 
-    tutorial_t_max = forms.IntegerField(
+    training_t_max = forms.IntegerField(
         label="Tutorial Duration",
         required=True,
         initial=5,
