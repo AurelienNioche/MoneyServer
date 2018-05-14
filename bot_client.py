@@ -195,16 +195,18 @@ class BotClient:
         self.training_t = args["trainingT"]
         self.training_t_max = args["trainingTMax"]
 
-        mapping = {
-            "survey": self.survey,
-            "training": self.training,
-            "game": self.choice,
-            "end": self.end
-        }
+        if not args['wait']:
 
-        input(f'Go to state {args["step"]}?')
+            mapping = {
+                "survey": self.survey,
+                "training": self.training,
+                "game": self.choice,
+                "end": self.end
+            }
 
-        mapping[args['step']]()
+            input(f'Go to state {args["step"]}?')
+
+            mapping[args['step']]()
 
     def survey(self):
 
