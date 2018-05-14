@@ -160,8 +160,8 @@ def state_verification(u, rm, progress, t, demand, success=None):
         if u.state == game.room.state.states.SURVEY:
 
             u = game.user.state.next_state(
-                            u=u,
-                            state=game.room.state.states.TRAINING,
+                u=u,
+                state=game.room.state.states.TRAINING,
             )
 
             wait = progress != 100

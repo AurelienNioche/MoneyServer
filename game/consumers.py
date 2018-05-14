@@ -32,19 +32,22 @@ class WebSocketConsumer(JsonWebsocketConsumer):
     def _on_receive(self, to_reply):
 
         user_id = to_reply.get('userId')
-        demand = getattr(game.views, to_reply.get('demand'))
-        t = to_reply.get('t')
+
+        demand = to_reply.get('demand')
+        demand_func = getattr(game.views, demand) if isinstance(demand, str) else None
+
         state = demand_state_mapping.get(demand)
 
         if user_id:
             self._group_add(group=f'user-{user_id}')
 
-        if demand == game.views.choice:
+        if demand_func == game.views.choice:
+            t = to_reply.get('t')
             self._group_add(f'game-t-{t}')
             self._group_discard(f'game-t-{t-1}')
             self._group_discard('training-done')
 
-        if demand == game.views.training_done:
+        if demand_func == game.views.training_done:
             self._group_add('training-done')
 
         # Remove user from all other groups
