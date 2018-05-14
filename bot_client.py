@@ -197,7 +197,7 @@ class BotClient:
 
         mapping = {
             "survey": self.survey,
-            "tutorial": self.tutorial,
+            "training": self.training,
             "game": self.choice,
             "end": self.end
         }
@@ -221,11 +221,11 @@ class BotClient:
 
         if not args['wait']:
             input('Go to state training?')
-            self.tutorial()
+            self.training()
 
     # --------------------- tuto  ------------------------------------ #
 
-    def tutorial(self):
+    def training(self):
 
         self._request({
             KeyTuto.demand: "training_choice",
@@ -235,7 +235,7 @@ class BotClient:
             KeyTuto.t: self.training_t,
         })
 
-        self.last_request = self.tutorial.__name__
+        self.last_request = self.training.__name__
 
     def reply_training_choice(self, args):
 
@@ -355,7 +355,7 @@ def main(args):
 
     # url = "http://money.getz.fr/client_request/"
     # url = "http://127.0.0.1:8000/client_request/"
-    url = 'ws://51.15.6.148:8018/'
+    url = 'ws://money.getz.fr/ws/'
 
     if not args.number:
 
