@@ -216,7 +216,7 @@ def state_verification(u, rm, progress, t, demand, success=None):
         else:
             wait = _is_someone_in_the_current_state(
                 rm=rm,
-                state=game.room.state.states.SURVEY
+                state=game.room.state.states.TRAINING
             )
 
         return wait, u.state

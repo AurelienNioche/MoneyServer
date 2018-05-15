@@ -1,4 +1,3 @@
-from game.room.state import states
 from game.models import User
 import game.views
 
