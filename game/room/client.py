@@ -111,15 +111,15 @@ def create(data):
     return rm
 
 
-def get_progression(u, rm, t, tuto=False):
+def get_progression(demand, rm, t, tuto=False):
 
-    if u.state == game.room.state.states.GAME:
+    if demand == game.views.choice:
 
         return game.room.state.get_progress_for_choices(rm=rm, t=t, tuto=tuto)
 
     else:
 
-        return game.user.state.get_progress_for_current_state(u=u, rm=rm)
+        return game.user.state.get_progress_for_current_state(demand=demand, rm=rm)
 
 
 def state_verification(u, rm, progress, t, demand, success=None):

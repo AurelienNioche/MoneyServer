@@ -80,7 +80,7 @@ def init(args):
         skip_survey=args.skip_survey,
     )
 
-    progress = game.room.client.get_progression(u=u, rm=rm, t=args.t)
+    progress = game.room.client.get_progression(demand=init, rm=rm, t=args.t)
 
     wait, state = game.room.client.state_verification(
         u=u, rm=rm, t=args.t, progress=progress, demand=init,
@@ -131,7 +131,7 @@ def survey(args):
         age=args.age,
     )
 
-    progress = game.room.client.get_progression(u=u, rm=rm, t=args.t)
+    progress = game.room.client.get_progression(demand=survey, rm=rm, t=args.t)
 
     wait, state = game.room.client.state_verification(
         u=u, rm=rm, t=args.t, progress=progress, demand=survey
@@ -164,7 +164,7 @@ def training_choice(args):
         t=args.t
     )
 
-    progress = game.room.client.get_progression(u=u, rm=rm, t=args.t, tuto=True)
+    progress = game.room.client.get_progression(demand=training_choice, rm=rm, t=args.t, tuto=True)
 
     wait, t, end = game.room.client.state_verification(
         rm=rm, u=u, t=args.t, progress=progress, demand=training_choice
@@ -189,7 +189,7 @@ def training_done(args):
 
     rm = game.room.client.get_room(room_id=u.room_id)
 
-    progress = game.room.client.get_progression(u=u, rm=rm, t=args.t)
+    progress = game.room.client.get_progression(demand=training_done, rm=rm, t=args.t)
 
     wait, state = game.room.client.state_verification(
         u=u, rm=rm, t=args.t, progress=progress, demand=training_done
@@ -222,7 +222,7 @@ def choice(args):
         t=args.t
     )
 
-    progress = game.room.client.get_progression(u=u, rm=rm, t=args.t)
+    progress = game.room.client.get_progression(demand=choice, rm=rm, t=args.t)
 
     state, wait, t, end = game.room.client.state_verification(
         rm=rm, u=u, t=args.t, progress=progress, demand=choice, success=success

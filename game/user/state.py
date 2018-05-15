@@ -1,26 +1,27 @@
 from game.room.state import states
 from game.models import User
+import game.views
 
 
-def get_progress_for_current_state(rm, u):
+def get_progress_for_current_state(rm, demand):
 
     # ----- Get progress ----------------------------------------------- #
 
-    if u.state == states.WELCOME:
+    if demand == game.views.init:
 
         # Count users assigned to the room
         n_user = User.objects.filter(room_id=rm.id).count()
 
         return round(n_user / rm.n_user * 100)
 
-    elif u.state == states.SURVEY:
+    elif demand == game.views.survey:
 
         # Get player with age and gender assigned
         n_user = User.objects.filter(room_id=rm.id).exclude(age=None).count()
 
         return round(n_user / rm.n_user * 100)
 
-    elif u.state == states.TRAINING:
+    elif demand in (game.views.training_choice, game.views.training_done):
 
         if u.training_done:
 
@@ -34,7 +35,7 @@ def get_progress_for_current_state(rm, u):
             # players don't wait for other's choices
             return 100
 
-    elif u.state in (states.GAME, states.END, ):
+    elif demand == game.views.choice:
 
         return round(rm.t / rm.t_max * 100)
 
