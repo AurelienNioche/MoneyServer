@@ -151,8 +151,8 @@ def state_verification(u, rm, progress, t, demand, success=None):
                     )
 
         else:
-            wait = False
-        
+            wait = _is_someone_in_the_current_state(rm=rm, state=u.state)
+
         return wait, u.state
 
     elif demand == game.views.survey:
@@ -175,7 +175,7 @@ def state_verification(u, rm, progress, t, demand, success=None):
                     )
 
         else:
-            wait = False
+            wait = _is_someone_in_the_current_state(rm=rm, state=u.state)
 
         return wait, u.state
 
@@ -208,7 +208,7 @@ def state_verification(u, rm, progress, t, demand, success=None):
                     )
 
         else:
-            wait = False
+            wait = _is_someone_in_the_current_state(rm=rm, state=u.state)
 
         return wait, u.state
 
@@ -335,3 +335,10 @@ def _compute_score_and_final_good(c):
 
     else:
         raise Exception("User is not found for that exchange.")
+
+
+def _is_someone_in_the_current_state(state, rm):
+
+    users = User.object.filter(room_id=rm.id).only('state')
+
+    return state in [u.state for u in users]
