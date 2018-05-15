@@ -151,7 +151,10 @@ def state_verification(u, rm, progress, t, demand, success=None):
                     )
 
         else:
-            wait = _is_someone_in_the_current_state(rm=rm, state=u.state)
+            wait = _is_someone_in_the_current_state(
+                rm=rm,
+                state=game.room.state.states.WELCOME
+            )
 
         return wait, u.state
 
@@ -175,7 +178,11 @@ def state_verification(u, rm, progress, t, demand, success=None):
                     )
 
         else:
-            wait = _is_someone_in_the_current_state(rm=rm, state=u.state)
+            wait = _is_someone_in_the_current_state(
+                rm=rm,
+                state=game.room.state.states.SURVEY
+            )
+
 
         return wait, u.state
 
@@ -208,7 +215,10 @@ def state_verification(u, rm, progress, t, demand, success=None):
                     )
 
         else:
-            wait = _is_someone_in_the_current_state(rm=rm, state=u.state)
+            wait = _is_someone_in_the_current_state(
+                rm=rm,
+                state=game.room.state.states.SURVEY
+            )
 
         return wait, u.state
 
