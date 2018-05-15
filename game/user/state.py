@@ -21,19 +21,16 @@ def get_progress_for_current_state(rm, demand):
 
         return round(n_user / rm.n_user * 100)
 
-    elif demand in (game.views.training_choice, game.views.training_done):
+    elif demand == game.views.training_choice:
+        # During training, progression is always 100 because
+        # players don't wait for other's choices
+        return 100
 
-        if u.training_done:
+    elif demand == game.views.training_done:
 
-            n_user = User.objects.filter(room_id=rm.id, training_done=True).count()
+        n_user = User.objects.filter(room_id=rm.id, training_done=True).count()
 
-            return round(n_user / rm.n_user * 100)
-
-        else:
-
-            # During training, progression is always 100 because
-            # players don't wait for other's choices
-            return 100
+        return round(n_user / rm.n_user * 100)
 
     elif demand == game.views.choice:
 
