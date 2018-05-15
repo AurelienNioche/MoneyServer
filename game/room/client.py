@@ -183,7 +183,6 @@ def state_verification(u, rm, progress, t, demand, success=None):
                 state=game.room.state.states.SURVEY
             )
 
-
         return wait, u.state
 
     elif demand == game.views.training_choice:
@@ -351,4 +350,4 @@ def _is_someone_in_the_current_state(state, rm):
 
     users = User.objects.filter(room_id=rm.id).only('state')
 
-    return state in [u.state for u in users]
+    return state in [u.state for u in users] and users.count() == rm.n_user
