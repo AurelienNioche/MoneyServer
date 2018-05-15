@@ -349,6 +349,6 @@ def _compute_score_and_final_good(c):
 
 def _is_someone_in_the_current_state(state, rm):
 
-    users = User.object.filter(room_id=rm.id).only('state')
+    users = User.objects.filter(room_id=rm.id).only('state')
 
     return state in [u.state for u in users]
