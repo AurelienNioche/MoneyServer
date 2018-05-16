@@ -70,7 +70,7 @@ class WebSocketConsumer(JsonWebsocketConsumer):
         """
 
         try:
-            print('\nSending to group {group}: {data}\n')
+            print(f'\nSending to group {group}: {data}\n')
         except UnicodeEncodeError:
             print('Error printing request.')
 
@@ -120,7 +120,7 @@ class WSDialog:
         channel_layer = get_channel_layer()
 
         try:
-            print('\nSending to group {group}: {data}\n')
+            print(f'\nSending to group {group}: {data}\n')
         except UnicodeEncodeError:
             print('Error printing request.')
 
