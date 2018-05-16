@@ -65,7 +65,7 @@ class WebSocketConsumer(JsonWebsocketConsumer):
         :return:
         """
 
-        print('\nSending to group {}: {}\n'.format(group, data))
+        print(str('\nSending to group {group}: {data}\n', encoding='utf-8'))
 
         async_to_sync(self.channel_layer.group_send)(
             group,
@@ -112,7 +112,7 @@ class WSDialog:
 
         channel_layer = get_channel_layer()
 
-        print('\nSending to group {}: {}\n'.format(group, data))
+        print(str('\nSending to group {group}: {data}\n', encoding='utf-8'))
 
         async_to_sync(channel_layer.group_send)(
             group,
