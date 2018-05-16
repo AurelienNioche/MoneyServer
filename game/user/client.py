@@ -235,14 +235,17 @@ def _triggers_matching(rm, t):
 
 def _set_current_choice(rm, u, desired_good, t):
 
-    current_choice = Choice.objects.filter(room_id=rm.id, t=t, player_id=u.player_id).first()
+    with transaction.atomic():
 
-    _check_choice_validity(u=u, choice=current_choice, desired_good=desired_good)
+        choices = Choice.objects.select_for_update().filter(room_id=rm.id)
+        current_choice = choices.filter(t=t, player_id=u.player_id).first()
 
-    current_choice.user_id = u.id
-    current_choice.desired_good = desired_good
+        _check_choice_validity(u=u, choice=current_choice, desired_good=desired_good)
 
-    current_choice.save(update_fields=["user_id", "desired_good"])
+        current_choice.user_id = u.id
+        current_choice.desired_good = desired_good
+
+        current_choice.save(update_fields=["user_id", "desired_good"])
 
 
 def _create_new_user(rm, device_id):
