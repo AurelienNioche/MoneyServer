@@ -64,7 +64,9 @@ class WebSocketConsumer(JsonWebsocketConsumer):
         :param data:
         :return:
         """
-        print(f'\nSending to group {group}: {data}\n')
+
+        print('\nSending to group {}: {}\n'.format(group, data))
+
         async_to_sync(self.channel_layer.group_send)(
             group,
             {'type': 'group.message', 'text': data}
