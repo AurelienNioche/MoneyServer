@@ -112,7 +112,7 @@ class WSDialog:
 
         channel_layer = get_channel_layer()
 
-        print(f'\nSending to group {group}: {data}\n')
+        print('\nSending to group {}: {}\n'.format(group, data))
 
         async_to_sync(channel_layer.group_send)(
             group,
