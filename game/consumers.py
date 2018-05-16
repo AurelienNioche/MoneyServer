@@ -21,7 +21,7 @@ class WebSocketConsumer(JsonWebsocketConsumer):
 
     def receive_json(self, content, **kwargs):
 
-        to_reply = async_to_sync(game.views.client_request(content))
+        to_reply = game.views.client_request(content)
 
         self.send_json(to_reply)
 
