@@ -65,7 +65,10 @@ class WebSocketConsumer(JsonWebsocketConsumer):
         :return:
         """
 
-        print('\nSending to group {group}: {data}\n')
+        try:
+            print('\nSending to group {group}: {data}\n')
+        except UnicodeEncodeError:
+            print('Error printing request.')
 
         async_to_sync(self.channel_layer.group_send)(
             group,
@@ -112,7 +115,10 @@ class WSDialog:
 
         channel_layer = get_channel_layer()
 
-        print(f'\nSending to group {group}: {data}\n')
+        try:
+            print('\nSending to group {group}: {data}\n')
+        except UnicodeEncodeError:
+            print('Error printing request.')
 
         async_to_sync(channel_layer.group_send)(
             group,
