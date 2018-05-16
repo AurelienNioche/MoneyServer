@@ -24,7 +24,11 @@ class WebSocketConsumer(JsonWebsocketConsumer):
         to_reply = game.views.client_request(content)
 
         self.send_json(to_reply)
-        print(f"\nSending: {to_reply}\n")
+
+        try:
+            print(f"\nSending: {to_reply}\n")
+        except UnicodeEncodeError:
+            print('Error printing request.')
 
         # Add user to groups
         self._on_receive(to_reply)
