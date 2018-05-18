@@ -173,6 +173,7 @@ class BotClient:
         self.user_id = args["userId"]
 
         self.good_in_hand = args["goodInHand"]
+        self.training_good_in_hand = args["trainingGoodInHand"]
 
         self.n_good = args["nGood"]
 
@@ -181,8 +182,6 @@ class BotClient:
 
         else:
             self.desired_good = self.get_desired_good()
-
-        self.training_good_in_hand = args["trainingGoodInHand"]
 
         if args["trainingGoodDesired"] != -2:
             self.training_desired_good = args["trainingGoodDesired"]

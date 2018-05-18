@@ -202,5 +202,10 @@ Change state if needed. return if client has to wait and state. Different states
     
 * Communicate response to group (except 'training_choice') 
 
-* Return response to single user
+* Return response to Consumer instance
+
+* The Consumer instance gets the response and send it to the client
+
+* Then the consumer call the on_receive method and do all the group operations (removing, adding) based on
+the content of the response dictionnary
 

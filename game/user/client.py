@@ -279,6 +279,8 @@ def _create_new_user(rm, device_id):
         u.save()
 
         u.production_good = _get_user_production_good(rm, u)
+
+        # prod i - 1 rule
         u.consumption_good = (u.production_good - 1) % rm.n_type
 
         u.save(update_fields=["production_good", "consumption_good"])
