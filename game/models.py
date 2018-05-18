@@ -24,8 +24,8 @@ class User(models.Model):
     production_good = models.IntegerField(default=None, null=True)
     consumption_good = models.IntegerField(default=None, null=True)
     score = models.IntegerField(default=0)
-    training_done = models.NullBooleanField(default=None, null=True)
-    training_score = models.IntegerField(default=None, null=True)
+    # training_done = models.NullBooleanField(default=None, null=True)
+    # training_score = models.IntegerField(default=None, null=True)
     state = models.TextField(default=None, null=True)
 
     class Meta:

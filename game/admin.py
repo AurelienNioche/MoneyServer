@@ -7,8 +7,11 @@ from . models import User, BoolParameter, Choice, TutorialChoice, Room
 class UserAdmin(admin.ModelAdmin):
     list_display = (
         "id", "room_id", "device_id", "pseudo", "consumption_good",
-        "production_good", "training_done", "gender", "age", "state", 'score',
-        'training_score', 'player_id'
+        "production_good",
+        #"training_done",
+         "gender", "age", "state", 'score',
+        #'training_score',
+        'player_id'
     )
 
 
