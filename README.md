@@ -178,7 +178,7 @@ The whole config file looks like:
 
 ## Code structure
 The consumers.py scripts contains a Consumer class, that is instantiated when running the server.
-That's how the Consumer instance records and stores information about clients through time.
+That's how the Consumer instance stores and maintains information about clients through time.
 When request from client, 'received' is called from 'consumers.py' (websocket) and then views.py. 
 
 All view functions have generic patterns. 
