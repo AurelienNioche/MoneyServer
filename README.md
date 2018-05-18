@@ -175,3 +175,32 @@ The whole config file looks like:
 * Local static IP Thinkpad basile: 192.168.1.204
 * tuto dnsmasq: https://www.michaelpporter.com/2017/11/using-dnsmasq-for-local-development-on-macos/
 
+
+## Code structure
+
+When request from client, 'received' is called from 'Consumers.py' (websocket) and then views.py. 
+
+All functions have generic patterns. 
+
+* Get user and room. Defined in 'client.py' from either 'room' or 'user' folder. 
+  - room folder: all functions relative to change properties of room or sending information to all users;
+  - user folder: all functions relative to a single user.
+
+* Specific function. Defined in 'client.py' of either 'room' or 'user' folder.
+  
+...then generic stuff:
+
+* 'get_progression'. Defined in 'room/client.py'. Return an integer between 0 and 100.
+
+* 'state_verification'.  Defined in 'room/client.py'. Along with other args, take progression as an input. 
+Change state if needed. return if client has to wait and state. Different states are:
+    - welcome
+    - survey
+    - training 
+    - game
+    - end
+    
+* Communicate response to group (except 'training_choice') 
+
+* Return response to single user
+

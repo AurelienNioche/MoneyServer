@@ -355,8 +355,7 @@ def bot_factory(base, device_id, delay, url, wait_event, seed):
 
 def main(args):
 
-    # url = "http://money.getz.fr/client_request/"
-    # url = "http://127.0.0.1:8000/client_request/"
+    #url = "ws://127.0.0.1/ws/"
     url = 'ws://money.getz.fr/ws/'
 
     if not args.number:
