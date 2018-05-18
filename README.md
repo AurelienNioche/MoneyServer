@@ -177,10 +177,11 @@ The whole config file looks like:
 
 
 ## Code structure
+The consumers.py scripts contains a Consumer class, that is instantiated when running the server.
+That's how the Consumer instance records information about clients through time.
+When request from client, 'received' is called from 'consumers.py' (websocket) and then views.py. 
 
-When request from client, 'received' is called from 'Consumers.py' (websocket) and then views.py. 
-
-All functions have generic patterns. 
+All view functions have generic patterns. 
 
 * Get user and room. Defined in 'client.py' from either 'room' or 'user' folder. 
   - room folder: all functions relative to change properties of room or sending information to all users;
@@ -202,7 +203,7 @@ Change state if needed. return if client has to wait and state. Different states
     
 * Communicate response to group (except 'training_choice') 
 
-* Return response to Consumer instance
+* Return response to Consumer instance 
 
 * The Consumer instance gets the response and send it to the client
 
