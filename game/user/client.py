@@ -293,6 +293,7 @@ def _create_new_user(rm, device_id):
             except (
                 django.db.IntegrityError,
                 django.db.OperationalError,
+                django.db.utils.OperationalError,
                 psycopg2.IntegrityError,
                 psycopg2.OperationalError
             ):
