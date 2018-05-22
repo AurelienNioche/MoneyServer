@@ -2,6 +2,7 @@ from django.db import transaction
 import django.db.utils
 import psycopg2
 import numpy as np
+import time
 
 from parameters import parameters
 
@@ -259,33 +260,44 @@ def _create_new_user(rm, device_id):
 
     with transaction.atomic():
 
-        users = User.objects.select_for_update().all()
+        while True:
+            try:
+                users = User.objects.select_for_update().all()
 
-        player_id = users.filter(room_id=rm.id).count()
+                player_id = users.filter(room_id=rm.id).count()
 
-        pseudo = parameters.pseudos[player_id]
+                pseudo = parameters.pseudos[player_id]
 
-        u = User(
-            device_id=device_id,
-            player_id=player_id,
-            pseudo=pseudo,
-            room_id=rm.id,
-            training_done=False,
-            score=0,
-            training_score=0,
-            state=game.room.state.states.WELCOME
-        )
+                u = User(
+                    device_id=device_id,
+                    player_id=player_id,
+                    pseudo=pseudo,
+                    room_id=rm.id,
+                    training_done=False,
+                    score=0,
+                    training_score=0,
+                    state=game.room.state.states.WELCOME
+                )
 
-        u.save()
+                u.save()
 
-        u.production_good = _get_user_production_good(rm, u)
+                u.production_good = _get_user_production_good(rm, u)
 
-        # prod i - 1 rule
-        u.consumption_good = (u.production_good - 1) % rm.n_type
+                # prod i - 1 rule
+                u.consumption_good = (u.production_good - 1) % rm.n_type
 
-        u.save(update_fields=["production_good", "consumption_good"])
+                u.save(update_fields=["production_good", "consumption_good"])
 
-        return u
+                return u
+
+            except (
+                django.db.IntegrityError,
+                django.db.OperationalError,
+                psycopg2.IntegrityError,
+                psycopg2.OperationalError
+            ):
+                time.sleep(0.5)
+                continue
 
 
 def _get_user_production_good(rm, u):
