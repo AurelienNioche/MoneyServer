@@ -34,7 +34,7 @@ def get_progress_for_choices(rm, t, tuto=False):
     return round(n_choices / rm.n_user * 100)
 
 
-def next_state(rm, state):
+def set_state(rm, state):
 
     rm.state = state
 
@@ -43,7 +43,7 @@ def next_state(rm, state):
     if state == states.END:
         rm.opened = False
 
-    # utils.log("Room {} goes to state {}".format(rm.id, rm.state), f=next_state)
+    # utils.log("Room {} goes to state {}".format(rm.id, rm.state), f=set_state)
     rm.save(update_fields=['state', 'opened'])
 
 

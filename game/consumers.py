@@ -1,10 +1,11 @@
-from channels.generic.websocket import JsonWebsocketConsumer
+from channels.generic.websocket import JsonWebsocketConsumer, SyncConsumer
 from asgiref.sync import async_to_sync
 from game.room.state import demand_state_mapping
 
 from channels.layers import get_channel_layer
 
 import game.views
+import game.receipt_views
 
 
 class WebSocketConsumer(JsonWebsocketConsumer):
@@ -21,19 +22,38 @@ class WebSocketConsumer(JsonWebsocketConsumer):
 
     def receive_json(self, content, **kwargs):
 
-        to_reply = game.views.client_request(content)
+        if content['demand'] != 'receipt_confirmation':
 
-        self.send_json(to_reply)
+            to_reply, group_reply = game.views.client_request(content)
 
-        try:
-            print(f"\nSending: {to_reply}\n")
-        except UnicodeEncodeError:
-            print('Error printing request.')
+            self.send_json(to_reply)
 
-        # Add user to groups
-        self._on_receive(to_reply)
+            try:
+                print(f"\nSending: {to_reply}\n")
+            except UnicodeEncodeError:
+                print('Error printing request.')
 
-    def _on_receive(self, to_reply):
+            self._group_management(to_reply)
+
+            if not to_reply['wait']:
+
+                self._send_to_worker(demand=to_reply['demand'], data=group_reply)
+
+        else:
+
+            game.views.client_request(content)
+
+    def _send_to_worker(self, demand, data):
+
+        async_to_sync(self.channel_layer.send)(
+            'receipt-consumer',
+            {
+                'type': 'generic',
+                'data': {'demand': demand, 'receipt_data': data}
+            },
+        )
+
+    def _group_management(self, to_reply):
 
         user_id = to_reply.get('userId')
 
@@ -112,6 +132,17 @@ class WebSocketConsumer(JsonWebsocketConsumer):
         )
 
 
+class ReceiptConsumer(SyncConsumer):
+
+    def generic(self, message):
+
+        demand = message['data']['demand']
+        kwargs = message['data']['receipt_data']
+
+        func = getattr(game.receipt_views, demand)
+        func(kwargs)
+
+
 class WSDialog:
 
     @staticmethod
@@ -138,7 +169,6 @@ class WSDialog:
             group,
             channel_layer.channel_name
         )
-
 
 
 

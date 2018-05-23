@@ -12,6 +12,7 @@ class ParametersForm(forms.Form):
     sex = forms.CharField(required=False)
     age = forms.CharField(required=False)
     deviceId = forms.CharField(required=False)
+    concernedDemand = forms.CharField(required=False)
     demand = forms.CharField(required=True)
 
 

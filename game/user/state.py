@@ -40,9 +40,9 @@ def get_progress_for_current_state(rm, demand):
         raise Exception("Error in 'game.user.state': Bad state")
 
 
-def next_state(u, state):
+def set_state(u, state):
     u.state = state
-    # utils.log("User {} goes to state {}".format(u.pseudo, u.state), f=next_state)
+    # utils.log("User {} goes to state {}".format(u.pseudo, u.state), f=set_state)
     u.save(update_fields=['state'])
 
     return u

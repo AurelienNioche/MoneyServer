@@ -129,12 +129,51 @@ class BotClient:
             if 'demand' in data:
 
                 print("Received:, ", data)
+
                 func = getattr(self, "reply_" + data["demand"])
+
+                if not data['wait']:
+
+                    if not self.user_id:
+                        self.user_id = data['userId']
+
+                    if 'training' in data['demand']:
+
+                        self.receipt_confirmation(
+                            user_id=self.user_id,
+                            t=self.training_t,
+                            concerned_demand=data['demand']
+                        )
+
+                    else:
+
+                        self.receipt_confirmation(
+                            user_id=self.user_id,
+                            t=self.t,
+                            concerned_demand=data['demand']
+                        )
+
                 func(data)
 
             elif not data['wait']:
 
                 reply = 'reply_' + self.last_request
+
+                if 'training' in reply:
+
+                    self.receipt_confirmation(
+                        user_id=self.user_id,
+                        t=self.training_t,
+                        concerned_demand=self.last_request
+                    )
+
+                else:
+
+                    self.receipt_confirmation(
+                        user_id=self.user_id,
+                        t=self.t,
+                        concerned_demand=self.last_request
+                    )
 
                 getattr(self, reply)(data)
 
@@ -156,6 +195,15 @@ class BotClient:
                 desired_good = np.random.randint(self.n_good)
 
         return desired_good
+
+    def receipt_confirmation(self, user_id, t, concerned_demand):
+
+        self._request({
+            "demand": "receipt_confirmation",
+            "concernedDemand": concerned_demand,
+            "t": t,
+            "userId": user_id
+        })
 
     # --------------------- Init ------------------------------------ #
 
@@ -198,7 +246,7 @@ class BotClient:
 
             mapping = {
                 "survey": self.survey,
-                "training": self.training,
+                "training": self.training_choice,
                 "game": self.choice,
                 "end": self.end
             }
@@ -222,11 +270,11 @@ class BotClient:
 
         if not args['wait']:
             input('Go to state training?')
-            self.training()
+            self.training_choice()
 
     # --------------------- tuto  ------------------------------------ #
 
-    def training(self):
+    def training_choice(self):
 
         self._request({
             KeyTuto.demand: "training_choice",
@@ -236,7 +284,7 @@ class BotClient:
             KeyTuto.t: self.training_t,
         })
 
-        self.last_request = self.training.__name__
+        self.last_request = self.training_choice.__name__
 
     def reply_training_choice(self, args):
 

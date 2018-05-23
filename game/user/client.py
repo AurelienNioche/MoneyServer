@@ -1,12 +1,12 @@
 from django.db import transaction
+import threading
 import django.db.utils
 import psycopg2
 import numpy as np
-import time
 
 from parameters import parameters
 
-from game.models import User, Room, Choice, TutorialChoice
+from game.models import User, Room, Choice, TutorialChoice, Receipt
 import game.room.state
 import game.room.client
 import game.user.state
@@ -102,8 +102,6 @@ def connect(device_id, skip_survey, skip_training):
         "trainingT": rm.training_t,
         "trainingScore": u.training_score,
 
-        # "skipSurvey": skip_survey,
-        # "skipTutorial": skip_training
     }
 
     return info, u, rm
@@ -187,6 +185,7 @@ def submit_training_choice(u, rm, desired_good, t):
 
             if choice.desired_good == u.consumption_good:
                 good_in_hand = u.production_good
+
             else:
                 good_in_hand = desired_good
 
@@ -197,6 +196,7 @@ def submit_training_choice(u, rm, desired_good, t):
         next_choice = TutorialChoice.objects.filter(room_id=rm.id, player_id=u.player_id, t=t+1).first()
 
         if next_choice:
+
             next_choice.good_in_hand = good_in_hand
             next_choice.save(update_fields=['good_in_hand'])
 
@@ -207,6 +207,13 @@ def submit_training_choice(u, rm, desired_good, t):
         u.save(update_fields=["training_score"])
 
     return choice.success, u.training_score
+
+
+def user_received(room_id, player_id, demand, t=None):
+
+    return Receipt.objects.filter(
+        room_id=room_id, player_id=player_id, demand=demand.__name__, t=t).first().received
+
 
 # ------------------------------  Private functions (called inside the script) ----------------------------------- #
 
@@ -258,10 +265,11 @@ def _create_new_user(rm, device_id):
     :return: user object (django model),
     """
 
-    with transaction.atomic():
+    while True:
 
-        while True:
-            try:
+        try:
+
+            with transaction.atomic():
                 users = User.objects.select_for_update().all()
 
                 player_id = users.filter(room_id=rm.id).count()
@@ -290,15 +298,18 @@ def _create_new_user(rm, device_id):
 
                 return u
 
-            except (
-                django.db.IntegrityError,
-                django.db.OperationalError,
-                django.db.utils.OperationalError,
-                psycopg2.IntegrityError,
-                psycopg2.OperationalError
-            ):
-                time.sleep(0.5)
-                continue
+        except (
+            django.db.IntegrityError,
+            django.db.OperationalError,
+            django.db.utils.OperationalError,
+            psycopg2.IntegrityError,
+            psycopg2.OperationalError
+        ):
+            print("*" * 50)
+            print("INTEGRITY ERROR" + "!" * 10)
+            print("*" * 50)
+            threading.Event().wait(0.5)
+            continue
 
 
 def _get_user_production_good(rm, u):
@@ -427,19 +438,19 @@ def _handle_skip_options(u, rm, skip_training, skip_survey):
     Change room's state as well as users' state.
     """
 
-    if skip_training:
-        skip_state = game.room.state.states.GAME
-    elif skip_survey:
+    if skip_survey:
         skip_state = game.room.state.states.TRAINING
+    elif skip_training:
+        skip_state = game.room.state.states.GAME
     else:
         skip_state = None
 
     if skip_state is not None:
         if rm.state != skip_state:
-            game.room.state.next_state(rm, skip_state)
+            game.room.state.set_state(rm, skip_state)
 
         if u.state != skip_state:
-            game.user.state.next_state(u, skip_state)
+            game.user.state.set_state(u, skip_state)
 
     return skip_state
 

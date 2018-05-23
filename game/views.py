@@ -60,16 +60,35 @@ def client_request(request):
         {"skip_training": skip_training, "skip_survey": skip_survey}
     )
 
-    to_reply = func(args)
+    if func != receipt_confirmation:
 
-    # utils.log("Post request: {}".format(list(to_reply.items())), f=client_request)
+        to_reply, group_reply = func(args)
 
-    to_reply['demand'] = demand
-    to_reply['messageId'] = _increment_message_id()
+        # utils.log("Post request: {}".format(list(to_reply.items())), f=client_request)
 
-    response = to_reply
+        to_reply['demand'] = demand
+        to_reply['messageId'] = _increment_message_id()
 
-    return response
+        response = to_reply
+
+        return response, group_reply
+
+    else:
+
+        func(args)
+
+
+def receipt_confirmation(args):
+
+    u = game.user.client.get_user(user_id=args.user_id)
+    rm = game.room.client.get_room(room_id=u.room_id)
+
+    game.room.client.receipt_confirmation(
+        rm=rm,
+        u=u,
+        t=args.t,
+        demand=args.concerned_demand
+    )
 
 
 def init(args):
@@ -92,32 +111,20 @@ def init(args):
     if state != to_reply['step']:
         to_reply.update({'step': state})
 
+    group_reply = {
+        'room_id': rm.id,
+        'skip_survey': args.skip_survey,
+        'skip_training': args.skip_training
+    }
+
     if wait:
 
         game.consumers.WSDialog.group_send(
             group=game.room.state.states.WELCOME,
-            data={'wait': True, 'progress': progress}
+            data={'wait': True, 'progress': progress, 'receipt': False}
         )
 
-    else:
-
-        users = game.room.client.get_all_users(rm=rm).exclude(id=u.id)
-
-        for user in users:
-
-            if user.state == game.room.state.states.SURVEY:
-
-                info = game.user.client.connect(
-                    device_id=user.device_id,
-                    skip_survey=args.skip_survey,
-                    skip_training=args.skip_training
-                )[0]
-
-                info.update({'wait': False})
-
-                game.consumers.WSDialog.group_send(group=f'user-{user.id}', data=info)
-
-    return to_reply
+    return to_reply, group_reply
 
 
 def survey(args):
@@ -137,17 +144,25 @@ def survey(args):
         u=u, rm=rm, t=args.t, progress=progress, demand=survey
     )
 
-    game.consumers.WSDialog.group_send(
-        group=game.room.state.states.SURVEY,
-        data={'wait': wait, 'progress': progress}
-    )
+    receipt = not wait
 
     to_reply = {
         "wait": wait,
-        "progress": progress
+        "progress": progress,
+        "receipt": receipt
     }
 
-    return to_reply
+    group_reply = {
+        'room_id': rm.id,
+        'to_reply': to_reply
+    }
+
+    game.consumers.WSDialog.group_send(
+        group=game.room.state.states.SURVEY,
+        data=to_reply
+    )
+
+    return to_reply, group_reply
 
 
 def training_choice(args):
@@ -170,16 +185,27 @@ def training_choice(args):
         rm=rm, u=u, t=args.t, progress=progress, demand=training_choice
     )
 
+    receipt = not wait
+
     to_reply = {
-        "wait": wait,
+        "wait": wait,  # Wait is always false here
         "trainingSuccess": success,
         "trainingScore": score,
         "trainingProgress": progress,
         "trainingT": args.t,
-        "trainingEnd": end
+        "trainingEnd": end,
+        "receipt": receipt
     }
 
-    return to_reply
+    group_reply = {
+        "room_id": rm.id,
+        "player_id": u.player_id,
+        "user_id": u.id,
+        "t": args.t,
+        "to_reply": to_reply
+    }
+
+    return to_reply, group_reply
 
 
 def training_done(args):
@@ -195,17 +221,25 @@ def training_done(args):
         u=u, rm=rm, t=args.t, progress=progress, demand=training_done
     )
 
-    game.consumers.WSDialog.group_send(
-        group='training-done',
-        data={'wait': wait, 'progress': progress}
-    )
+    receipt = not wait
 
     to_reply = {
         "wait": wait,
-        "progress": progress
+        "progress": progress,
+        "receipt": receipt
     }
 
-    return to_reply
+    group_reply = {
+        "room_id": rm.id,
+        "to_reply": to_reply
+    }
+
+    game.consumers.WSDialog.group_send(
+        group='training-done',
+        data=to_reply
+    )
+
+    return to_reply, group_reply
 
 
 def choice(args):
@@ -228,6 +262,8 @@ def choice(args):
         rm=rm, u=u, t=args.t, progress=progress, demand=choice, success=success
     )
 
+    receipt = not wait
+
     to_reply = {
         "wait": wait,
         "progress": progress,
@@ -235,36 +271,25 @@ def choice(args):
         "end": end,
         "score": score,
         "t": args.t,
+        "receipt": receipt
+    }
+
+    group_reply = {
+        "progress": progress,
+        "end": end,
+        "t": args.t,
+        "room_id": rm.id
+
     }
 
     if wait:
 
         game.consumers.WSDialog.group_send(
             group=f'game-t-{args.t}',
-            data={'wait': True, 'progress': progress, 't': args.t}
+            data={'wait': True, 'progress': progress, 't': args.t, 'receipt': False}
         )
 
-    else:
-
-        # Get results for all users except the one asking
-        users = game.room.client.get_results_for_all_users(rm=rm, t=args.t, user_id=u.id)
-
-        for user_result in users:
-
-                data = {
-                    "wait": False,
-                    "progress": progress,
-                    "success": user_result.success,
-                    "end": end,
-                    "score": user_result.score,
-                    "t": args.t,
-                }
-
-                game.consumers.WSDialog.group_send(
-                    group=f'user-{user_result.id}', data=data
-                )
-
-    return to_reply
+    return to_reply, group_reply
 
 
 def _treat_args(request, options):
@@ -276,7 +301,10 @@ def _treat_args(request, options):
         Args = namedtuple(
             "Args",
             ["demand", "device_id", "user_id",
-             "age", "gender", "desired_good", "t", "skip_survey", "skip_training"]
+             "age", "gender", "desired_good",
+             "t", "skip_survey", "skip_training",
+             "concerned_demand"
+             ]
         )
 
         args = Args(
@@ -287,6 +315,7 @@ def _treat_args(request, options):
             gender=form.cleaned_data.get("sex"),
             desired_good=form.cleaned_data.get("good"),
             t=form.cleaned_data.get("t"),
+            concerned_demand=form.cleaned_data.get("concernedDemand"),
             skip_training=options["skip_training"],
             skip_survey=options["skip_survey"]
         )
@@ -322,8 +351,3 @@ def _increment_message_id():
     message_count.save()
 
     return message_count.value
-
-
-
-
-

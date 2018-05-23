@@ -3,7 +3,7 @@ import itertools
 
 import numpy as np
 
-from game.models import User, Room, Choice, TutorialChoice
+from game.models import User, Room, Choice, TutorialChoice, Receipt
 import game.user.client
 import game.room.state
 import game.room.dashboard
@@ -23,15 +23,19 @@ def get_room(room_id):
     return rm
 
 
-def get_all_users(rm):
+def get_all_users_that_did_not_receive(room_id, demand, t=None):
 
-    return User.objects.filter(room_id=rm.id)
+    players_that_did_not_receive = Receipt.objects.filter(
+            room_id=room_id, demand=demand.__name__, t=t, received=False
+    ).values_list('player_id')
+
+    return User.objects.filter(room_id=room_id, player_id__in=players_that_did_not_receive)
 
 
-def get_results_for_all_users(rm, t, user_id):
+def get_results_for_all_users(room_id, t):
 
-    choices = Choice.objects.filter(room_id=rm.id, t=t).exclude(user_id=user_id)
-    users = User.objects.filter(room_id=rm.id).exclude(id=user_id)
+    choices = Choice.objects.filter(room_id=room_id, t=t)
+    users = User.objects.filter(room_id=room_id)
 
     for u in users:
 
@@ -43,6 +47,14 @@ def get_results_for_all_users(rm, t, user_id):
         u.success = c.success
 
     return users
+
+
+def all_client_received(demand, room_id, t=None):
+
+    rm = Room.objects.get(id=room_id)
+
+    return Receipt.objects.filter(
+        room_id=room_id, demand=demand.__name__, t=t, received=True).count() == rm.n_user
 
 
 def create_room():
@@ -108,6 +120,30 @@ def create(data):
         for n in range(n_user) for t in range(training_t_max)
     ])
 
+    for demand in ('init', 'survey', 'training_done'):
+
+        Receipt.objects.bulk_create([
+            Receipt(
+                room_id=rm.id,
+                player_id=n,
+                demand=demand,
+                t=None
+            )
+            for n in range(n_user)
+        ])
+
+    for demand, t_maximum in zip(['training_choice', 'choice'], [training_t_max, t_max]):
+
+        Receipt.objects.bulk_create([
+            Receipt(
+                room_id=rm.id,
+                player_id=n,
+                demand=demand,
+                t=t
+            )
+            for n in range(n_user) for t in range(t_maximum)
+        ])
+
     return rm
 
 
@@ -135,7 +171,7 @@ def state_verification(u, rm, progress, t, demand, success=None):
 
         if u.state == game.room.state.states.WELCOME:
 
-            u = game.user.state.next_state(
+            u = game.user.state.set_state(
                         u=u,
                         state=game.room.state.states.SURVEY
             )
@@ -145,7 +181,7 @@ def state_verification(u, rm, progress, t, demand, success=None):
             if not wait:
 
                 if rm.state == game.room.state.states.WELCOME:
-                    game.room.state.next_state(
+                    game.room.state.set_state(
                         rm=rm,
                         state=game.room.state.states.SURVEY
                     )
@@ -162,7 +198,7 @@ def state_verification(u, rm, progress, t, demand, success=None):
 
         if u.state == game.room.state.states.SURVEY:
 
-            u = game.user.state.next_state(
+            u = game.user.state.set_state(
                 u=u,
                 state=game.room.state.states.TRAINING,
             )
@@ -172,7 +208,7 @@ def state_verification(u, rm, progress, t, demand, success=None):
             if not wait:
 
                 if rm.state == game.room.state.states.SURVEY:
-                    game.room.state.next_state(
+                    game.room.state.set_state(
                         rm=rm,
                         state=game.room.state.states.TRAINING
                     )
@@ -197,7 +233,7 @@ def state_verification(u, rm, progress, t, demand, success=None):
 
         if u.state == game.room.state.states.TRAINING:
 
-            u = game.user.state.next_state(
+            u = game.user.state.set_state(
                             u=u,
                             state=game.room.state.states.GAME,
             )
@@ -208,7 +244,7 @@ def state_verification(u, rm, progress, t, demand, success=None):
 
                 if rm.state == game.room.state.states.TRAINING:
 
-                    game.room.state.next_state(
+                    game.room.state.set_state(
                         rm=rm,
                         state=game.room.state.states.GAME
                     )
@@ -232,18 +268,31 @@ def state_verification(u, rm, progress, t, demand, success=None):
         if end:
 
             if rm.state == game.room.state.states.GAME:
-                game.room.state.next_state(
+                game.room.state.set_state(
                     rm=rm,
                     state=game.room.state.states.END
                 )
 
             if u.state == game.room.state.states.GAME:
-                u = game.user.state.next_state(
+                u = game.user.state.set_state(
                     u=u,
                     state=game.room.state.states.END
                 )
 
         return u.state, wait, t, end
+
+
+def receipt_confirmation(demand, rm, u, t=None):
+
+    t = None if demand not in ('training_choice', 'choice') else t
+
+    receipt = Receipt.objects.filter(demand=demand, t=t, room_id=rm.id, player_id=u.player_id).first()
+
+    if not receipt.received:
+
+        receipt.received = True
+
+        receipt.save(update_fields=['received'])
 
 
 def matching(rm, t):

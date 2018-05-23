@@ -1,7 +1,7 @@
 from django.contrib import admin
 
 # # Register your models here.
-from . models import User, BoolParameter, Choice, TutorialChoice, Room
+from . models import User, BoolParameter, Choice, TutorialChoice, Room, Receipt
 
 
 class UserAdmin(admin.ModelAdmin):
@@ -39,10 +39,15 @@ class TutorialChoiceAdmin(admin.ModelAdmin):
     )
 
 
+class ReceiptAdmin(admin.ModelAdmin):
+    list_display = ('room_id', 'player_id', 'received', 'demand')
+
+
 admin.site.register(User, UserAdmin)
 admin.site.register(BoolParameter, BoolParameterAdmin)
 admin.site.register(Choice, ChoiceAdmin)
 admin.site.register(TutorialChoice, TutorialChoiceAdmin)
 admin.site.register(Room, RoomAdmin)
+admin.site.register(Receipt, ReceiptAdmin)
 
 

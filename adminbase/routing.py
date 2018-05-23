@@ -13,8 +13,8 @@ application = ProtocolTypeRouter({
         )
     ),
 
-    # 'channel': ChannelNameRouter({
-    #     'main': game.consumers.MainConsumer,
-    # }),
+    'channel': ChannelNameRouter({
+        'receipt-consumer': game.consumers.ReceiptConsumer,
+    }),
 
 })
