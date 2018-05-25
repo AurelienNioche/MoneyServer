@@ -103,7 +103,6 @@ def connect(device_id, skip_survey, skip_training):
         "trainingScore": u.training_score,
 
         "demand": "init"
-
     }
 
     return info, u, rm
