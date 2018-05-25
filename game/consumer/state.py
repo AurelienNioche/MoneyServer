@@ -13,8 +13,6 @@ def is_consumer_already_treating_demand(demand, room_id):
             s = ConsumerState(room_id=room_id)
             s.save()
 
-        print('wwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwww')
-        print(getattr(s, demand))
         return getattr(s, demand)
 
 

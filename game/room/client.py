@@ -3,7 +3,7 @@ import itertools
 
 import numpy as np
 
-from game.models import User, Room, Choice, TutorialChoice, Receipt
+from game.models import User, Room, Choice, TutorialChoice, Receipt, ConsumerState
 import game.user.client
 import game.room.state
 import game.room.dashboard
@@ -143,6 +143,9 @@ def create(data):
             for n in range(n_user) for t in range(t_maximum)
         ])
 
+    cs = ConsumerState(room_id=rm.id)
+    cs.save()
+
     return rm
 
 
@@ -281,22 +284,6 @@ def state_verification(u, rm, progress, t, demand, success=None):
             game.room.state.set_rm_timestep(rm=rm, t=t, tuto=False)
 
         return u.state, wait, t, end
-
-
-def receipt_confirmation(demand, rm, u, t=None):
-
-    t = None if demand not in ('training_choice', 'choice') else t
-
-    receipt = Receipt.objects.filter(demand=demand, t=t, room_id=rm.id, player_id=u.player_id).first()
-
-    try:
-        if not receipt.received:
-
-            receipt.received = True
-
-            receipt.save(update_fields=['received'])
-    except AttributeError:
-        raise Exception(f'Receipt demand={demand}, t={t}, room_id={rm.id}, player_id={u.player_id} NOT FOUND')
 
 
 def matching(rm, t):

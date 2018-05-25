@@ -76,7 +76,7 @@ def receipt_confirmation(args):
         u=u, t=args.t, demand=args.concerned_demand
     )
 
-    game.room.client.receipt_confirmation(
+    game.user.client.receipt_confirmation(
         rm=rm,
         u=u,
         t=args.t,
@@ -107,20 +107,22 @@ def init(args):
     if state != to_reply['step']:
         to_reply.update({'step': state})
 
-    group_reply = {
+    consumer_info = {
         'room_id': rm.id,
         'skip_survey': args.skip_survey,
-        'skip_training': args.skip_training
+        'skip_training': args.skip_training,
+        'user_id': u.id,
+        'demand': args.demand
     }
 
     if wait:
 
         game.consumers.WSDialog.group_send(
             group=game.room.state.states.WELCOME,
-            data={'wait': True, 'progress': progress, 'receipt': False, 'demand': 'init'}
+            data={'wait': True, 'progress': progress, 'receipt': False, 'demand': args.demand}
         )
 
-    return to_reply, group_reply
+    return to_reply, consumer_info
 
 
 def survey(args):
@@ -146,12 +148,14 @@ def survey(args):
         "wait": wait,
         "progress": progress,
         "receipt": receipt,
-        "demand": 'survey'
+        "demand": args.demand
     }
 
-    group_reply = {
+    consumer_info = {
         'room_id': rm.id,
-        'to_reply': to_reply
+        'to_reply': to_reply,
+        'user_id': u.id,
+        'demand': args.demand
     }
 
     if wait:
@@ -160,7 +164,7 @@ def survey(args):
             data=to_reply
         )
 
-    return to_reply, group_reply
+    return to_reply, consumer_info
 
 
 def training_choice(args):
@@ -197,18 +201,19 @@ def training_choice(args):
         "t": args.t,
         "trainingEnd": end,
         "receipt": receipt,
-        "demand": 'training_choice'
+        "demand": args.demand
     }
 
-    group_reply = {
+    consumer_info = {
         "room_id": rm.id,
         "player_id": u.player_id,
         "user_id": u.id,
+        "demand": args.demand,
         "t": args.t,
         "to_reply": to_reply
     }
 
-    return to_reply, group_reply
+    return to_reply, consumer_info
 
 
 def training_done(args):
@@ -230,12 +235,14 @@ def training_done(args):
         "wait": wait,
         "progress": progress,
         "receipt": receipt,
-        'demand': 'training_done'
+        'demand': args.demand,
     }
 
-    group_reply = {
+    consumer_info = {
         "room_id": rm.id,
-        "to_reply": to_reply
+        "to_reply": to_reply,
+        "demand": args.demand,
+        "user_id": u.id,
     }
 
     game.consumers.WSDialog.group_send(
@@ -243,7 +250,7 @@ def training_done(args):
         data=to_reply
     )
 
-    return to_reply, group_reply
+    return to_reply, consumer_info
 
 
 def choice(args):
@@ -280,25 +287,26 @@ def choice(args):
         "score": score,
         "t": args.t,
         "receipt": receipt,
-        "demand": "choice"
+        "demand": args.demand
     }
 
-    group_reply = {
+    consumer_info = {
         "progress": progress,
         "end": end,
         "t": args.t,
         "room_id": rm.id,
-        "user_id": u.id
+        "user_id": u.id,
+        "demand": args.demand
     }
 
     if wait:
 
         game.consumers.WSDialog.group_send(
             group=f'game-t-{args.t}',
-            data={'wait': True, 'progress': progress, 't': args.t, 'receipt': False, 'demand': 'choice'}
+            data={'wait': True, 'progress': progress, 't': args.t, 'receipt': False, 'demand': args.demand}
         )
 
-    return to_reply, group_reply
+    return to_reply, consumer_info
 
 
 def _treat_args(request, options):

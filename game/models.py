@@ -75,7 +75,7 @@ class Receipt(models.Model):
 
 
 class ConsumerState(models.Model):
-    room_id = models.IntegerField(default=None)
+    room_id = models.IntegerField(default=None, unique=True)
     init = models.BooleanField(default=False)
     survey = models.BooleanField(default=False)
     training_choice = models.BooleanField(default=False)

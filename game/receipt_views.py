@@ -61,7 +61,11 @@ def training_choice(kwargs):
     # because training choices results are directly send to
     # the client when he submits his choice
     stop_sending = game.user.client.user_received(
-            room_id=kwargs['room_id'], player_id=kwargs['player_id'], demand=training_choice, t=kwargs['t'])
+        room_id=kwargs['room_id'],
+        player_id=kwargs['player_id'],
+        demand=training_choice,
+        t=kwargs['t']
+    )
 
     # If he does not have confirmed he received
     while not stop_sending:
@@ -69,12 +73,16 @@ def training_choice(kwargs):
         game.consumers.WSDialog.group_send(
                 group=f'user-{kwargs["user_id"]}',
                 data=kwargs['to_reply'],
-            )
+        )
 
         threading.Event().wait(1)
 
         stop_sending = game.user.client.user_received(
-            room_id=kwargs['room_id'], player_id=kwargs['player_id'], demand=training_choice, t=kwargs['t'])
+            room_id=kwargs['room_id'],
+            player_id=kwargs['player_id'],
+            demand=training_choice,
+            t=kwargs['t']
+        )
 
         if stop_sending:
             break
@@ -84,7 +92,9 @@ def training_done(kwargs):
 
     while True:
 
-        users = game.room.client.get_all_users_that_did_not_receive(room_id=kwargs['room_id'], demand=training_done)
+        users = game.room.client.get_all_users_that_did_not_receive(
+            room_id=kwargs['room_id'], demand=training_done
+        )
 
         for user in users:
 
@@ -95,7 +105,9 @@ def training_done(kwargs):
 
         threading.Event().wait(1)
 
-        stop_sending = game.room.client.all_client_received(room_id=kwargs['room_id'], demand=training_done)
+        stop_sending = game.room.client.all_client_received(
+            room_id=kwargs['room_id'], demand=training_done
+        )
 
         if stop_sending:
             break
@@ -110,15 +122,17 @@ def choice(kwargs):
             room_id=kwargs['room_id'], demand=choice, t=kwargs['t']
         )
 
-        results = game.room.client.get_results_for_all_users(room_id=kwargs['room_id'], t=kwargs['t'])
+        results = game.room.client.get_results_for_all_users(
+            room_id=kwargs['room_id'], t=kwargs['t']
+        )
 
         users = [user for user in results
                  if user.id in [i.id for i in users_that_did_not_receive]]
 
-        print('IN CHOIICE')
+        print('Begin to send to users')
+
         for user_result in users:
 
-            print(user_result)
             data = {
                 'wait': False,
                 'progress': kwargs['progress'],
@@ -131,15 +145,15 @@ def choice(kwargs):
             }
 
             game.consumers.WSDialog.group_send(
-                group=f'user-{user_result.id}', data=data,
+                group=f'user-{user_result.id}',
+                data=data
             )
 
-        threading.Event().wait(2)
+        threading.Event().wait(1)
 
-        print()
-
-        stop_sending = game.room.client.all_client_received(room_id=kwargs['room_id'], demand=choice, t=kwargs['t'])
+        stop_sending = game.room.client.all_client_received(
+            room_id=kwargs['room_id'], demand=choice, t=kwargs['t']
+        )
 
         if stop_sending:
             break
-

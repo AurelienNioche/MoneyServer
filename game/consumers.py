@@ -21,14 +21,14 @@ class WebSocketConsumer(JsonWebsocketConsumer):
     def disconnect(self, close_code):
 
         pass
-        # for state in demand_state_mapping.keys():
-        #     self._group_discard(group=state)
 
     def receive_json(self, content, **kwargs):
 
         to_reply, consumer_info = game.views.client_request(content)
 
-        if to_reply:
+        if to_reply and consumer_info:
+
+            self._group_management(consumer_info)
 
             self.send_json(to_reply)
 
@@ -37,21 +37,16 @@ class WebSocketConsumer(JsonWebsocketConsumer):
             except UnicodeEncodeError:
                 print('Error printing request.')
 
-            self._group_management(to_reply)
-
             cond0 = not to_reply['wait']
+
             cond1 = game.consumer.state.is_consumer_already_treating_demand(
                 demand=consumer_info['demand'],
                 room_id=consumer_info['room_id']
             )
 
             if cond0 and not cond1:
-                print('Worker is not occupied')
-                self._send_to_worker(demand=consumer_info['demand'], data=consumer_info)
-            else:
 
-                if cond1:
-                    print('WORKER IS OCCUPIED')
+                self._send_to_worker(demand=consumer_info['demand'], data=consumer_info)
 
     def _send_to_worker(self, demand, data):
 
@@ -64,33 +59,57 @@ class WebSocketConsumer(JsonWebsocketConsumer):
             },
         )
 
-    def _group_management(self, to_reply):
+    def _group_management(self, consumer_info):
 
-        user_id = to_reply.get('userId')
+        user_id = consumer_info.get('user_id')
+        demand = consumer_info.get('demand')
 
-        demand = to_reply.get('demand')
         demand_func = \
             getattr(game.views, demand) if isinstance(demand, str) else None
 
         state = demand_state_mapping.get(demand)
 
         if user_id:
-            self._group_add(group=f'user-{user_id}')
+
+            # if user_id is available
+            # add the corresponding group
+            # Each user_id group matches only
+            # user/client/device
+            id_group = f'user-{user_id}'
+            self._group_add(group=id_group)
 
         if demand_func == game.views.choice:
-            t = to_reply.get('t')
-            self._group_add(f'game-t-{t}')
-            self._group_discard(f'game-t-{t-1}')
-            self._group_discard('training-done')
+
+            t = consumer_info.get('t')
+
+            # Add user to the current t group
+            game_group_t = f'game-t-{t}'
+            self._group_add(game_group_t)
+
+            # Discard user from group t - 1
+            game_group_t_minus_1 = f'game-t-{t-1}'
+            self._group_discard(game_group_t_minus_1)
+
+            # If user calls the choice method it means that
+            # training is done
+            # So that we remove him from that
+            # group too
+            training_group_discard = 'training-done'
+            self._group_discard(training_group_discard)
 
         elif demand_func == game.views.training_done:
-            self._group_add('training-done')
+
+            # If training_done is called add user to the
+            # corresponding group
+            training_group_add = 'training-done'
+            self._group_add(training_group_add)
 
         # Remove user from all other groups
         for group in demand_state_mapping.keys():
             self._group_discard(group=group)
 
-        self._group_add(group=state)
+        if state:
+            self._group_add(group=state)
 
     def _group_send(self, group, data):
 
@@ -111,9 +130,10 @@ class WebSocketConsumer(JsonWebsocketConsumer):
         )
 
     def group_message(self, message):
+
         """
-        Send json to a group, called by group_send
-        method.
+        Send json to a group, called by self._group_send
+        method and WSDialog.group_send from outside
         :param message:
         :return:
         """
@@ -121,11 +141,7 @@ class WebSocketConsumer(JsonWebsocketConsumer):
         data = message['data']
         group = message['group']
 
-        if data.get('receipt_views'):
-            raise Exception
-
         try:
-            print(f'Sending to group {group}')
             utils.log(f'Sending to group {group}: {data}', f=self._group_send)
         except UnicodeEncodeError:
             print('Error printing request.')
@@ -156,22 +172,21 @@ class WebSocketConsumer(JsonWebsocketConsumer):
 
 
 class ReceiptConsumer(SyncConsumer):
-
     def generic(self, message):
 
         demand = message['demand']
         kwargs = message['receipt_data']
 
-        print('Task Launched')
+        utils.log(f'ReceiptConsumer begins the task {demand}', f=self.generic)
 
         game.consumer.state.treat_demand(demand=demand, room_id=kwargs['room_id'])
 
         func = getattr(game.receipt_views, demand)
         func(kwargs)
 
-        print('Task end')
-
         game.consumer.state.finished_treating_demand(demand=demand, room_id=kwargs['room_id'])
+
+        utils.log(f'ReceiptConsumer finished to treat the task {demand}', f=self.generic)
 
 
 class WSDialog:

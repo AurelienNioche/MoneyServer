@@ -211,6 +211,9 @@ def submit_training_choice(u, rm, desired_good, t):
     return choice.success, u.training_score
 
 
+# -------------------------------------------- RECEIPT MANAGEMENT --------------------------------------- #
+
+
 def user_received(room_id, player_id, demand, t=None):
 
     return Receipt.objects.filter(
@@ -246,6 +249,23 @@ def set_all_precedent_receipt_confirmation_to_received(demand, u, t):
         r.received = True
 
         r.save(update_fields=['received'])
+
+
+def receipt_confirmation(demand, rm, u, t=None):
+
+    t = None if demand not in ('training_choice', 'choice') else t
+
+    receipt = Receipt.objects.filter(demand=demand, t=t, room_id=rm.id, player_id=u.player_id).first()
+
+    try:
+        if not receipt.received:
+
+            receipt.received = True
+
+            receipt.save(update_fields=['received'])
+    except AttributeError:
+        raise Exception(f'Receipt demand={demand}, t={t}, room_id={rm.id}, player_id={u.player_id} NOT FOUND')
+
 
 # ------------------------------  Private functions (called inside the script) ----------------------------------- #
 

@@ -7,7 +7,7 @@ import argparse
 import json
 
 import websocket
-websocket.enableTrace(True)
+websocket.enableTrace(False)
 
 
 # --------------- Init ----------------- #
