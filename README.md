@@ -174,6 +174,7 @@ The whole config file looks like:
 
 * Local static IP Thinkpad basile: 192.168.1.204
 * tuto dnsmasq: https://www.michaelpporter.com/2017/11/using-dnsmasq-for-local-development-on-macos/
+* To attach a new device (set a fixed ip) Advanced > setup > LAN setup
 
 
 ## Code structure
