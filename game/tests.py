@@ -1,10 +1,10 @@
-from game.models import User, Choice, TutorialChoice, Room, Receipt
+from game.models import User, Choice, TutorialChoice, Room, Receipt, ConsumerState
 import game.room.dashboard
 
 
 def reset_all():
 
-    for table in (User, Choice, TutorialChoice, Room, Receipt):
+    for table in (User, Choice, TutorialChoice, Room, Receipt, ConsumerState):
         table.objects.all().delete()
 
 

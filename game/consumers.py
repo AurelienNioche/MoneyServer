@@ -1,11 +1,15 @@
 from channels.generic.websocket import JsonWebsocketConsumer, SyncConsumer
 from asgiref.sync import async_to_sync
+
+from utils import utils
+
 from game.room.state import demand_state_mapping
 
 from channels.layers import get_channel_layer
 
 import game.views
 import game.receipt_views
+import game.consumer.state
 
 
 class WebSocketConsumer(JsonWebsocketConsumer):
@@ -22,26 +26,32 @@ class WebSocketConsumer(JsonWebsocketConsumer):
 
     def receive_json(self, content, **kwargs):
 
-        if content['demand'] != 'receipt_confirmation':
+        to_reply, consumer_info = game.views.client_request(content)
 
-            to_reply, group_reply = game.views.client_request(content)
+        if to_reply:
 
             self.send_json(to_reply)
 
             try:
-                print(f"\nSending: {to_reply}\n")
+                utils.log(f'Sending to current channel: {to_reply}', f=self.receive_json)
             except UnicodeEncodeError:
                 print('Error printing request.')
 
             self._group_management(to_reply)
 
-            if not to_reply['wait']:
+            cond0 = not to_reply['wait']
+            cond1 = game.consumer.state.is_consumer_already_treating_demand(
+                demand=consumer_info['demand'],
+                room_id=consumer_info['room_id']
+            )
 
-                self._send_to_worker(demand=to_reply['demand'], data=group_reply)
+            if cond0 and not cond1:
+                print('Worker is not occupied')
+                self._send_to_worker(demand=consumer_info['demand'], data=consumer_info)
+            else:
 
-        else:
-
-            game.views.client_request(content)
+                if cond1:
+                    print('WORKER IS OCCUPIED')
 
     def _send_to_worker(self, demand, data):
 
@@ -49,7 +59,8 @@ class WebSocketConsumer(JsonWebsocketConsumer):
             'receipt-consumer',
             {
                 'type': 'generic',
-                'data': {'demand': demand, 'receipt_data': data}
+                'demand': demand,
+                'receipt_data': data
             },
         )
 
@@ -58,7 +69,8 @@ class WebSocketConsumer(JsonWebsocketConsumer):
         user_id = to_reply.get('userId')
 
         demand = to_reply.get('demand')
-        demand_func = getattr(game.views, demand) if isinstance(demand, str) else None
+        demand_func = \
+            getattr(game.views, demand) if isinstance(demand, str) else None
 
         state = demand_state_mapping.get(demand)
 
@@ -71,7 +83,7 @@ class WebSocketConsumer(JsonWebsocketConsumer):
             self._group_discard(f'game-t-{t-1}')
             self._group_discard('training-done')
 
-        if demand_func == game.views.training_done:
+        elif demand_func == game.views.training_done:
             self._group_add('training-done')
 
         # Remove user from all other groups
@@ -89,25 +101,36 @@ class WebSocketConsumer(JsonWebsocketConsumer):
         :return:
         """
 
-        try:
-            print(f'\nSending to group {group}: {data}\n')
-        except UnicodeEncodeError:
-            print('Error printing request.')
-
         async_to_sync(self.channel_layer.group_send)(
             group,
-            {'type': 'group.message', 'text': data}
+            {
+                'type': 'group.message',
+                'data': data,
+                'group': group
+             }
         )
 
-    def group_message(self, data):
+    def group_message(self, message):
         """
         Send json to a group, called by group_send
         method.
-        :param data:
+        :param message:
         :return:
         """
 
-        self.send_json(data['text'])
+        data = message['data']
+        group = message['group']
+
+        if data.get('receipt_views'):
+            raise Exception
+
+        try:
+            print(f'Sending to group {group}')
+            utils.log(f'Sending to group {group}: {data}', f=self._group_send)
+        except UnicodeEncodeError:
+            print('Error printing request.')
+
+        self.send_json(data)
 
     def _group_add(self, group):
 
@@ -136,11 +159,19 @@ class ReceiptConsumer(SyncConsumer):
 
     def generic(self, message):
 
-        demand = message['data']['demand']
-        kwargs = message['data']['receipt_data']
+        demand = message['demand']
+        kwargs = message['receipt_data']
+
+        print('Task Launched')
+
+        game.consumer.state.treat_demand(demand=demand, room_id=kwargs['room_id'])
 
         func = getattr(game.receipt_views, demand)
         func(kwargs)
+
+        print('Task end')
+
+        game.consumer.state.finished_treating_demand(demand=demand, room_id=kwargs['room_id'])
 
 
 class WSDialog:
@@ -150,14 +181,13 @@ class WSDialog:
 
         channel_layer = get_channel_layer()
 
-        try:
-            print(f'\nSending to group {group}: {data}\n')
-        except UnicodeEncodeError:
-            print('Error printing request.')
-
         async_to_sync(channel_layer.group_send)(
             group,
-            {'type': 'group.message', 'text': data}
+            {
+                'type': 'group.message',
+                'data': data,
+                'group': group,
+             }
         )
 
     @staticmethod

@@ -102,6 +102,8 @@ def connect(device_id, skip_survey, skip_training):
         "trainingT": rm.training_t,
         "trainingScore": u.training_score,
 
+        "demand": "init"
+
     }
 
     return info, u, rm
@@ -214,6 +216,36 @@ def user_received(room_id, player_id, demand, t=None):
     return Receipt.objects.filter(
         room_id=room_id, player_id=player_id, demand=demand.__name__, t=t).first().received
 
+
+def set_all_precedent_receipt_confirmation_to_received(demand, u, t):
+
+    if not isinstance(demand, str):
+        demand = demand.__name__
+
+    t = None if demand not in ('training_choice', 'choice') else t
+
+    if t:
+        times = np.arange(t)
+
+        receipts = Receipt.objects.filter(
+            room_id=u.room_id,
+            player_id=u.player_id,
+            demand=demand,
+            t__in=times
+        )
+    else:
+
+        receipts = Receipt.objects.filter(
+            room_id=u.room_id,
+            player_id=u.player_id,
+            demand=demand,
+            t=t
+        )
+
+    for r in receipts:
+        r.received = True
+
+        r.save(update_fields=['received'])
 
 # ------------------------------  Private functions (called inside the script) ----------------------------------- #
 

@@ -4,8 +4,6 @@ from utils import utils
 
 from game.forms import ClientRequestForm
 
-from dashboard.models import IntParameter
-
 import game.trial_views
 import game.user.client
 import game.room.client
@@ -60,22 +58,13 @@ def client_request(request):
         {"skip_training": skip_training, "skip_survey": skip_survey}
     )
 
-    if func != receipt_confirmation:
+    to_reply, consumer_info = func(args)
 
-        to_reply, group_reply = func(args)
-
-        # utils.log("Post request: {}".format(list(to_reply.items())), f=client_request)
-
+    if to_reply:
         to_reply['demand'] = demand
-        to_reply['messageId'] = _increment_message_id()
+        consumer_info['demand'] = demand
 
-        response = to_reply
-
-        return response, group_reply
-
-    else:
-
-        func(args)
+    return to_reply, consumer_info
 
 
 def receipt_confirmation(args):
@@ -83,12 +72,18 @@ def receipt_confirmation(args):
     u = game.user.client.get_user(user_id=args.user_id)
     rm = game.room.client.get_room(room_id=u.room_id)
 
+    game.user.client.set_all_precedent_receipt_confirmation_to_received(
+        u=u, t=args.t, demand=args.concerned_demand
+    )
+
     game.room.client.receipt_confirmation(
         rm=rm,
         u=u,
         t=args.t,
         demand=args.concerned_demand
     )
+
+    return None, None
 
 
 def init(args):
@@ -107,6 +102,7 @@ def init(args):
 
     to_reply.update({'wait': wait})
     to_reply.update({'progress': progress})
+    to_reply.update({'receipt': not wait})
 
     if state != to_reply['step']:
         to_reply.update({'step': state})
@@ -121,7 +117,7 @@ def init(args):
 
         game.consumers.WSDialog.group_send(
             group=game.room.state.states.WELCOME,
-            data={'wait': True, 'progress': progress, 'receipt': False}
+            data={'wait': True, 'progress': progress, 'receipt': False, 'demand': 'init'}
         )
 
     return to_reply, group_reply
@@ -149,7 +145,8 @@ def survey(args):
     to_reply = {
         "wait": wait,
         "progress": progress,
-        "receipt": receipt
+        "receipt": receipt,
+        "demand": 'survey'
     }
 
     group_reply = {
@@ -157,10 +154,11 @@ def survey(args):
         'to_reply': to_reply
     }
 
-    game.consumers.WSDialog.group_send(
-        group=game.room.state.states.SURVEY,
-        data=to_reply
-    )
+    if wait:
+        game.consumers.WSDialog.group_send(
+            group=game.room.state.states.SURVEY,
+            data=to_reply
+        )
 
     return to_reply, group_reply
 
@@ -169,6 +167,10 @@ def training_choice(args):
 
     u = game.user.client.get_user(user_id=args.user_id)
     rm = game.room.client.get_room(room_id=u.room_id)
+
+    game.user.client.set_all_precedent_receipt_confirmation_to_received(
+        u=u, t=args.t, demand=training_choice
+    )
 
     absolute_good = game.user.client.get_absolute_good(u=u, rm=rm, good=args.desired_good)
 
@@ -192,9 +194,10 @@ def training_choice(args):
         "trainingSuccess": success,
         "trainingScore": score,
         "trainingProgress": progress,
-        "trainingT": args.t,
+        "t": args.t,
         "trainingEnd": end,
-        "receipt": receipt
+        "receipt": receipt,
+        "demand": 'training_choice'
     }
 
     group_reply = {
@@ -226,7 +229,8 @@ def training_done(args):
     to_reply = {
         "wait": wait,
         "progress": progress,
-        "receipt": receipt
+        "receipt": receipt,
+        'demand': 'training_done'
     }
 
     group_reply = {
@@ -246,6 +250,10 @@ def choice(args):
 
     u = game.user.client.get_user(user_id=args.user_id)
     rm = game.room.client.get_room(room_id=u.room_id)
+
+    game.user.client.set_all_precedent_receipt_confirmation_to_received(
+        u=u, t=args.t, demand=choice
+    )
 
     absolute_desired_good = game.user.client.get_absolute_good(u=u, good=args.desired_good, rm=rm)
 
@@ -271,22 +279,23 @@ def choice(args):
         "end": end,
         "score": score,
         "t": args.t,
-        "receipt": receipt
+        "receipt": receipt,
+        "demand": "choice"
     }
 
     group_reply = {
         "progress": progress,
         "end": end,
         "t": args.t,
-        "room_id": rm.id
-
+        "room_id": rm.id,
+        "user_id": u.id
     }
 
     if wait:
 
         game.consumers.WSDialog.group_send(
             group=f'game-t-{args.t}',
-            data={'wait': True, 'progress': progress, 't': args.t, 'receipt': False}
+            data={'wait': True, 'progress': progress, 't': args.t, 'receipt': False, 'demand': 'choice'}
         )
 
     return to_reply, group_reply
@@ -335,19 +344,19 @@ def _set_headers(response):
 
     return response
 
-
-def _increment_message_id():
-
-    message_count = IntParameter.objects.filter(name="message_count").first()
-
-    if not message_count:
-
-        message_count = IntParameter(name="message_count", value=0, unit="int")
-
-        message_count.save()
-
-    message_count.value += 1
-
-    message_count.save()
-
-    return message_count.value
+#
+# def _increment_message_id():
+#
+#     message_count = IntParameter.objects.filter(name="message_count").first()
+#
+#     if not message_count:
+#
+#         message_count = IntParameter(name="message_count", value=0, unit="int")
+#
+#         message_count.save()
+#
+#     message_count.value += 1
+#
+#     message_count.save()
+#
+#     return message_count.value

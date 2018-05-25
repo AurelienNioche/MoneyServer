@@ -75,6 +75,7 @@ class BotClient:
         self.training_desired_good = None
         self.training_good_in_hand = None
         self.training_t_max = None
+        self.t_max = None
         self.choice_made = None
         self.n_good = None
 
@@ -83,11 +84,36 @@ class BotClient:
         self.training_end = None
         self.game_end = None
 
-        self.last_request = None
-
         self.wait_for_server = None
 
+        self.last_request = None
+
+        self.done_init = False
+        self.done_survey = False
+        self.done_training = False
+
+        self.done_training_choice = None
+        self.done_choice = None
+
+        self.mapping = {
+                "survey": self.survey,
+                "training": self.training_choice,
+                "game": self.choice,
+                "end": self.end
+        }
+
+        self.order = [
+            self.init,
+            self.survey,
+            self.training_choice,
+            self.training_done,
+            self.choice,
+            self.end
+        ]
+
     def _connect(self, url):
+
+        del self.ws
 
         self.ws = websocket.WebSocketApp(
             url=url,
@@ -95,6 +121,7 @@ class BotClient:
             on_error=self.on_error,
             on_close=self.on_close
         )
+
         self.ws.on_open = self.on_open
 
         thread = threading.Thread(target=self.ws.run_forever)
@@ -114,6 +141,7 @@ class BotClient:
 
         print(message)
         self._connect(url=self.url)
+        getattr(self, self.last_request)()
 
     def on_close(self, message):
 
@@ -125,60 +153,28 @@ class BotClient:
         data = json.loads(args)
 
         if isinstance(data, dict):
-            # execution of reply function with response
-            if 'demand' in data:
 
-                print("Received:, ", data)
+            print('Received:', data)
 
-                func = getattr(self, "reply_" + data["demand"])
+            if not data['wait']:
+                self.last_request = data['demand']
 
-                if not data['wait']:
+                func = getattr(self, 'reply_' + data['demand'])
 
-                    if not self.user_id:
-                        self.user_id = data['userId']
+                if data.get('receipt'):
 
-                    if 'training' in data['demand']:
+                    self.user_id = data['userId'] if self.user_id is None else self.user_id
 
-                        self.receipt_confirmation(
-                            user_id=self.user_id,
-                            t=self.training_t,
-                            concerned_demand=data['demand']
-                        )
-
-                    else:
-
-                        self.receipt_confirmation(
-                            user_id=self.user_id,
-                            t=self.t,
-                            concerned_demand=data['demand']
-                        )
+                    self.receipt_confirmation(
+                        t=data.get('t'),
+                        concerned_demand=data['demand']
+                    )
 
                 func(data)
 
-            elif not data['wait']:
-
-                reply = 'reply_' + self.last_request
-
-                if 'training' in reply:
-
-                    self.receipt_confirmation(
-                        user_id=self.user_id,
-                        t=self.training_t,
-                        concerned_demand=self.last_request
-                    )
-
-                else:
-
-                    self.receipt_confirmation(
-                        user_id=self.user_id,
-                        t=self.t,
-                        concerned_demand=self.last_request
-                    )
-
-                getattr(self, reply)(data)
-
             else:
-                print(f'Waiting, progress = {data["progress"]}')
+                print(f'Waiting, progress={data["progress"]}')
+
         else:
             print("Received:, ", data)
             print(data)
@@ -196,13 +192,15 @@ class BotClient:
 
         return desired_good
 
-    def receipt_confirmation(self, user_id, t, concerned_demand):
+    # ------------------------------------------------------------- #
+
+    def receipt_confirmation(self, t, concerned_demand):
 
         self._request({
             "demand": "receipt_confirmation",
             "concernedDemand": concerned_demand,
             "t": t,
-            "userId": user_id
+            "userId": self.user_id
         })
 
     # --------------------- Init ------------------------------------ #
@@ -214,46 +212,44 @@ class BotClient:
             KeyInit.device_id: self.device_id,
         })
 
-        self.last_request = self.init.__name__
-
     def reply_init(self, args):
 
-        self.user_id = args["userId"]
+        if not self.done_init:
+            self.user_id = args["userId"]
 
-        self.good_in_hand = args["goodInHand"]
-        self.training_good_in_hand = args["trainingGoodInHand"]
+            self.good_in_hand = args["goodInHand"]
+            self.training_good_in_hand = args["trainingGoodInHand"]
 
-        self.n_good = args["nGood"]
+            self.n_good = args["nGood"]
 
-        if args["goodDesired"] != -2:
-            self.desired_good = args["goodDesired"]
+            if args["goodDesired"] != -2:
+                self.desired_good = args["goodDesired"]
 
-        else:
-            self.desired_good = self.get_desired_good()
+            else:
+                self.desired_good = self.get_desired_good()
 
-        if args["trainingGoodDesired"] != -2:
-            self.training_desired_good = args["trainingGoodDesired"]
+            if args["trainingGoodDesired"] != -2:
+                self.training_desired_good = args["trainingGoodDesired"]
 
-        else:
-            self.training_desired_good = self.get_desired_good(training=True)
+            else:
+                self.training_desired_good = self.get_desired_good(training=True)
 
-        self.t = args["t"]
-        self.choice_made = args["choiceMade"]
-        self.training_t = args["trainingT"]
-        self.training_t_max = args["trainingTMax"]
+            self.t = args["t"]
+            self.t_max = args["tMax"]
+            self.choice_made = args["choiceMade"]
+            self.training_t = args["trainingT"]
+            self.training_t_max = args["trainingTMax"]
 
-        if not args['wait']:
+            self.done_training_choice = np.zeros(self.training_t_max)
+            self.done_choice = np.zeros(self.t_max)
 
-            mapping = {
-                "survey": self.survey,
-                "training": self.training_choice,
-                "game": self.choice,
-                "end": self.end
-            }
+            if not args['wait']:
 
-            input(f'Go to state {args["step"]}?')
+                input(f'Go to state {args["step"]}?')
 
-            mapping[args['step']]()
+                self.done_init = True
+
+                self.mapping[args['step']]()
 
     def survey(self):
 
@@ -264,13 +260,15 @@ class BotClient:
             KeySurvey.user_id: self.user_id,
         })
 
-        self.last_request = self.survey.__name__
-
     def reply_survey(self, args):
 
-        if not args['wait']:
-            input('Go to state training?')
-            self.training_choice()
+        if not self.done_survey:
+
+            if not args['wait']:
+                self.done_survey = True
+
+                input('Go to state training?')
+                self.training_choice()
 
     # --------------------- tuto  ------------------------------------ #
 
@@ -284,32 +282,34 @@ class BotClient:
             KeyTuto.t: self.training_t,
         })
 
-        self.last_request = self.training_choice.__name__
-
     def reply_training_choice(self, args):
 
-        if not args["wait"]:
+        if not self.done_training_choice[args["t"]]:
 
-            if args["trainingSuccess"] != -2:
+            if not args["wait"]:
 
-                if args["trainingSuccess"]:
+                self.done_training_choice[args["t"]] = 1
 
-                    if self.training_desired_good == 1:
-                        self.training_good_in_hand = 0
+                if args["trainingSuccess"] != -2:
+
+                    if args["trainingSuccess"]:
+
+                        if self.training_desired_good == 1:
+                            self.training_good_in_hand = 0
+                        else:
+                            self.training_good_in_hand = self.training_desired_good
+
+                    self.training_desired_good = self.get_desired_good(training=True)
+
+                    if args['trainingEnd']:
+                        input('Go to state "training_done"?')
+                        self.training_done()
                     else:
-                        self.training_good_in_hand = self.training_desired_good
+                        self.training_t = args["t"] + 1
+                        self.training_choice()
 
-                self.training_t = args["trainingT"] + 1
-
-                self.training_desired_good = self.get_desired_good(training=True)
-
-                if not args['trainingEnd']:
-                    self.training_done()
                 else:
-                    self.choice()
-
-            else:
-                raise Exception("Do not wait but success is None")
+                    raise Exception("Do not wait but success is None")
 
     def training_done(self):
 
@@ -318,13 +318,13 @@ class BotClient:
             KeyTutoDone.user_id: self.user_id
         })
 
-        self.last_request = self.training_done.__name__
-
     def reply_training_done(self, args):
 
-        if not args['wait']:
-            input('Go to state game?')
-            self.choice()
+        if not self.done_training:
+            if not args['wait']:
+                input('Go to state game?')
+                self.done_training = True
+                self.choice()
 
     # --------------------- choice ------------------------------------ #
 
@@ -337,32 +337,33 @@ class BotClient:
             KeyChoice.t: self.t
         })
 
-        self.last_request = self.choice.__name__
-
     def reply_choice(self, args):
 
-        if not args["wait"]:
+        if not self.done_choice[args['t']]:
 
-            if args["success"] != -2:
+            if not args["wait"]:
 
-                if args["success"]:
+                self.done_choice[args['t']] = 1
 
-                    if self.desired_good == 1:
-                        self.good_in_hand = 0
+                if args["success"] != -2:
+
+                    if args["success"]:
+
+                        if self.desired_good == 1:
+                            self.good_in_hand = 0
+                        else:
+                            self.good_in_hand = self.desired_good
+
+                    self.desired_good = self.get_desired_good()
+
+                    if args['end']:
+                        self.end()
                     else:
-                        self.good_in_hand = self.desired_good
+                        self.t = args['t'] + 1
+                        self.choice()
 
-                self.t = args["t"] + 1
-
-                self.desired_good = self.get_desired_good()
-
-                if args['end']:
-                    self.end()
                 else:
-                    self.choice()
-
-            else:
-                raise Exception("Do not wait but success is None")
+                    raise Exception("Do not wait but success is None")
 
     def end(self):
         print('this is the end')

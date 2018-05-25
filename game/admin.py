@@ -1,16 +1,16 @@
 from django.contrib import admin
 
 # # Register your models here.
-from . models import User, BoolParameter, Choice, TutorialChoice, Room, Receipt
+from . models import User, BoolParameter, Choice, TutorialChoice, Room, Receipt, ConsumerState
 
 
 class UserAdmin(admin.ModelAdmin):
     list_display = (
         "id", "room_id", "device_id", "pseudo", "consumption_good",
         "production_good",
-        #"training_done",
+        "training_done",
          "gender", "age", "state", 'score',
-        #'training_score',
+        'training_score',
         'player_id'
     )
 
@@ -27,8 +27,8 @@ class ChoiceAdmin(admin.ModelAdmin):
 
 class RoomAdmin(admin.ModelAdmin):
     list_display = (
-        'id', 'n_user', 'opened', 't', #'training_t',
-        't_max', #'training_t_max',
+        'id', 'n_user', 'opened', 't', 'training_t',
+        't_max', 'training_t_max',
         "state", "n_type", "types"
     )
 
@@ -43,11 +43,15 @@ class ReceiptAdmin(admin.ModelAdmin):
     list_display = ('room_id', 'player_id', 'received', 'demand')
 
 
+class ConsumerStateAdmin(admin.ModelAdmin):
+    list_display = ('room_id', 'init', 'survey', 'training_choice', 'training_done', 'choice')
+
+
 admin.site.register(User, UserAdmin)
 admin.site.register(BoolParameter, BoolParameterAdmin)
 admin.site.register(Choice, ChoiceAdmin)
 admin.site.register(TutorialChoice, TutorialChoiceAdmin)
 admin.site.register(Room, RoomAdmin)
 admin.site.register(Receipt, ReceiptAdmin)
-
+admin.site.register(ConsumerState, ConsumerStateAdmin)
 

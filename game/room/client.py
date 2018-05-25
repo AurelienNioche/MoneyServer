@@ -26,8 +26,7 @@ def get_room(room_id):
 def get_all_users_that_did_not_receive(room_id, demand, t=None):
 
     players_that_did_not_receive = Receipt.objects.filter(
-            room_id=room_id, demand=demand.__name__, t=t, received=False
-    ).values_list('player_id')
+            room_id=room_id, demand=demand.__name__, t=t, received=False).values_list('player_id')
 
     return User.objects.filter(room_id=room_id, player_id__in=players_that_did_not_receive)
 
@@ -261,9 +260,8 @@ def state_verification(u, rm, progress, t, demand, success=None):
 
         wait = progress != 100 or success == -2
         t += not wait
-        rm = game.room.state.set_rm_timestep(rm=rm, t=t, tuto=False)
 
-        end = rm.t == rm.t_max
+        end = t == rm.t_max
 
         if end:
 
@@ -278,6 +276,9 @@ def state_verification(u, rm, progress, t, demand, success=None):
                     u=u,
                     state=game.room.state.states.END
                 )
+        else:
+
+            game.room.state.set_rm_timestep(rm=rm, t=t, tuto=False)
 
         return u.state, wait, t, end
 
@@ -288,11 +289,14 @@ def receipt_confirmation(demand, rm, u, t=None):
 
     receipt = Receipt.objects.filter(demand=demand, t=t, room_id=rm.id, player_id=u.player_id).first()
 
-    if not receipt.received:
+    try:
+        if not receipt.received:
 
-        receipt.received = True
+            receipt.received = True
 
-        receipt.save(update_fields=['received'])
+            receipt.save(update_fields=['received'])
+    except AttributeError:
+        raise Exception(f'Receipt demand={demand}, t={t}, room_id={rm.id}, player_id={u.player_id} NOT FOUND')
 
 
 def matching(rm, t):
@@ -397,11 +401,11 @@ def _compute_score_and_final_good(c):
 
 def _is_someone_in_the_current_state(state, rm):
 
-    states = User.objects.filter(room_id=rm.id).values_list('state')
+    users = User.objects.filter(room_id=rm.id)
 
-    if len(states) == rm.n_user:
+    if len(users) == rm.n_user:
 
-        return state in states
+        return state in [u.state for u in users]
 
     else:
 
