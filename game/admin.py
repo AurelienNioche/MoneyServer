@@ -41,11 +41,11 @@ class TutorialChoiceAdmin(admin.ModelAdmin):
 
 
 class ReceiptAdmin(admin.ModelAdmin):
-    list_display = ('room_id', 'player_id', 'received', 'demand')
+    list_display = ('room_id', 'player_id', 'received', 'demand', 't')
 
 
 class ConsumerStateAdmin(admin.ModelAdmin):
-    list_display = ('room_id', 'init', 'survey', 'training_choice', 'training_done', 'choice')
+    list_display = ('room_id', 'init', 'survey', 'training_choice', 'training_done', 'choice', 'treating_t')
 
 
 admin.site.register(User, UserAdmin)

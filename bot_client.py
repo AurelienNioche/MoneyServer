@@ -113,7 +113,7 @@ class BotClient:
 
     def _connect(self, url):
 
-        del self.ws
+        # del self.ws
 
         self.ws = websocket.WebSocketApp(
             url=url,
@@ -140,13 +140,20 @@ class BotClient:
     def on_error(self, message, *args):
 
         print(message)
-        self._connect(url=self.url)
-        getattr(self, self.last_request)()
+        # self._connect(url=self.url)
+        # try:
+        #     getattr(self, self.last_request)()
+        # except:
+        #     print('tamere')
 
     def on_close(self, message):
 
         print("websocket is closed.")
-        # self._connect(self.url)
+        self._connect(url=self.url)
+        # try:
+        #     getattr(self, self.last_request)()
+        # except:
+        #     print('tamere')
 
     def on_message(self, ws, args):
 
@@ -234,10 +241,11 @@ class BotClient:
             else:
                 self.training_desired_good = self.get_desired_good(training=True)
 
-            self.t = args["t"]
+            self.t = args["t"] if args['t'] is not None else 0
+
             self.t_max = args["tMax"]
             self.choice_made = args["choiceMade"]
-            self.training_t = args["trainingT"]
+            self.training_t = args["trainingT"] if args['trainingT'] is not None else 0
             self.training_t_max = args["trainingTMax"]
 
             self.done_training_choice = np.zeros(self.training_t_max)
@@ -403,8 +411,8 @@ def bot_factory(base, device_id, delay, url, wait_event, seed):
 
 def main(args):
 
-    #url = "ws://127.0.0.1/ws/"
-    url = 'ws://money.getz.fr/ws/'
+    url = "ws://127.0.0.1/ws/"
+    # url = 'ws://money.getz.fr/ws/'
 
     if not args.number:
 

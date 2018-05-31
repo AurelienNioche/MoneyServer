@@ -112,7 +112,8 @@ def init(args):
         'skip_survey': args.skip_survey,
         'skip_training': args.skip_training,
         'user_id': u.id,
-        'demand': args.demand
+        'demand': args.demand,
+        't': args.t
     }
 
     if wait:
@@ -209,8 +210,8 @@ def training_choice(args):
         "player_id": u.player_id,
         "user_id": u.id,
         "demand": args.demand,
-        "t": args.t,
-        "to_reply": to_reply
+        "to_reply": to_reply,
+        "t": args.t
     }
 
     return to_reply, consumer_info
@@ -258,9 +259,10 @@ def choice(args):
     u = game.user.client.get_user(user_id=args.user_id)
     rm = game.room.client.get_room(room_id=u.room_id)
 
-    game.user.client.set_all_precedent_receipt_confirmation_to_received(
-        u=u, t=args.t, demand=choice
-    )
+    if args.t:
+        game.user.client.set_all_precedent_receipt_confirmation_to_received(
+            u=u, t=args.t, demand=choice
+        )
 
     absolute_desired_good = game.user.client.get_absolute_good(u=u, good=args.desired_good, rm=rm)
 

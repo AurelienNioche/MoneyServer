@@ -131,6 +131,9 @@ def choice(kwargs):
 
         print('Begin to send to users')
 
+        print('Users that did not receive:', users_that_did_not_receive)
+        print('Users results:', users)
+
         for user_result in users:
 
             data = {

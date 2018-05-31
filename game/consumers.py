@@ -41,7 +41,8 @@ class WebSocketConsumer(JsonWebsocketConsumer):
 
             cond1 = game.consumer.state.is_consumer_already_treating_demand(
                 demand=consumer_info['demand'],
-                room_id=consumer_info['room_id']
+                room_id=consumer_info['room_id'],
+                t=consumer_info.get('t'),
             )
 
             if cond0 and not cond1:
@@ -76,6 +77,7 @@ class WebSocketConsumer(JsonWebsocketConsumer):
             # Each user_id group matches only
             # user/client/device
             id_group = f'user-{user_id}'
+            utils.log(f'Adding group {id_group}', f=self._group_management)
             self._group_add(group=id_group)
 
         if demand_func == game.views.choice:
@@ -179,12 +181,12 @@ class ReceiptConsumer(SyncConsumer):
 
         utils.log(f'ReceiptConsumer begins the task {demand}', f=self.generic)
 
-        game.consumer.state.treat_demand(demand=demand, room_id=kwargs['room_id'])
+        game.consumer.state.treat_demand(demand=demand, room_id=kwargs['room_id'], t=kwargs.get('t'))
 
         func = getattr(game.receipt_views, demand)
         func(kwargs)
 
-        game.consumer.state.finished_treating_demand(demand=demand, room_id=kwargs['room_id'])
+        game.consumer.state.finished_treating_demand(demand=demand, room_id=kwargs['room_id'], t=kwargs.get('t'))
 
         utils.log(f'ReceiptConsumer finished to treat the task {demand}', f=self.generic)
 

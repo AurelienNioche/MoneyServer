@@ -111,7 +111,7 @@ def connect(device_id, skip_survey, skip_training):
 def submit_survey(u, age, gender):
 
     # if survey is not already completed
-    if u.age is None and u.gender is None:
+    if u.age is None:
         u.age = age
         u.gender = gender
         u.save(update_fields=["age", "gender"])
@@ -235,6 +235,7 @@ def set_all_precedent_receipt_confirmation_to_received(demand, u, t):
             demand=demand,
             t__in=times
         )
+
     else:
 
         receipts = Receipt.objects.filter(
@@ -245,6 +246,7 @@ def set_all_precedent_receipt_confirmation_to_received(demand, u, t):
         )
 
     for r in receipts:
+
         r.received = True
 
         r.save(update_fields=['received'])
@@ -260,8 +262,8 @@ def receipt_confirmation(demand, rm, u, t=None):
         if not receipt.received:
 
             receipt.received = True
-
             receipt.save(update_fields=['received'])
+
     except AttributeError:
         raise Exception(f'Receipt demand={demand}, t={t}, room_id={rm.id}, player_id={u.player_id} NOT FOUND')
 

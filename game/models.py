@@ -81,5 +81,6 @@ class ConsumerState(models.Model):
     training_choice = models.BooleanField(default=False)
     training_done = models.BooleanField(default=False)
     choice = models.BooleanField(default=False)
+    treating_t = models.TextField(default="")
 
 
