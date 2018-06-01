@@ -22,4 +22,4 @@
 
 
 python manage.py runworker receipt-consumer &
-daphne -b 127.0.0.1 -p 8018 adminbase.asgi:application
+sudo daphne -b 127.0.0.1 -p 8018 adminbase.asgi:application

@@ -32,7 +32,6 @@ pseudos = [
     'Conan',
     'Drogon',
     'Durand',
-    'Flocel',
     'Flodoard',
     'Flouard',
     'Flour',
@@ -75,8 +74,11 @@ pseudos = [
     'Sigebert',
     'Taillefer',
     'Vantelme',
-
-
+    'Télémoth',
+    'Itu',
+    'Elfam',
+    'Lasa',
+    'Pita'
 ]
 
 

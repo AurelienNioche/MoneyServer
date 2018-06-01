@@ -12,6 +12,7 @@ class Room(models.Model):
     trial = models.BooleanField(default=False)
     opened = models.BooleanField(default=True)
     state = models.TextField(default=None, null=True)
+    counter = models.IntegerField(default=0)
 
 
 class User(models.Model):
@@ -82,5 +83,4 @@ class ConsumerState(models.Model):
     training_done = models.BooleanField(default=False)
     choice = models.BooleanField(default=False)
     treating_t = models.TextField(default="")
-
 

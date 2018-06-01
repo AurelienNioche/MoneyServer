@@ -24,16 +24,13 @@ def get_user(user_id):
 
 def connect(device_id, skip_survey, skip_training):
 
-    with transaction.atomic():
-        # Get opened room
-        rooms = Room.objects.select_for_update().all()
-        rm = rooms.filter(opened=True).first()
+    rm = Room.objects.filter(opened=True).first()
 
-        if not rm:
-
-            # If no room create room dynamically (if auto_room parameter is enabled)
-            # Else an exception is raised!
-            rm = game.room.client.create_room()
+        # if not rm:
+        #
+        #     # If no room create room dynamically (if auto_room parameter is enabled)
+        #     # Else an exception is raised!
+        #     rm = game.room.client.create_room()
 
     u = User.objects.filter(device_id=device_id, room_id=rm.id).first()
 
@@ -319,13 +316,13 @@ def _create_new_user(rm, device_id):
     """
 
     while True:
-
         try:
 
             with transaction.atomic():
-                users = User.objects.select_for_update().all()
 
-                player_id = users.filter(room_id=rm.id).count()
+                temp_room = Room.objects.select_for_update().filter(id=rm.id).first()
+
+                player_id = temp_room.counter
 
                 pseudo = parameters.pseudos[player_id]
 
@@ -349,6 +346,9 @@ def _create_new_user(rm, device_id):
 
                 u.save(update_fields=["production_good", "consumption_good"])
 
+                temp_room.counter += 1
+                temp_room.save(update_fields=['counter'])
+
                 return u
 
         except (
@@ -357,11 +357,12 @@ def _create_new_user(rm, device_id):
             django.db.utils.OperationalError,
             psycopg2.IntegrityError,
             psycopg2.OperationalError
-        ):
+        ) as e:
             print("*" * 50)
             print("INTEGRITY ERROR" + "!" * 10)
+            print(str(e))
             print("*" * 50)
-            threading.Event().wait(0.5)
+            threading.Event().wait(1 + np.random.random() * 4)
             continue
 
 
