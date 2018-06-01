@@ -211,3 +211,10 @@ Change state if needed. return if client has to wait and state. Different states
 * Then the consumer call the on_receive method and do all the group operations (removing, adding) based on
 the content of the response dictionnary
 
+
+## Tweaking / scaling
+
+* channels_redis (in settings.py): 
+    expiry: 4  # Time before a msg expires
+    capacity: 200  # Message capacity
+

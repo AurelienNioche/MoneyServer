@@ -13,6 +13,9 @@ default_room = {
     "tutorial_t_max": 40,
 }
 
+# Delay to wait for a receipt confirmation (seconds)
+receipt_delay = 3
+
 pseudos = [
     'Arthur',
     'Abrand',

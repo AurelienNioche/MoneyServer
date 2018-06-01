@@ -3,7 +3,7 @@ import itertools
 
 import numpy as np
 
-from game.models import User, Room, Choice, TutorialChoice, Receipt, ConsumerState
+from game.models import User, Room, Choice, TutorialChoice, Receipt, ConsumerTask
 import game.user.client
 import game.room.state
 import game.room.dashboard
@@ -131,6 +131,9 @@ def create(data):
             for n in range(n_user)
         ])
 
+        c = ConsumerTask(room_id=rm.id, demand=demand, t=None)
+        c.save()
+
     for demand, t_maximum in zip(['training_choice', 'choice'], [training_t_max, t_max]):
 
         Receipt.objects.bulk_create([
@@ -143,8 +146,13 @@ def create(data):
             for n in range(n_user) for t in range(t_maximum)
         ])
 
-    cs = ConsumerState(room_id=rm.id)
-    cs.save()
+    ConsumerTask.objects.bulk_create([
+        ConsumerTask(
+            room_id=rm.id,
+            demand='choice',
+            t=t
+        ) for t in range(t_max)
+    ])
 
     return rm
 

@@ -26,7 +26,7 @@ def connect(device_id, skip_survey, skip_training):
 
     rm = Room.objects.filter(opened=True).first()
 
-        # if not rm:
+        # if not rm
         #
         #     # If no room create room dynamically (if auto_room parameter is enabled)
         #     # Else an exception is raised!

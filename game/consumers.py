@@ -1,3 +1,4 @@
+from django.db import transaction
 from channels.generic.websocket import JsonWebsocketConsumer, SyncConsumer
 from asgiref.sync import async_to_sync
 
@@ -39,15 +40,20 @@ class WebSocketConsumer(JsonWebsocketConsumer):
 
             cond0 = not to_reply['wait']
 
-            cond1 = game.consumer.state.is_consumer_already_treating_demand(
+            cond1 = game.consumer.state.task_is_done(
                 demand=consumer_info['demand'],
                 room_id=consumer_info['room_id'],
                 t=consumer_info.get('t'),
             )
+            utils.log(f'Verifying that worker is occupied', f=self.receive_json)
 
             if cond0 and not cond1:
 
                 self._send_to_worker(demand=consumer_info['demand'], data=consumer_info)
+
+            else:
+                utils.log(f'Worker already did task {consumer_info["demand"]}, t={consumer_info.get("t")}',
+                          f=self.receive_json)
 
     def _send_to_worker(self, demand, data):
 
@@ -181,12 +187,16 @@ class ReceiptConsumer(SyncConsumer):
 
         utils.log(f'ReceiptConsumer begins the task {demand}', f=self.generic)
 
-        game.consumer.state.treat_demand(demand=demand, room_id=kwargs['room_id'], t=kwargs.get('t'))
+        with transaction.atomic():
 
-        func = getattr(game.receipt_views, demand)
-        func(kwargs)
+            if demand != 'training_choice':
+                task = game.consumer.state.treat_demand(demand=demand, room_id=kwargs['room_id'], t=kwargs.get('t'))
 
-        game.consumer.state.finished_treating_demand(demand=demand, room_id=kwargs['room_id'], t=kwargs.get('t'))
+            func = getattr(game.receipt_views, demand)
+            func(kwargs)
+
+            if demand != 'training_choice':
+                game.consumer.state.finished_treating_demand(task=task)
 
         utils.log(f'ReceiptConsumer finished to treat the task {demand}', f=self.generic)
 

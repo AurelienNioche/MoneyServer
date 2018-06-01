@@ -6,6 +6,8 @@ import game.consumers
 import game.user.client
 import game.consumer.state
 
+from parameters import parameters
+
 
 def init(kwargs):
 
@@ -27,7 +29,7 @@ def init(kwargs):
 
                 game.consumers.WSDialog.group_send(group=f'user-{user.id}', data=info)
 
-        threading.Event().wait(1)
+        threading.Event().wait(parameters.receipt_delay)
         stop_sending = game.room.client.all_client_received(room_id=kwargs['room_id'], demand=init)
 
         if stop_sending:
@@ -47,7 +49,7 @@ def survey(kwargs):
                 data=kwargs['to_reply'],
             )
 
-        threading.Event().wait(1)
+        threading.Event().wait(parameters.receipt_delay)
 
         stop_sending = game.room.client.all_client_received(room_id=kwargs['room_id'], demand=survey)
 
@@ -75,7 +77,7 @@ def training_choice(kwargs):
                 data=kwargs['to_reply'],
         )
 
-        threading.Event().wait(1)
+        threading.Event().wait(parameters.receipt_delay)
 
         stop_sending = game.user.client.user_received(
             room_id=kwargs['room_id'],
@@ -103,7 +105,7 @@ def training_done(kwargs):
                 data=kwargs['to_reply'],
             )
 
-        threading.Event().wait(1)
+        threading.Event().wait(parameters.receipt_delay)
 
         stop_sending = game.room.client.all_client_received(
             room_id=kwargs['room_id'], demand=training_done
@@ -152,7 +154,7 @@ def choice(kwargs):
                 data=data
             )
 
-        threading.Event().wait(1)
+        threading.Event().wait(parameters.receipt_delay)
 
         stop_sending = game.room.client.all_client_received(
             room_id=kwargs['room_id'], demand=choice, t=kwargs['t']

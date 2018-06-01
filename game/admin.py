@@ -1,7 +1,7 @@
 from django.contrib import admin
 
 # # Register your models here.
-from . models import User, BoolParameter, Choice, TutorialChoice, Room, Receipt, ConsumerState
+from . models import User, BoolParameter, Choice, TutorialChoice, Room, Receipt, ConsumerTask
 
 
 class UserAdmin(admin.ModelAdmin):
@@ -44,8 +44,8 @@ class ReceiptAdmin(admin.ModelAdmin):
     list_display = ('room_id', 'player_id', 'received', 'demand', 't')
 
 
-class ConsumerStateAdmin(admin.ModelAdmin):
-    list_display = ('room_id', 'init', 'survey', 'training_choice', 'training_done', 'choice', 'treating_t')
+class ConsumerTaskAdmin(admin.ModelAdmin):
+    list_display = ('room_id', 'demand', 't', 'done')
 
 
 admin.site.register(User, UserAdmin)
@@ -54,5 +54,5 @@ admin.site.register(Choice, ChoiceAdmin)
 admin.site.register(TutorialChoice, TutorialChoiceAdmin)
 admin.site.register(Room, RoomAdmin)
 admin.site.register(Receipt, ReceiptAdmin)
-admin.site.register(ConsumerState, ConsumerStateAdmin)
+admin.site.register(ConsumerTask, ConsumerTaskAdmin)
 
