@@ -21,6 +21,7 @@
 
 * Launch Postgresql server
 * Launch Redis server
+* Launch Nginx
 
 
 ## Stack
@@ -56,7 +57,7 @@
 
 * The client communicates with daphne and django through nginx
 
-## Dnsmasq config
+<!-- ## Dnsmasq config
 
 Linux: 
 
@@ -73,7 +74,12 @@ Modify the variable named **address**:
 The dns server catch all domain names ending with **fr** and returns 
 the address of the nginx server on the local network (here **192.168.1.204**).
 
+-->
+
 ## Nginx config
+
+Modify the config file. Default location MacOS: '/usr/local/etc/nginx/nginx.conf'.
+Default location Linux: '/etc/nginx/nginx.conf' 
 
 We tell nginx to serve static files:
 
@@ -173,8 +179,8 @@ The whole config file looks like:
 * access points are connected using rj-45 (not in the 'console' port)
 
 * Local static IP Thinkpad basile: 192.168.1.204
-* tuto dnsmasq: https://www.michaelpporter.com/2017/11/using-dnsmasq-for-local-development-on-macos/
-* To attach a new device (set a fixed ip) Advanced > setup > LAN setup
+* To attach a new device on the router (set a fixed ip) Advanced > setup > LAN setup
+<!--* tuto dnsmasq: https://www.michaelpporter.com/2017/11/using-dnsmasq-for-local-development-on-macos/ -->
 
 
 ## Code structure
@@ -209,7 +215,7 @@ Change state if needed. return if client has to wait and state. Different states
 * The Consumer instance gets the response and send it to the client
 
 * Then the consumer call the on_receive method and do all the group operations (removing, adding) based on
-the content of the response dictionnary
+the content of the response dictionary
 
 
 ## Tweaking / scaling
