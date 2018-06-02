@@ -17,17 +17,15 @@ def init(kwargs):
 
         for user in users:
 
-            if user.state == game.room.state.states.SURVEY:
+            info = game.user.client.connect(
+                device_id=user.device_id,
+                skip_survey=kwargs['skip_survey'],
+                skip_training=kwargs['skip_training'],
+            )[0]
 
-                info = game.user.client.connect(
-                    device_id=user.device_id,
-                    skip_survey=kwargs['skip_survey'],
-                    skip_training=kwargs['skip_training'],
-                )[0]
+            info.update({'wait': False, 'receipt': True})
 
-                info.update({'wait': False, 'receipt': True})
-
-                game.consumers.WSDialog.group_send(group=f'user-{user.id}', data=info)
+            game.consumers.WSDialog.group_send(group=f'user-{user.id}', data=info)
 
         threading.Event().wait(parameters.receipt_delay)
         stop_sending = game.room.client.all_client_received(room_id=kwargs['room_id'], demand=init)
