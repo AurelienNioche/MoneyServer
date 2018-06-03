@@ -15,6 +15,7 @@ application = ProtocolTypeRouter({
 
     'channel': ChannelNameRouter({
         'receipt-consumer': game.consumers.ReceiptConsumer,
+        'ping-consumer': game.consumers.PingConsumer,
     }),
 
 })

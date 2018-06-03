@@ -1,6 +1,7 @@
 from django.db import transaction
-from channels.generic.websocket import JsonWebsocketConsumer, SyncConsumer
+from channels.generic.websocket import JsonWebsocketConsumer, SyncConsumer, AsyncConsumer
 from asgiref.sync import async_to_sync
+import threading
 
 from utils import utils
 
@@ -11,6 +12,7 @@ from channels.layers import get_channel_layer
 import game.views
 import game.receipt_views
 import game.consumer.state
+import game.room.client
 
 
 class WebSocketConsumer(JsonWebsocketConsumer):
@@ -18,10 +20,13 @@ class WebSocketConsumer(JsonWebsocketConsumer):
     def connect(self):
 
         self.accept()
+        self._group_add('all')
+        self.start_pinging()
 
     def disconnect(self, close_code):
 
-        pass
+        utils.log(f'Disconnection! close code: {close_code}', f=self.disconnect)
+        self._group_discard('all')
 
     def receive_json(self, content, **kwargs):
 
@@ -119,7 +124,16 @@ class WebSocketConsumer(JsonWebsocketConsumer):
         if state:
             self._group_add(group=state)
 
-    def _group_send(self, group, data):
+    def start_pinging(self):
+
+        async_to_sync(self.channel_layer.send)(
+            'ping-consumer',
+            {
+                'type': 'ping'
+            },
+        )
+
+    def _group_send(self, group, data, json=True):
 
         """
         Send data to a desired group of users
@@ -133,7 +147,8 @@ class WebSocketConsumer(JsonWebsocketConsumer):
             {
                 'type': 'group.message',
                 'data': data,
-                'group': group
+                'group': group,
+                'json': json
              }
         )
 
@@ -149,12 +164,15 @@ class WebSocketConsumer(JsonWebsocketConsumer):
         data = message['data']
         group = message['group']
 
-        try:
-            utils.log(f'Sending to group {group}: {data}', f=self._group_send)
-        except UnicodeEncodeError:
-            print('Error printing request.')
+        if message['json']:
+            try:
+                utils.log(f'Sending to group {group}: {data}', f=self._group_send)
+            except UnicodeEncodeError:
+                print('Error printing request.')
 
-        self.send_json(data)
+            self.send_json(data)
+        else:
+            self.send(data)
 
     def _group_add(self, group):
 
@@ -201,10 +219,23 @@ class ReceiptConsumer(SyncConsumer):
         utils.log(f'ReceiptConsumer finished to treat the task {demand}', f=self.generic)
 
 
+class PingConsumer(SyncConsumer):
+
+    def ping(self, *args):
+
+        utils.log('Start pinging', f=self.ping)
+
+        while True:
+
+            WSDialog.group_send(group='all', data='ping', json=False)
+
+            threading.Event().wait(2)
+
+
 class WSDialog:
 
     @staticmethod
-    def group_send(group, data):
+    def group_send(group, data, json=True):
 
         channel_layer = get_channel_layer()
 
@@ -214,6 +245,7 @@ class WSDialog:
                 'type': 'group.message',
                 'data': data,
                 'group': group,
+                'json': json
              }
         )
 

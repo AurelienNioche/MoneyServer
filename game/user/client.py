@@ -5,6 +5,7 @@ import psycopg2
 import numpy as np
 
 from parameters import parameters
+from utils import utils
 
 from game.models import User, Room, Choice, TutorialChoice, Receipt
 import game.room.state
@@ -18,7 +19,7 @@ import game.user.state
 def get_user(user_id):
     u = User.objects.select_for_update().filter(id=user_id).first()
     if not u:
-        raise Exception("Error: User not found.")
+        raise Exception("Error: User not found.", f=get_user)
     return u
 
 
@@ -377,7 +378,7 @@ def _get_user_production_good(rm, u):
         return types[u.player_id]
 
     except IndexError:
-        raise Exception("Too much players.")
+        utils.log('TOO MUCH PLAYERS')
 
 
 def get_absolute_good(u, rm, good):

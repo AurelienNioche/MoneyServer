@@ -31,6 +31,10 @@ def get_all_users_that_did_not_receive(room_id, demand, t=None):
     return User.objects.filter(room_id=room_id, player_id__in=players_that_did_not_receive)
 
 
+def get_all_users(room_id):
+    return User.objects.filter(room_id=room_id)
+
+
 def get_results_for_all_users(room_id, t):
 
     choices = Choice.objects.filter(room_id=room_id, t=t)
