@@ -21,13 +21,18 @@ class WebSocketConsumer(JsonWebsocketConsumer):
     def connect(self):
 
         self.accept()
+
+        # self.send_json(
+        #     content=game.params.client.get_request_parameters()
+        # )
+
         # self._group_add('all')
         # self.start_pinging()
 
     def disconnect(self, close_code):
 
         utils.log(f'Disconnection! close code: {close_code}', f=self.disconnect)
-        self._group_discard('all')
+        # self._group_discard('all')
 
     def receive_json(self, content, **kwargs):
 
@@ -44,38 +49,45 @@ class WebSocketConsumer(JsonWebsocketConsumer):
             except UnicodeEncodeError:
                 print('Error printing request.')
 
-            cond0 = not to_reply['wait']
+            # If clients do not need to wait
+            # and are waiting for answer
+            if not to_reply['wait']:
 
-            cond1 = game.consumer.state.task_is_done(
-                demand=consumer_info['demand'],
-                room_id=consumer_info['room_id'],
-                t=consumer_info.get('t'),
-            )
-            utils.log(f'Verifying that worker did the task {consumer_info["demand"]}', f=self.receive_json)
+                self._worker_management(consumer_info)
 
-            if cond0 and not cond1:
+    def _worker_management(self, consumer_info):
 
-                self._send_to_worker(demand=consumer_info['demand'], data=consumer_info)
-
-            else:
-
-                utils.log(
-                    f'Worker already did task {consumer_info["demand"]}, t={consumer_info.get("t")}',
-                    f=self.receive_json
-                )
-
-    def _send_to_worker(self, demand, data):
-
-        async_to_sync(self.channel_layer.send)(
-            'receipt-consumer',
-            {
-                'type': 'generic',
-                'demand': demand,
-                'receipt_data': data
-            },
+        task_done = game.consumer.state.task_is_done(
+            demand=consumer_info['demand'],
+            room_id=consumer_info['room_id'],
+            t=consumer_info.get('t'),
         )
 
+        utils.log(
+            f'Verifying that worker did the task {consumer_info["demand"]}',
+            f=self._worker_management
+        )
+
+        if not task_done:
+
+            self._send_to_worker(
+                demand=consumer_info['demand'], data=consumer_info
+            )
+
+        else:
+
+            utils.log(
+                f'Worker already did task {consumer_info["demand"]}, t={consumer_info.get("t")}',
+                f=self._worker_management
+            )
+
     def _group_management(self, consumer_info):
+
+        """
+        Adding current connected user to group
+        :param consumer_info:
+        :return:
+        """
 
         user_id = consumer_info.get('user_id')
         demand = consumer_info.get('demand')
@@ -128,12 +140,46 @@ class WebSocketConsumer(JsonWebsocketConsumer):
         if state:
             self._group_add(group=state)
 
+    def group_message(self, message):
+
+        """
+        Send json to a group, called by self._group_send
+        method and WSDialog.group_send from outside
+        :param message:
+        :return:
+        """
+
+        data = message['data']
+        group = message['group']
+        is_json = message['json']
+
+        if is_json:
+            try:
+                utils.log(f'Sending to group {group}: {data}', f=self._group_send)
+            except UnicodeEncodeError:
+                print('Error printing request.')
+
+            self.send_json(data)
+        else:
+            self.send(data)
+
     def start_pinging(self):
 
         async_to_sync(self.channel_layer.send)(
             'ping-consumer',
             {
                 'type': 'ping'
+            },
+        )
+
+    def _send_to_worker(self, demand, data):
+
+        async_to_sync(self.channel_layer.send)(
+            'receipt-consumer',
+            {
+                'type': 'generic',
+                'demand': demand,
+                'receipt_data': data
             },
         )
 
@@ -155,28 +201,6 @@ class WebSocketConsumer(JsonWebsocketConsumer):
                 'json': json
              }
         )
-
-    def group_message(self, message):
-
-        """
-        Send json to a group, called by self._group_send
-        method and WSDialog.group_send from outside
-        :param message:
-        :return:
-        """
-
-        data = message['data']
-        group = message['group']
-
-        if message['json']:
-            try:
-                utils.log(f'Sending to group {group}: {data}', f=self._group_send)
-            except UnicodeEncodeError:
-                print('Error printing request.')
-
-            self.send_json(data)
-        else:
-            self.send(data)
 
     def _group_add(self, group):
 

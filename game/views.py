@@ -30,6 +30,9 @@ def client_request(request):
     demand = request.get('demand')
 
     if not demand:
+        if request.get('timeLastRequest'):
+            return game.params.client.get_request_parameters(), None
+
         raise Exception('"demand" key is required.')
 
     trial, skip_survey, skip_training = game.params.client.is_trial()
