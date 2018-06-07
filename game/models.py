@@ -85,3 +85,8 @@ class ConsumerTask(models.Model):
 class FloatParameter(models.Model):
     name = models.TextField()
     value = models.FloatField()
+
+
+class IntParameter(models.Model):
+    name = models.TextField()
+    value = models.IntegerField()

@@ -56,3 +56,4 @@ def get_ping_frequency():
     return ping.value
 
 
+def get_request_parameters():
