@@ -1,4 +1,6 @@
 from collections import namedtuple
+from django.views.decorators.csrf import csrf_exempt
+# from django.
 
 from utils import utils
 
@@ -12,6 +14,7 @@ import game.room.state
 import game.consumers
 
 
+@csrf_exempt
 def client_request(request):
 
     """

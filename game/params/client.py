@@ -1,6 +1,6 @@
 from django.db import transaction
 
-from game.models import BoolParameter
+from game.models import BoolParameter, FloatParameter
 
 
 def is_trial():
@@ -41,3 +41,18 @@ def create_default_room():
             auto_room.save()
 
         return auto_room.value
+
+
+def get_ping_frequency():
+
+    ping = FloatParameter.objects.filter(name="ping").first()
+
+    if not ping:
+
+        ping = FloatParameter(name="ping", value=3)
+
+        ping.save()
+
+    return ping.value
+
+

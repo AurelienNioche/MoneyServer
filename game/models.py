@@ -81,3 +81,7 @@ class ConsumerTask(models.Model):
     demand = models.TextField(default=None, null=True)
     done = models.BooleanField(default=False)
 
+
+class FloatParameter(models.Model):
+    name = models.TextField()
+    value = models.FloatField()

@@ -13,6 +13,7 @@ import game.views
 import game.receipt_views
 import game.consumer.state
 import game.room.client
+import game.params.client
 
 
 class WebSocketConsumer(JsonWebsocketConsumer):
@@ -20,8 +21,8 @@ class WebSocketConsumer(JsonWebsocketConsumer):
     def connect(self):
 
         self.accept()
-        self._group_add('all')
-        self.start_pinging()
+        # self._group_add('all')
+        # self.start_pinging()
 
     def disconnect(self, close_code):
 
@@ -50,15 +51,18 @@ class WebSocketConsumer(JsonWebsocketConsumer):
                 room_id=consumer_info['room_id'],
                 t=consumer_info.get('t'),
             )
-            utils.log(f'Verifying that worker is occupied', f=self.receive_json)
+            utils.log(f'Verifying that worker did the task {consumer_info["demand"]}', f=self.receive_json)
 
             if cond0 and not cond1:
 
                 self._send_to_worker(demand=consumer_info['demand'], data=consumer_info)
 
             else:
-                utils.log(f'Worker already did task {consumer_info["demand"]}, t={consumer_info.get("t")}',
-                          f=self.receive_json)
+
+                utils.log(
+                    f'Worker already did task {consumer_info["demand"]}, t={consumer_info.get("t")}',
+                    f=self.receive_json
+                )
 
     def _send_to_worker(self, demand, data):
 
@@ -229,7 +233,9 @@ class PingConsumer(SyncConsumer):
 
             WSDialog.group_send(group='all', data='ping', json=False)
 
-            threading.Event().wait(2)
+            frequency = game.params.client.get_ping_frequency()
+
+            threading.Event().wait(frequency)
 
 
 class WSDialog:
