@@ -34,6 +34,15 @@ class WebSocketConsumer(JsonWebsocketConsumer):
         utils.log(f'Disconnection! close code: {close_code}', f=self.disconnect)
         # self._group_discard('all')
 
+    def receive(self, **kwargs):
+
+        if kwargs['text_data'] == 'ping':
+            #utils.log('I received a ping, I will send a pong', f=self.receive)
+            self.send('pong')
+
+        else:
+            super().receive(**kwargs)
+
     def receive_json(self, content, **kwargs):
 
         to_reply, consumer_info = game.views.client_request(content)

@@ -378,7 +378,7 @@ def _get_user_production_good(rm, u):
         return types[u.player_id]
 
     except IndexError:
-        utils.log('TOO MUCH PLAYERS')
+        utils.log('TOO MUCH PLAYERS', f=_get_user_production_good)
 
 
 def get_absolute_good(u, rm, good):
