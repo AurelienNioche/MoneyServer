@@ -22,4 +22,4 @@
 
 
 python manage.py runworker receipt-consumer & #ping-consumer
-daphne -b 0.0.0.0 -p 80 adminbase.asgi:application
+daphne -b 127.0.0.1 -p 8018 adminbase.asgi:application
