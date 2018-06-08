@@ -68,7 +68,7 @@ class WebSocketConsumer(JsonWebsocketConsumer):
             f=self._worker_management
         )
 
-        if not task_done:
+        if not task_done and task_done is not None:
 
             self._send_to_worker(
                 demand=consumer_info['demand'], data=consumer_info
