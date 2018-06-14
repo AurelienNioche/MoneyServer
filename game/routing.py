@@ -5,6 +5,6 @@ from . import consumers
 
 
 websocket_urlpatterns = [
-    path('ws', consumers.WebSocketConsumer),
-    url(r'^ws/$', consumers.WebSocketConsumer),
+    path('ws', consumers.GameWebSocketConsumer),
+    url(r'^ws/$', consumers.GameWebSocketConsumer),
 ]

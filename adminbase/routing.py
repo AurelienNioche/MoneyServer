@@ -3,13 +3,15 @@ from channels.routing import ProtocolTypeRouter, URLRouter, ChannelNameRouter
 
 import game.consumers
 import game.routing
+import dashboard.routing
 
 
 application = ProtocolTypeRouter({
     # (http->django views is added by default)
     'websocket': AuthMiddlewareStack(
         URLRouter(
-            game.routing.websocket_urlpatterns
+                game.routing.websocket_urlpatterns
+                + dashboard.routing.websocket_urlpatterns
         )
     ),
 

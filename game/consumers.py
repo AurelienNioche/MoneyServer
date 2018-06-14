@@ -2,6 +2,7 @@ from django.db import transaction
 from channels.generic.websocket import JsonWebsocketConsumer, SyncConsumer, AsyncConsumer
 from asgiref.sync import async_to_sync
 import threading
+import subprocess
 
 from utils import utils
 
@@ -16,7 +17,7 @@ import game.room.client
 import game.params.client
 
 
-class WebSocketConsumer(JsonWebsocketConsumer):
+class GameWebSocketConsumer(JsonWebsocketConsumer):
 
     def connect(self):
 
@@ -31,13 +32,15 @@ class WebSocketConsumer(JsonWebsocketConsumer):
 
     def disconnect(self, close_code):
 
+        subprocess.call('spd-say "Déconnection" -l fr', shell=True)
+
         utils.log(f'Disconnection! close code: {close_code}', f=self.disconnect)
         # self._group_discard('all')
 
     def receive(self, **kwargs):
 
         if kwargs['text_data'] == 'ping':
-            #utils.log('I received a ping, I will send a pong', f=self.receive)
+            # utils.log('I received a ping, I will send a pong', f=self.receive)
             self.send('pong')
 
         else:
@@ -60,9 +63,9 @@ class WebSocketConsumer(JsonWebsocketConsumer):
 
             # If clients do not need to wait
             # and are waiting for answer
-            if not to_reply['wait']:
-
-                self._worker_management(consumer_info)
+            # if not to_reply['wait']:
+            #
+            #     self._worker_management(consumer_info)
 
     def _worker_management(self, consumer_info):
 

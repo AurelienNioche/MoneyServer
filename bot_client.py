@@ -411,7 +411,7 @@ def bot_factory(base, device_id, delay, url, wait_event, seed):
 
 def main(args):
 
-    url = "ws://127.0.0.1/ws/"
+    url = "ws://127.0.0.1/ws/register"
     # url = 'ws://money.getz.fr/ws/'
 
     if not args.number:

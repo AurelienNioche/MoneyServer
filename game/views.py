@@ -30,9 +30,6 @@ def client_request(request):
     demand = request.get('demand')
 
     if not demand:
-        if request.get('timeLastRequest'):
-            return game.params.client.get_request_parameters(), None
-
         raise Exception('"demand" key is required.')
 
     trial, skip_survey, skip_training = game.params.client.is_trial()
@@ -122,12 +119,12 @@ def init(args):
         't': args.t
     }
 
-    if wait:
-
-        game.consumers.WSDialog.group_send(
-            group=game.room.state.states.WELCOME,
-            data={'wait': True, 'progress': progress, 'receipt': False, 'demand': args.demand}
-        )
+    # if wait:
+    #
+    #     game.consumers.WSDialog.group_send(
+    #         group=game.room.state.states.WELCOME,
+    #         data={'wait': True, 'progress': progress, 'receipt': False, 'demand': args.demand}
+    #     )
 
     return to_reply, consumer_info
 
@@ -165,12 +162,12 @@ def survey(args):
         'demand': args.demand
     }
 
-    if wait:
-        game.consumers.WSDialog.group_send(
-            group=game.room.state.states.SURVEY,
-            data=to_reply
-        )
-
+    # if wait:
+    #     game.consumers.WSDialog.group_send(
+    #         group=game.room.state.states.SURVEY,
+    #         data=to_reply
+    #     )
+    #
     return to_reply, consumer_info
 
 
@@ -252,10 +249,10 @@ def training_done(args):
         "user_id": u.id,
     }
 
-    game.consumers.WSDialog.group_send(
-        group='training-done',
-        data=to_reply
-    )
+    # game.consumers.WSDialog.group_send(
+    #     group='training-done',
+    #     data=to_reply
+    # )
 
     return to_reply, consumer_info
 
@@ -307,12 +304,12 @@ def choice(args):
         "demand": args.demand
     }
 
-    if wait:
-
-        game.consumers.WSDialog.group_send(
-            group=f'game-t-{args.t}',
-            data={'wait': True, 'progress': progress, 't': args.t, 'receipt': False, 'demand': args.demand}
-        )
+    # if wait:
+    #
+    #     game.consumers.WSDialog.group_send(
+    #         group=f'game-t-{args.t}',
+    #         data={'wait': True, 'progress': progress, 't': args.t, 'receipt': False, 'demand': args.demand}
+    #     )
 
     return to_reply, consumer_info
 
