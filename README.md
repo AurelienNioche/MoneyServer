@@ -76,6 +76,24 @@ the address of the nginx server on the local network (here **192.168.1.204**).
 
 -->
 
+## PostgreSQL (MacOs)
+install postgresql
+
+    brew install postgresql
+
+run pgsql server
+
+    pg_ctl -D /usr/local/var/postgres start
+
+create user and db
+
+    createuser dasein
+    createdb MoneyServer --owner dasein
+
+if you need to remove the db
+    
+    dropdb MoneyServer
+
 ## Nginx config
 
 Modify the config file. Default location MacOS: '/usr/local/etc/nginx/nginx.conf'.
