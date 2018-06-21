@@ -1,5 +1,6 @@
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
+from django.template.loader import render_to_string
 from django.views.decorators.gzip import gzip_page
 from django.db import transaction
 from django.shortcuts import redirect, render
@@ -243,4 +244,9 @@ class ConnectedTablets(TemplateView):
         context.update({"devices": devices})
 
         return context
+
+    @staticmethod
+    def get_table_from_devices(devices):
+        return render_to_string('components/connection_table.html', {'devices': devices})
+
 

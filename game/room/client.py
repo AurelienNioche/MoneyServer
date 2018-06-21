@@ -74,6 +74,9 @@ def create_room():
 
 def create(data):
 
+    if Room.objects.filter(opened=True).first():
+        raise Exception('Only ONE room can be opened at once.')
+
     t_max = int(data["t_max"])
     training_t_max = int(data["training_t_max"])
 

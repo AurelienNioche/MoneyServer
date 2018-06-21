@@ -21,7 +21,6 @@ class DashboardWebSocketConsumer(JsonWebsocketConsumer):
 
     def receive_json(self, content, **kwargs):
 
-        print('WWWWWWWWWWWWWWWWw')
         if 'identity' in self.scope['path']:
 
             dashboard.tablets.client.register_tablet(
@@ -36,7 +35,6 @@ class DashboardWebSocketConsumer(JsonWebsocketConsumer):
 
         elif 'connection' in self.scope['path']:
 
-            print('YYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYY')
             self._group_add('connection')
             self._send_to_worker(worker='connection-consumer', demand='check.connection', data=None)
 
@@ -55,7 +53,8 @@ class DashboardWebSocketConsumer(JsonWebsocketConsumer):
 
         if is_json:
             try:
-                utils.log(f'Sending to group {group}: {data}', f=self._group_send)
+                if len(str(data)) < 100:
+                    utils.log(f'Sending to group {group}: {data}', f=self._group_send)
             except UnicodeEncodeError:
                 print('Error printing request.')
 
@@ -129,7 +128,6 @@ class ConnectionConsumer(DashboardWebSocketConsumer):
 
             self._group_send(
                 group='connection',
-                data={'html': dashboard.tablets.client.devices_html_table(devices)}
+                data={'html': dashboard.tablets.client.get_table_from_devices(devices)}
             )
-            print('Sending')
 

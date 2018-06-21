@@ -125,6 +125,8 @@ to work correctly. So we add:
          proxy_set_header Upgrade $http_upgrade;
          proxy_set_header Connection "upgrade";
      }
+     
+On Macos the user must be followed by a group (e.g. staff).
 
 The whole config file looks like: 
 
@@ -171,7 +173,7 @@ The whole config file looks like:
 
             location /static/ {
                  autoindex on;
-                 alias /home/getz/Pycharm/MoneyServer/static/;
+                 alias <path_of_the_static_folder>;
              }
          
             location / {

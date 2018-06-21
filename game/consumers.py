@@ -29,21 +29,17 @@ class GameWebSocketConsumer(JsonWebsocketConsumer):
         utils.log(f'Disconnection! close code: {close_code}', f=self.disconnect)
         # self._group_discard('all')
 
-    def receive(self, **kwargs):
-
-        if kwargs['text_data'] == 'ping':
-            # utils.log('I received a ping, I will send a pong', f=self.receive)
-            self.send('pong')
-
-        else:
-            super().receive(**kwargs)
-
     def receive_json(self, content, **kwargs):
 
         dashboard.tablets.client.set_time_last_request(
             user_id=content.get('userId'),
             device_id=content.get('deviceId')
         )
+
+        if content.get('demand') == 'ping':
+
+            self.send('pong')
+            return
 
         to_reply, consumer_info = game.views.client_request(content)
 

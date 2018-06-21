@@ -2,16 +2,17 @@ from django.utils import timezone
 import datetime
 from dashboard.models import ConnectedTablet, IntParameter
 from game.models import User
-from django.template.loader import render_to_string
+
+import dashboard.views
 
 
-def devices_html_table(devices):
-    return render_to_string('templates/components/connection_table.html', devices)
+def get_table_from_devices(devices):
+    return dashboard.views.ConnectedTablets.get_table_from_devices(devices)
 
 
 def get_connected_users():
 
-    devices = ConnectedTablet.objects.all()
+    devices = ConnectedTablet.objects.all().order_by('tablet_id')
 
     for d in devices:
         connected = not _is_disconnected(d.time_last_request)
