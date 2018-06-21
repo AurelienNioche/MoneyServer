@@ -1,15 +1,11 @@
-from django.db import transaction
-from django.utils import timezone
-import datetime
 from channels.generic.websocket import JsonWebsocketConsumer, SyncConsumer, AsyncConsumer
 from asgiref.sync import async_to_sync
-from dashboard.models import ConnectedTablet, IntParameter
 import threading
-import subprocess
 
 from utils import utils
 
-from channels.layers import get_channel_layer
+import game.params.client
+import dashboard.tablets.client
 
 
 class DashboardWebSocketConsumer(JsonWebsocketConsumer):
@@ -25,9 +21,24 @@ class DashboardWebSocketConsumer(JsonWebsocketConsumer):
 
     def receive_json(self, content, **kwargs):
 
-        if 'register' in self.scope['path']:
-            register_tablet(content['deviceId'], content['tabletNumber'])
+        print('WWWWWWWWWWWWWWWWw')
+        if 'identity' in self.scope['path']:
+
+            dashboard.tablets.client.register_tablet(
+                content['deviceId'], content['tabletNumber']
+            )
+
             self.send('Done!')
+
+        elif 'check_network' in self.scope['path']:
+
+            self.send_json(game.params.client.get_request_parameters())
+
+        elif 'connection' in self.scope['path']:
+
+            print('YYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYY')
+            self._group_add('connection')
+            self._send_to_worker(worker='connection-consumer', demand='check.connection', data=None)
 
     def group_message(self, message):
 
@@ -52,14 +63,13 @@ class DashboardWebSocketConsumer(JsonWebsocketConsumer):
         else:
             self.send(data)
 
-    def _send_to_worker(self, demand, data):
+    def _send_to_worker(self, worker, demand, data):
 
         async_to_sync(self.channel_layer.send)(
-            'receipt-consumer',
+            worker,
             {
-                'type': 'generic',
-                'demand': demand,
-                'receipt_data': data
+                'type': demand,
+                'data': data
             },
         )
 
@@ -105,89 +115,21 @@ class DashboardWebSocketConsumer(JsonWebsocketConsumer):
         )
 
 
-class WSDialog:
+class ConnectionConsumer(DashboardWebSocketConsumer):
 
-    @staticmethod
-    def group_send(group, data, json=True):
+    def check_connection(self, message):
 
-        channel_layer = get_channel_layer()
+        print('Sending')
 
-        async_to_sync(channel_layer.group_send)(
-            group,
-            {
-                'type': 'group.message',
-                'data': data,
-                'group': group,
-                'json': json
-             }
-        )
+        while True:
 
-    @staticmethod
-    def group_add(group):
+            threading.Event().wait(2)
 
-        channel_layer = get_channel_layer()
+            devices = dashboard.tablets.client.get_connected_users()
 
-        async_to_sync(channel_layer.group_add)(
-            group,
-            channel_layer.channel_name
-        )
-
-
-def register_tablet(device_id, tablet_id):
-
-    t = ConnectedTablet.objects.filter(device_id=device_id).first()
-
-    if t:
-
-        t.delete()
-
-    t = ConnectedTablet(
-        device_id=device_id,
-        tablet_id=tablet_id,
-        connected=False,
-        time_last_request=timezone.now()
-    )
-
-    t.save()
-
-
-def check_connected_users(devices):
-
-    for d in devices:
-        connected = not _is_disconnected(d.time_last_request)
-        if connected != d.connected:
-            d.connected = connected
-            d.save(update_fields=["connected"])
-
-
-def _is_disconnected(reference_time):
-
-    # Then get the timezone
-    tz_info = reference_time.tzinfo
-    # Get time now using timezone info
-    t_now = datetime.datetime.now(tz_info)
-
-    param = IntParameter.objects.filter(name="disconnected_timeout").first()
-
-    if param is None:
-
-        param = IntParameter(name="disconnected_timeout", value=15)
-        param.save()
-
-    delta = datetime.timedelta(seconds=param.value)
-
-    # If more than X seconds since the last request
-    timeout = t_now > reference_time + delta
-
-    return timeout
-
-
-def _set_time_last_request(d):
-    d.time_last_request = timezone.now()
-    d.save(update_fields=["time_last_request"])
-
-
-
-
-
+            self._group_send(
+                group='connection',
+                data={'html': dashboard.tablets.client.devices_html_table(devices)}
+            )
+            print('Sending')
 

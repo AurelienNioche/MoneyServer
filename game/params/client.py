@@ -61,8 +61,8 @@ def get_request_parameters():
     data = {}
 
     for name, value in zip(
-            ['timeOut', 'maxFailedPing', 'reconnectTime', 'delayRequest', 'delayPing'],
-            [100, 6, 1000, 1000, 1000]
+            ['timeOut', 'reconnectTime', 'delayRequest'],
+            [30000, 1000, 1000]
     ):
 
         param = IntParameter.objects.filter(name=name).first()

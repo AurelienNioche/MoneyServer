@@ -26,3 +26,4 @@ def set_parameter(name, value):
     if p:
         p.value = value
         p.save(update_fields=['value'])
+

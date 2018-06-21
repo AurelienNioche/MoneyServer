@@ -14,6 +14,7 @@ from parameters import parameters
 
 import game.room.dashboard
 import game.params.dashboard
+import dashboard.tablets.client
 
 
 class LoginView(TemplateView):
@@ -226,3 +227,20 @@ class SettingsView(TemplateView):
             game.params.dashboard.set_parameter(k, value)
 
         return HttpResponse("Ok")
+
+
+@method_decorator(login_required, name='dispatch')
+class ConnectedTablets(TemplateView):
+    template_name = "components/connected_tablets.html"
+
+    def get_context_data(self, **kwargs):
+
+        context = super().get_context_data(**kwargs)
+        context.update({"subtitle": "Connected tablets"})
+
+        # Get values for parameters
+        devices = dashboard.tablets.client.get_connected_users()
+        context.update({"devices": devices})
+
+        return context
+

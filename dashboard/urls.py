@@ -12,4 +12,5 @@ urlpatterns = [
     url(r'^data/$', views.DataView.as_view(), name="data"),
     url(r'^logs/$', views.LogsView.as_view(), name="logs"),
     url(r'^settings/$', views.SettingsView.as_view(), name="settings"),
+    url(r'^connected_tablets/$', views.ConnectedTablets.as_view(), name="connected_tablets"),
 ]

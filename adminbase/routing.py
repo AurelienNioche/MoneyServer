@@ -4,6 +4,7 @@ from channels.routing import ProtocolTypeRouter, URLRouter, ChannelNameRouter
 import game.consumers
 import game.routing
 import dashboard.routing
+import dashboard.consumers
 
 
 application = ProtocolTypeRouter({
@@ -16,8 +17,7 @@ application = ProtocolTypeRouter({
     ),
 
     'channel': ChannelNameRouter({
-        'receipt-consumer': game.consumers.ReceiptConsumer,
-        'ping-consumer': game.consumers.PingConsumer,
+        'connection-consumer': dashboard.consumers.ConnectionConsumer
     }),
 
 })

@@ -1,7 +1,5 @@
-from django.db import transaction
-from channels.generic.websocket import JsonWebsocketConsumer, SyncConsumer, AsyncConsumer
+from channels.generic.websocket import JsonWebsocketConsumer
 from asgiref.sync import async_to_sync
-import threading
 import subprocess
 
 from utils import utils
@@ -15,6 +13,7 @@ import game.receipt_views
 import game.consumer.state
 import game.room.client
 import game.params.client
+import dashboard.tablets.client
 
 
 class GameWebSocketConsumer(JsonWebsocketConsumer):
@@ -22,13 +21,6 @@ class GameWebSocketConsumer(JsonWebsocketConsumer):
     def connect(self):
 
         self.accept()
-
-        # self.send_json(
-        #     content=game.params.client.get_request_parameters()
-        # )
-
-        # self._group_add('all')
-        # self.start_pinging()
 
     def disconnect(self, close_code):
 
@@ -48,6 +40,11 @@ class GameWebSocketConsumer(JsonWebsocketConsumer):
 
     def receive_json(self, content, **kwargs):
 
+        dashboard.tablets.client.set_time_last_request(
+            user_id=content.get('userId'),
+            device_id=content.get('deviceId')
+        )
+
         to_reply, consumer_info = game.views.client_request(content)
 
         if to_reply and consumer_info:
@@ -60,12 +57,6 @@ class GameWebSocketConsumer(JsonWebsocketConsumer):
                 utils.log(f'Sending to current channel: {to_reply}', f=self.receive_json)
             except UnicodeEncodeError:
                 print('Error printing request.')
-
-            # If clients do not need to wait
-            # and are waiting for answer
-            # if not to_reply['wait']:
-            #
-            #     self._worker_management(consumer_info)
 
     def _worker_management(self, consumer_info):
 
@@ -235,43 +226,6 @@ class GameWebSocketConsumer(JsonWebsocketConsumer):
             group,
             self.channel_name
         )
-
-
-class ReceiptConsumer(SyncConsumer):
-    def generic(self, message):
-
-        demand = message['demand']
-        kwargs = message['receipt_data']
-
-        utils.log(f'ReceiptConsumer begins the task {demand}', f=self.generic)
-
-        with transaction.atomic():
-
-            if demand != 'training_choice':
-                task = game.consumer.state.treat_demand(demand=demand, room_id=kwargs['room_id'], t=kwargs.get('t'))
-
-            func = getattr(game.receipt_views, demand)
-            func(kwargs)
-
-            if demand != 'training_choice':
-                game.consumer.state.finished_treating_demand(task=task)
-
-        utils.log(f'ReceiptConsumer finished to treat the task {demand}', f=self.generic)
-
-
-class PingConsumer(SyncConsumer):
-
-    def ping(self, *args):
-
-        utils.log('Start pinging', f=self.ping)
-
-        while True:
-
-            WSDialog.group_send(group='all', data='ping', json=False)
-
-            frequency = game.params.client.get_ping_frequency()
-
-            threading.Event().wait(frequency)
 
 
 class WSDialog:
