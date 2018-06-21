@@ -20,6 +20,5 @@
 #     -b 127.0.0.1:8000 --reload \
 #     adminbase.wsgi |& tee -a $LOGFILE #2>>$LOGFILE
 
-
-python manage.py runworker connection-consumer &
+python3 manage.py runworker connection-consumer &
 daphne -b 127.0.0.1 -p 8018 adminbase.asgi:application
