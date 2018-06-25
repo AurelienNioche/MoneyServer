@@ -6,6 +6,12 @@ from game.models import User
 import dashboard.views
 
 
+def get_connection_table():
+
+    devices = get_connected_users()
+    return get_table_from_devices(devices)
+
+
 def get_table_from_devices(devices):
     return dashboard.views.ConnectedTablets.get_table_from_devices(devices)
 

@@ -1,4 +1,4 @@
-from channels.generic.websocket import JsonWebsocketConsumer, SyncConsumer, AsyncConsumer
+from channels.generic.websocket import JsonWebsocketConsumer
 from asgiref.sync import async_to_sync
 import threading
 
@@ -8,7 +8,7 @@ import game.params.client
 import dashboard.tablets.client
 
 
-class DashboardWebSocketConsumer(JsonWebsocketConsumer):
+class AbstractWebsocketConsumer(JsonWebsocketConsumer):
 
     def connect(self):
 
@@ -18,25 +18,6 @@ class DashboardWebSocketConsumer(JsonWebsocketConsumer):
 
         utils.log(f'Disconnection! close code: {close_code}', f=self.disconnect)
         # self._group_discard('all')
-
-    def receive_json(self, content, **kwargs):
-
-        if 'identity' in self.scope['path']:
-
-            dashboard.tablets.client.register_tablet(
-                content['deviceId'], content['tabletNumber']
-            )
-
-            self.send('Done!')
-
-        elif 'check_network' in self.scope['path']:
-
-            self.send_json(game.params.client.get_request_parameters())
-
-        elif 'connection' in self.scope['path']:
-
-            self._group_add('connection')
-            self._send_to_worker(worker='connection-consumer', demand='check.connection', data=None)
 
     def group_message(self, message):
 
@@ -52,6 +33,7 @@ class DashboardWebSocketConsumer(JsonWebsocketConsumer):
         is_json = message['json']
 
         if is_json:
+
             try:
                 if len(str(data)) < 100:
                     utils.log(f'Sending to group {group}: {data}', f=self._group_send)
@@ -59,6 +41,7 @@ class DashboardWebSocketConsumer(JsonWebsocketConsumer):
                 print('Error printing request.')
 
             self.send_json(data)
+
         else:
             self.send(data)
 
@@ -88,7 +71,7 @@ class DashboardWebSocketConsumer(JsonWebsocketConsumer):
                 'data': data,
                 'group': group,
                 'json': json
-             }
+            }
         )
 
     def _group_add(self, group):
@@ -114,20 +97,49 @@ class DashboardWebSocketConsumer(JsonWebsocketConsumer):
         )
 
 
-class ConnectionConsumer(DashboardWebSocketConsumer):
+class DashboardWebSocketConsumer(AbstractWebsocketConsumer):
+
+    def receive_json(self, content, **kwargs):
+
+        if 'identity' in self.scope['path']:
+
+            dashboard.tablets.client.register_tablet(
+                device_id=content['deviceId'],
+                tablet_id=content['tabletNumber']
+            )
+
+            self.send('Done!')
+
+        elif 'check_network' in self.scope['path']:
+
+            self.send_json(
+                game.params.client.get_request_parameters()
+            )
+
+        elif 'connection' in self.scope['path']:
+
+            self._group_add('connection')
+
+            self._send_to_worker(
+                worker='connection-consumer', demand='check.connection', data=None
+            )
+
+
+class ConnectionConsumer(AbstractWebsocketConsumer):
+
+    # Delay in seconds
+    delay = 2
 
     def check_connection(self, message):
 
-        print('Sending')
-
         while True:
 
-            threading.Event().wait(2)
+            threading.Event().wait(self.delay)
 
-            devices = dashboard.tablets.client.get_connected_users()
+            connection_table = dashboard.tablets.client.get_connection_table()
 
             self._group_send(
                 group='connection',
-                data={'html': dashboard.tablets.client.get_table_from_devices(devices)}
+                data={'html': connection_table}
             )
 
