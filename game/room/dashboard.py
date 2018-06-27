@@ -5,7 +5,7 @@ import os
 import subprocess
 import pickle
 
-from game.models import Room, Choice, TutorialChoice
+from game.models import Room, Choice, TutorialChoice, User
 import game.room.state
 import game.room.client
 
@@ -18,6 +18,8 @@ def delete(room_id):
 
         Choice.objects.filter(room_id=rm.id).delete()
         TutorialChoice.objects.filter(room_id=rm.id).delete()
+        User.objects.filter(room_id=rm.id).delete()
+
         rm.delete()
 
 

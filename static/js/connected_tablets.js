@@ -16,7 +16,7 @@ function onMessage(ev) {
     var data = JSON.parse(ev.data);
 
     if (data.html) {
-        $('#table-div').html(data.html)
+        $('#update').html(data.html)
     } else {
         alert('Error on updating data' + data.toString())
     }

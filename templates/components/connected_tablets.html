@@ -31,32 +31,12 @@
             <br>
             <div class="panel-body">
                 <div class="row">
-                    <div id='table-div' class="col-md-6 col-lg-offset-3" align="center">
-                       <table class="table table-striped">
-                          <thead>
-                            <tr>
-                              <th scope="col">#</th>
-                              <th scope="col">Device ID</th>
-                              <th scope="col">Connected</th>
-                            </tr>
-                          </thead>
-                          <tbody>
-                          {% for device in devices %}
-                            <tr>
-                              <th scope="row">{{  device.tablet_id }}</th>
-                              <td>{{ device.device_id }} </td>
-                                {% if device.connected %}
-                                    <td><img src="/static/admin/img/icon-yes.svg" alt="True"></td>
-                                {% else %}
-                                    <td><img src="/static/admin/img/icon-no.svg" alt="False"></td>
-                                {% endif %}
-                            </tr>
-                          {% endfor %}
-                          </tbody>
-                        </table>
+                    <div id="update" class="col-md-6 col-lg-offset-3" align="center">
+                        {% include 'components/connection_table.html' %}
                     </div>
-                    <!-- /.col-lg-6 (nested) -->
                 </div>
+                    <!-- /.col-lg-6 (nested) -->
+            </div>
                 <!-- /.row (nested) -->
             </div>
             <!-- /.panel-body -->
@@ -64,7 +44,6 @@
         <!-- /.panel -->
     </div>
     <!-- /.col-lg-12 -->
-</div>
 <!-- /.row -->
 
 

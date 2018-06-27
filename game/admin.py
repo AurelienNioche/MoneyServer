@@ -2,17 +2,18 @@ from django.contrib import admin
 
 # # Register your models here.
 from . models import User, Choice, TutorialChoice, Room, Receipt,\
-    ConsumerTask, BoolParameter, IntParameter, FloatParameter
+    ConsumerTask, BoolParameter, IntParameter, FloatParameter, ProbaExchangeTraining
 
 
 class UserAdmin(admin.ModelAdmin):
     list_display = (
-        "id", "room_id", "device_id", "pseudo", "consumption_good",
+        "id", "room_id", "pseudo", "consumption_good",
         "production_good",
         "training_done",
          "gender", "age", "state", 'score',
         'training_score',
-        'player_id'
+        'player_id',
+        'tablet_id'
     )
 
 
@@ -57,6 +58,10 @@ class IntParameterAdmin(admin.ModelAdmin):
     list_display = ('name', 'value')
 
 
+class ProbaExchangeTrainingAdmin(admin.ModelAdmin):
+    list_display = ('good_in_hand', 'desired_good', 'p_success')
+
+
 admin.site.register(User, UserAdmin)
 admin.site.register(BoolParameter, BoolParameterAdmin)
 admin.site.register(Choice, ChoiceAdmin)
@@ -66,4 +71,5 @@ admin.site.register(Receipt, ReceiptAdmin)
 admin.site.register(ConsumerTask, ConsumerTaskAdmin)
 admin.site.register(FloatParameter, FloatParameterAdmin)
 admin.site.register(IntParameter, IntParameterAdmin)
+admin.site.register(ProbaExchangeTraining, ProbaExchangeTrainingAdmin)
 

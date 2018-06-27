@@ -1,22 +1,42 @@
-<table class="table table-striped">
-  <thead>
-    <tr>
-      <th scope="col">#</th>
-      <th scope="col">Device ID</th>
-      <th scope="col">Connected</th>
-    </tr>
-  </thead>
-  <tbody>
-  {% for device in devices %}
-    <tr>
-      <th scope="row">{{ device.tablet_id }} </th>
-      <td>{{ device.device_id }}</td>
-    {% if device.connected %}
-        <td><img src="/static/admin/img/icon-yes.svg" alt="True"></td>
-    {% else %}
-        <td><img src="/static/admin/img/icon-no.svg" alt="False"></td>
+{% if info.error %}
+    <strong>Error: {{ info.error }}</strong>
+{% else %}
+    <br>
+    <strong>Room State: {{ info.state }}</strong>
+    <br>
+    {% if info.t > -1 %}
+        <strong>T: {{ info.t }}</strong>
     {% endif %}
-    </tr>
-  {% endfor %}
-  </tbody>
-</table>
+    <br>
+    <br>
+       <table class="table table-striped">
+          <thead>
+            <tr>
+              <th scope="col">#</th>
+                <th scope="col">Pseudo</th>
+              <th scope="col">Connected</th>
+              <th scope="col">Replied</th>
+                <th scope="col">Training T</th>
+            </tr>
+          </thead>
+          <tbody>
+          {% for device in info.users %}
+            <tr>
+              <th scope="row">{{  device.tablet_id }}</th>
+              <td>{{ device.pseudo }} </td>
+                {% if device.connected %}
+                    <td><img src="/static/admin/img/icon-yes.svg" alt="True"></td>
+                {% else %}
+                    <td><img src="/static/admin/img/icon-no.svg" alt="False"></td>
+                {% endif %}
+            {% if device.replied %}
+                    <td><img src="/static/admin/img/icon-yes.svg" alt="True"></td>
+                {% else %}
+                    <td><img src="/static/admin/img/icon-no.svg" alt="False"></td>
+                {% endif %}
+                <td>{{ device.training_t }} </td>
+            </tr>
+          {% endfor %}
+          </tbody>
+        </table>
+{% endif %}

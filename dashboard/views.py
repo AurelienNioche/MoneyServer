@@ -240,13 +240,13 @@ class ConnectedTablets(TemplateView):
         context.update({"subtitle": "Connected tablets"})
 
         # Get values for parameters
-        devices = dashboard.tablets.client.get_connected_users()
-        context.update({"devices": devices})
+        info = dashboard.tablets.client.get_overview_info()
+        context.update({"info": info})
 
         return context
 
     @staticmethod
-    def get_table_from_devices(devices):
-        return render_to_string('components/connection_table.html', {'devices': devices})
+    def get_html_table(info):
+        return render_to_string('components/connection_table.html', {'info': info})
 
 

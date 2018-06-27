@@ -17,21 +17,21 @@ class Room(models.Model):
 
 class User(models.Model):
     room_id = models.IntegerField(default=None, null=True)
-    device_id = models.TextField(default=None, null=True)
     player_id = models.IntegerField(default=None, null=True)
     pseudo = models.TextField(default=None, null=True)
-    age = models.IntegerField(default=None, null=True)
-    gender = models.TextField(default=None, null=True)
+    age = models.IntegerField(default=-1, null=True)
+    gender = models.TextField(default="undefined", null=True)
     production_good = models.IntegerField(default=None, null=True)
     consumption_good = models.IntegerField(default=None, null=True)
     score = models.IntegerField(default=0)
     training_done = models.NullBooleanField(default=None, null=True)
     training_score = models.IntegerField(default=None, null=True)
     state = models.TextField(default=None, null=True)
+    tablet_id = models.IntegerField(default=None, null=True)
 
     class Meta:
         unique_together = [
-            ('room_id', 'device_id'),
+            ('room_id', 'tablet_id'),
             ('room_id', 'player_id'),
             ('room_id', 'pseudo')
         ]
@@ -80,6 +80,12 @@ class ConsumerTask(models.Model):
     t = models.IntegerField(default=None, null=True)
     demand = models.TextField(default=None, null=True)
     done = models.BooleanField(default=False)
+
+
+class ProbaExchangeTraining(models.Model):
+    desired_good = models.IntegerField()
+    good_in_hand = models.IntegerField()
+    p_success = models.FloatField()
 
 
 class FloatParameter(models.Model):

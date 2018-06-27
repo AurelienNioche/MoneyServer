@@ -128,7 +128,7 @@ class DashboardWebSocketConsumer(AbstractWebsocketConsumer):
 class ConnectionConsumer(AbstractWebsocketConsumer):
 
     # Delay in seconds
-    delay = 2
+    delay = 1.5
 
     def check_connection(self, message):
 

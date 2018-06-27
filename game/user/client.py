@@ -7,7 +7,9 @@ import numpy as np
 from parameters import parameters
 from utils import utils
 
-from game.models import User, Room, Choice, TutorialChoice, Receipt
+from game.models import User, Room, Choice, TutorialChoice, Receipt, ProbaExchangeTraining
+from dashboard.models import ConnectedTablet
+
 import game.room.state
 import game.room.client
 import game.user.state
@@ -27,13 +29,12 @@ def connect(device_id, skip_survey, skip_training):
 
     rm = Room.objects.filter(opened=True).first()
 
-        # if not rm
-        #
-        #     # If no room create room dynamically (if auto_room parameter is enabled)
-        #     # Else an exception is raised!
-        #     rm = game.room.client.create_room()
+    tablet = ConnectedTablet.objects.filter(device_id=device_id).first()
 
-    u = User.objects.filter(device_id=device_id, room_id=rm.id).first()
+    if tablet is None:
+        raise Exception('Tablet is not known')
+
+    u = User.objects.filter(tablet_id=tablet.tablet_id, room_id=rm.id).first()
 
     if not u:
 
@@ -109,7 +110,7 @@ def connect(device_id, skip_survey, skip_training):
 def submit_survey(u, age, gender):
 
     # if survey is not already completed
-    if u.age is None:
+    if u.age == -1:
         u.age = age
         u.gender = gender
         u.save(update_fields=["age", "gender"])
@@ -176,7 +177,13 @@ def submit_training_choice(u, rm, desired_good, t):
 
         choice.user_id = u.id
         choice.desired_good = desired_good
-        choice.success = bool(np.random.choice([False, True]))
+
+        choice.success = make_exchange_during_training(
+            u=u,
+            rm=rm,
+            good_in_hand=choice.good_in_hand,
+            desired_good=desired_good
+        )
 
         #  --------------------------------------------------------------------------------------------- #
 
@@ -208,65 +215,17 @@ def submit_training_choice(u, rm, desired_good, t):
     return choice.success, u.training_score
 
 
-# -------------------------------------------- RECEIPT MANAGEMENT --------------------------------------- #
+def make_exchange_during_training(u, rm, good_in_hand, desired_good):
 
+    relative_good_in_hand = _get_relative_good(u=u, rm=rm, good=good_in_hand)
+    relative_desired_good = _get_relative_good(u=u, rm=rm, good=desired_good)
 
-def user_received(room_id, player_id, demand, t=None):
+    exchange = ProbaExchangeTraining.objects.filter(
+        desired_good=relative_desired_good,
+        good_in_hand=relative_good_in_hand
+    ).first()
 
-    return Receipt.objects.filter(
-        room_id=room_id, player_id=player_id, demand=demand.__name__, t=t).first().received
-
-
-def set_all_precedent_receipt_confirmation_to_received(demand, u, t):
-
-    if not isinstance(demand, str):
-        demand = demand.__name__
-
-    t = None if demand not in ('training_choice', 'choice') else t
-
-    if t:
-        times = np.arange(t)
-
-        receipts = Receipt.objects.filter(
-            room_id=u.room_id,
-            player_id=u.player_id,
-            demand=demand,
-            t__in=times
-        )
-
-    else:
-
-        receipts = Receipt.objects.filter(
-            room_id=u.room_id,
-            player_id=u.player_id,
-            demand=demand,
-            t=t
-        )
-
-    for r in receipts:
-
-        r.received = True
-
-        r.save(update_fields=['received'])
-
-
-def receipt_confirmation(demand, rm, u, t=None):
-
-    t = None if demand not in ('training_choice', 'choice') else t
-
-    receipt = Receipt.objects.filter(demand=demand, t=t, room_id=rm.id, player_id=u.player_id).first()
-
-    try:
-        if not receipt.received:
-
-            receipt.received = True
-            receipt.save(update_fields=['received'])
-
-    except AttributeError:
-        raise Exception(f'Receipt demand={demand}, t={t}, room_id={rm.id}, player_id={u.player_id} NOT FOUND')
-
-
-# ------------------------------  Private functions (called inside the script) ----------------------------------- #
+    return bool(np.random.choice([True, False], p=[exchange.p_success, 1 - exchange.p_success]))
 
 
 def _triggers_matching(rm, t):
@@ -323,19 +282,21 @@ def _create_new_user(rm, device_id):
 
                 temp_room = Room.objects.select_for_update().filter(id=rm.id).first()
 
+                tablet_id = ConnectedTablet.objects.filter(device_id=device_id).first().tablet_id
+
                 player_id = temp_room.counter
 
                 pseudo = parameters.pseudos[player_id]
 
                 u = User(
-                    device_id=device_id,
                     player_id=player_id,
                     pseudo=pseudo,
                     room_id=rm.id,
                     training_done=False,
                     score=0,
                     training_score=0,
-                    state=game.room.state.states.WELCOME
+                    state=game.room.state.states.WELCOME,
+                    tablet_id=tablet_id
                 )
 
                 u.save()
