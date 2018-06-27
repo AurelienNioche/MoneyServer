@@ -3,7 +3,7 @@ import itertools
 
 import numpy as np
 
-from game.models import User, Room, Choice, TutorialChoice, Receipt, ConsumerTask
+from game.models import User, Room, Choice, TutorialChoice #Receipt, ConsumerTask
 import game.user.client
 import game.room.state
 import game.room.dashboard
@@ -23,12 +23,12 @@ def get_room(room_id):
     return rm
 
 
-def get_all_users_that_did_not_receive(room_id, demand, t=None):
-
-    players_that_did_not_receive = Receipt.objects.filter(
-            room_id=room_id, demand=demand.__name__, t=t, received=False).values_list('player_id')
-
-    return User.objects.filter(room_id=room_id, player_id__in=players_that_did_not_receive)
+# def get_all_users_that_did_not_receive(room_id, demand, t=None):
+#
+#     players_that_did_not_receive = Receipt.objects.filter(
+#             room_id=room_id, demand=demand.__name__, t=t, received=False).values_list('player_id')
+#
+#     return User.objects.filter(room_id=room_id, player_id__in=players_that_did_not_receive)
 
 
 def get_all_users(room_id):
@@ -52,12 +52,12 @@ def get_results_for_all_users(room_id, t):
     return users
 
 
-def all_client_received(demand, room_id, t=None):
-
-    rm = Room.objects.get(id=room_id)
-
-    return Receipt.objects.filter(
-        room_id=room_id, demand=demand.__name__, t=t, received=True).count() == rm.n_user
+# def all_client_received(demand, room_id, t=None):
+#
+#     rm = Room.objects.get(id=room_id)
+#
+#     return Receipt.objects.filter(
+#         room_id=room_id, demand=demand.__name__, t=t, received=True).count() == rm.n_user
 
 
 def create_room():
@@ -126,42 +126,42 @@ def create(data):
         for n in range(n_user) for t in range(training_t_max)
     ])
 
-    for demand in ('init', 'survey', 'training_done'):
-
-        Receipt.objects.bulk_create([
-            Receipt(
-                room_id=rm.id,
-                player_id=n,
-                demand=demand,
-                t=None
-            )
-            for n in range(n_user)
-        ])
-
-        c = ConsumerTask(room_id=rm.id, demand=demand, t=None)
-        c.save()
-
-    for demand, t_maximum in zip(['training_choice', 'choice'], [training_t_max, t_max]):
-
-        Receipt.objects.bulk_create([
-            Receipt(
-                room_id=rm.id,
-                player_id=n,
-                demand=demand,
-                t=t
-            )
-            for n in range(n_user) for t in range(t_maximum)
-        ])
-
-    ConsumerTask.objects.bulk_create([
-        ConsumerTask(
-            room_id=rm.id,
-            demand='choice',
-            t=t
-        ) for t in range(t_max)
-    ])
-
     return rm
+
+    # for demand in ('init', 'survey', 'training_done'):
+    #
+    #     Receipt.objects.bulk_create([
+    #         Receipt(
+    #             room_id=rm.id,
+    #             player_id=n,
+    #             demand=demand,
+    #             t=None
+    #         )
+    #         for n in range(n_user)
+    #     ])
+    #
+    #     c = ConsumerTask(room_id=rm.id, demand=demand, t=None)
+    #     c.save()
+    #
+    # for demand, t_maximum in zip(['training_choice', 'choice'], [training_t_max, t_max]):
+    #
+    #     Receipt.objects.bulk_create([
+    #         Receipt(
+    #             room_id=rm.id,
+    #             player_id=n,
+    #             demand=demand,
+    #             t=t
+    #         )
+    #         for n in range(n_user) for t in range(t_maximum)
+    #     ])
+    #
+    # ConsumerTask.objects.bulk_create([
+    #     ConsumerTask(
+    #         room_id=rm.id,
+    #         demand='choice',
+    #         t=t
+    #     ) for t in range(t_max)
+    # ])
 
 
 def get_progression(demand, rm, t, tuto=False):

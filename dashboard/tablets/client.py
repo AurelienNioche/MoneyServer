@@ -177,7 +177,7 @@ def set_time_last_request(user_id, device_id):
     elif user_id:
 
         device = ConnectedTablet.objects.get(
-            device_id=User.objects.get(id=user_id).device_id
+            tablet_id=User.objects.get(id=user_id).tablet_id
         )
 
     else:

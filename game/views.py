@@ -105,7 +105,6 @@ def init(args):
 
     to_reply.update({'wait': wait})
     to_reply.update({'progress': progress})
-    to_reply.update({'receipt': not wait})
 
     if state != to_reply['step']:
         to_reply.update({'step': state})
@@ -118,13 +117,6 @@ def init(args):
         'demand': args.demand,
         't': args.t
     }
-
-    # if wait:
-    #
-    #     game.consumers.WSDialog.group_send(
-    #         group=game.room.state.states.WELCOME,
-    #         data={'wait': True, 'progress': progress, 'receipt': False, 'demand': args.demand}
-    #     )
 
     return to_reply, consumer_info
 
@@ -146,12 +138,9 @@ def survey(args):
         u=u, rm=rm, t=args.t, progress=progress, demand=survey
     )
 
-    receipt = not wait
-
     to_reply = {
         "wait": wait,
         "progress": progress,
-        "receipt": receipt,
         "demand": args.demand
     }
 
@@ -162,12 +151,6 @@ def survey(args):
         'demand': args.demand
     }
 
-    # if wait:
-    #     game.consumers.WSDialog.group_send(
-    #         group=game.room.state.states.SURVEY,
-    #         data=to_reply
-    #     )
-    #
     return to_reply, consumer_info
 
 
@@ -175,10 +158,6 @@ def training_choice(args):
 
     u = game.user.client.get_user(user_id=args.user_id)
     rm = game.room.client.get_room(room_id=u.room_id)
-
-    # game.user.client.set_all_precedent_receipt_confirmation_to_received(
-    #     u=u, t=args.t, demand=training_choice
-    # )
 
     absolute_good = game.user.client.get_absolute_good(u=u, rm=rm, good=args.desired_good)
 
@@ -195,8 +174,6 @@ def training_choice(args):
         rm=rm, u=u, t=args.t, progress=progress, demand=training_choice
     )
 
-    receipt = not wait
-
     to_reply = {
         "wait": wait,  # Wait is always false here
         "trainingSuccess": success,
@@ -204,7 +181,6 @@ def training_choice(args):
         "trainingProgress": progress,
         "t": args.t,
         "trainingEnd": end,
-        "receipt": receipt,
         "demand": args.demand
     }
 
@@ -233,12 +209,9 @@ def training_done(args):
         u=u, rm=rm, t=args.t, progress=progress, demand=training_done
     )
 
-    receipt = not wait
-
     to_reply = {
         "wait": wait,
         "progress": progress,
-        "receipt": receipt,
         'demand': args.demand,
     }
 
@@ -249,11 +222,6 @@ def training_done(args):
         "user_id": u.id,
     }
 
-    # game.consumers.WSDialog.group_send(
-    #     group='training-done',
-    #     data=to_reply
-    # )
-
     return to_reply, consumer_info
 
 
@@ -261,11 +229,6 @@ def choice(args):
 
     u = game.user.client.get_user(user_id=args.user_id)
     rm = game.room.client.get_room(room_id=u.room_id)
-
-    # if args.t:
-        # game.user.client.set_all_precedent_receipt_confirmation_to_received(
-        #     u=u, t=args.t, demand=choice
-        # )
 
     absolute_desired_good = game.user.client.get_absolute_good(u=u, good=args.desired_good, rm=rm)
 
@@ -282,8 +245,6 @@ def choice(args):
         rm=rm, u=u, t=args.t, progress=progress, demand=choice, success=success
     )
 
-    receipt = not wait
-
     to_reply = {
         "wait": wait,
         "progress": progress,
@@ -291,7 +252,6 @@ def choice(args):
         "end": end,
         "score": score,
         "t": args.t,
-        "receipt": receipt,
         "demand": args.demand
     }
 
@@ -303,13 +263,6 @@ def choice(args):
         "user_id": u.id,
         "demand": args.demand
     }
-
-    # if wait:
-    #
-    #     game.consumers.WSDialog.group_send(
-    #         group=f'game-t-{args.t}',
-    #         data={'wait': True, 'progress': progress, 't': args.t, 'receipt': False, 'demand': args.demand}
-    #     )
 
     return to_reply, consumer_info
 
@@ -356,20 +309,3 @@ def _set_headers(response):
     response["Access-Control-Allow-Origin"] = "*"
 
     return response
-
-#
-# def _increment_message_id():
-#
-#     message_count = IntParameter.objects.filter(name="message_count").first()
-#
-#     if not message_count:
-#
-#         message_count = IntParameter(name="message_count", value=0, unit="int")
-#
-#         message_count.save()
-#
-#     message_count.value += 1
-#
-#     message_count.save()
-#
-#     return message_count.value

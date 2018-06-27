@@ -67,21 +67,6 @@ class BoolParameter(models.Model):
     value = models.NullBooleanField(default=None, null=True)
 
 
-class Receipt(models.Model):
-    room_id = models.IntegerField(default=None, null=True)
-    player_id = models.IntegerField(default=None, null=True)
-    demand = models.TextField(default=None, null=True)
-    t = models.IntegerField(default=None, null=True)
-    received = models.BooleanField(default=False)
-
-
-class ConsumerTask(models.Model):
-    room_id = models.IntegerField(default=None, null=True)
-    t = models.IntegerField(default=None, null=True)
-    demand = models.TextField(default=None, null=True)
-    done = models.BooleanField(default=False)
-
-
 class ProbaExchangeTraining(models.Model):
     desired_good = models.IntegerField()
     good_in_hand = models.IntegerField()

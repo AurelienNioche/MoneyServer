@@ -16,7 +16,7 @@ def get_progress_for_current_state(rm, demand):
     elif demand == game.views.survey:
 
         # Get player with age and gender assigned
-        n_user = User.objects.filter(room_id=rm.id).exclude(age=None).count()
+        n_user = User.objects.filter(room_id=rm.id).exclude(age=-1).count()
 
         return round(n_user / rm.n_user * 100)
 

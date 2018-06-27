@@ -7,7 +7,7 @@ import numpy as np
 from parameters import parameters
 from utils import utils
 
-from game.models import User, Room, Choice, TutorialChoice, Receipt, ProbaExchangeTraining
+from game.models import User, Room, Choice, TutorialChoice, ProbaExchangeTraining
 from dashboard.models import ConnectedTablet
 
 import game.room.state

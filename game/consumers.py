@@ -9,8 +9,8 @@ from game.room.state import demand_state_mapping
 from channels.layers import get_channel_layer
 
 import game.views
-import game.receipt_views
-import game.consumer.state
+# import game.receipt_views
+# import game.consumer.state
 import game.room.client
 import game.params.client
 import dashboard.tablets.client
@@ -54,31 +54,31 @@ class GameWebSocketConsumer(JsonWebsocketConsumer):
             except UnicodeEncodeError:
                 print('Error printing request.')
 
-    def _worker_management(self, consumer_info):
-
-        task_done = game.consumer.state.task_is_done(
-            demand=consumer_info['demand'],
-            room_id=consumer_info['room_id'],
-            t=consumer_info.get('t'),
-        )
-
-        utils.log(
-            f'Verifying that worker did the task {consumer_info["demand"]}',
-            f=self._worker_management
-        )
-
-        if not task_done and task_done is not None:
-
-            self._send_to_worker(
-                demand=consumer_info['demand'], data=consumer_info
-            )
-
-        else:
-
-            utils.log(
-                f'Worker already did task {consumer_info["demand"]}, t={consumer_info.get("t")}',
-                f=self._worker_management
-            )
+    # def _worker_management(self, consumer_info):
+    #
+    #     task_done = game.consumer.state.task_is_done(
+    #         demand=consumer_info['demand'],
+    #         room_id=consumer_info['room_id'],
+    #         t=consumer_info.get('t'),
+    #     )
+    #
+    #     utils.log(
+    #         f'Verifying that worker did the task {consumer_info["demand"]}',
+    #         f=self._worker_management
+    #     )
+    #
+    #     if not task_done and task_done is not None:
+    #
+    #         self._send_to_worker(
+    #             demand=consumer_info['demand'], data=consumer_info
+    #         )
+    #
+    #     else:
+    #
+    #         utils.log(
+    #             f'Worker already did task {consumer_info["demand"]}, t={consumer_info.get("t")}',
+    #             f=self._worker_management
+    #         )
 
     def _group_management(self, consumer_info):
 
