@@ -1,6 +1,7 @@
 from channels.generic.websocket import JsonWebsocketConsumer
 from asgiref.sync import async_to_sync
 import subprocess
+import platform
 
 from utils import utils
 
@@ -24,7 +25,10 @@ class GameWebSocketConsumer(JsonWebsocketConsumer):
 
     def disconnect(self, close_code):
 
-        subprocess.call('spd-say "Déconnection" -l fr', shell=True)
+        if platform.system() == "Darwin":
+            subprocess.call('say "Deconnection"', shell=True)
+        elif platform.system() == "Linux":
+            subprocess.call('spd-say "Déconnection" -l fr', shell=True)
 
         utils.log(f'Disconnection! close code: {close_code}', f=self.disconnect)
         # self._group_discard('all')
