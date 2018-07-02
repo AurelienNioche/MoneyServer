@@ -26,7 +26,7 @@
 
 ## Stack
 
-* **LAN**: client -> router -> dnsmasq -> nginx -> daphne -> if websocket -> redis -> django asgi <br>
+* **LAN**: client -> router -> nginx -> daphne -> if websocket -> redis -> django asgi <br>
                                                          else -> django wsgi
                                                          
 * **WAN**: client -> online.net DNS  -> getz-server -> nginx -> daphne -> if websocket -> redis -> django asgi
@@ -48,33 +48,11 @@
 * pw: macaque40
 
 ## How it works
-
-* Client asks the router for a domain name (money.getz.fr)
-
-* Local dns is configured on the router interface (Advanced > Setup > internet configuration section)
-
-* Router asks the local dns (dnsmasq), it returns the nginx ip
-
+   
+* Client asks for ip 192.168.1.204.
+* The server has a fixed ip (192.168.1.204) attributed by the router.
+* Nginx listens to every request to port 80
 * The client communicates with daphne and django through nginx
-
-<!-- ## Dnsmasq config
-
-Linux: 
-
-    /etc/dnsmasq.conf
-
-MacOS: 
-
-    /usr/local/etc/dnsmasq.conf
-
-Modify the variable named **address**: 
-
-    address=/fr/192.168.1.204
-    
-The dns server catch all domain names ending with **fr** and returns 
-the address of the nginx server on the local network (here **192.168.1.204**).
-
--->
 
 ## PostgreSQL (MacOs)
 install postgresql
