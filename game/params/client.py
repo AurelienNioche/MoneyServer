@@ -76,6 +76,3 @@ def get_request_parameters():
         data[name] = param.value
 
     return data
-
-
-# def set_ti

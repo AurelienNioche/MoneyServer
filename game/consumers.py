@@ -1,17 +1,11 @@
 from channels.generic.websocket import JsonWebsocketConsumer
 from asgiref.sync import async_to_sync
-import subprocess
-import platform
 
 from utils import utils
 
 from game.room.state import demand_state_mapping
 
-from channels.layers import get_channel_layer
-
 import game.views
-# import game.receipt_views
-# import game.consumer.state
 import game.room.client
 import game.params.client
 import dashboard.tablets.client
@@ -25,26 +19,15 @@ class GameWebSocketConsumer(JsonWebsocketConsumer):
 
     def disconnect(self, close_code):
 
-        if platform.system() == "Darwin":
-            subprocess.call('say "Deconnection"', shell=True)
-        elif platform.system() == "Linux":
-            subprocess.call('spd-say "Déconnection" -l fr', shell=True)
-
         utils.log(f'Disconnection! close code: {close_code}', f=self.disconnect)
         # self._group_discard('all')
 
     def receive_json(self, content, **kwargs):
 
-        try:
-            dashboard.tablets.client.set_time_last_request(
+        dashboard.tablets.client.set_time_last_request(
                 user_id=content.get('userId'),
                 device_id=content.get('deviceId')
-            )
-
-        except Exception:
-            print('*' * 10)
-            print('EXCEPTION WHEN TRYING TO SET TIME LAST REQUEST')
-            print('*' * 10)
+        )
 
         if content.get('demand') == 'ping':
 
@@ -63,32 +46,6 @@ class GameWebSocketConsumer(JsonWebsocketConsumer):
                 utils.log(f'Sending to current channel: {to_reply}', f=self.receive_json)
             except UnicodeEncodeError:
                 print('Error printing request.')
-
-    # def _worker_management(self, consumer_info):
-    #
-    #     task_done = game.consumer.state.task_is_done(
-    #         demand=consumer_info['demand'],
-    #         room_id=consumer_info['room_id'],
-    #         t=consumer_info.get('t'),
-    #     )
-    #
-    #     utils.log(
-    #         f'Verifying that worker did the task {consumer_info["demand"]}',
-    #         f=self._worker_management
-    #     )
-    #
-    #     if not task_done and task_done is not None:
-    #
-    #         self._send_to_worker(
-    #             demand=consumer_info['demand'], data=consumer_info
-    #         )
-    #
-    #     else:
-    #
-    #         utils.log(
-    #             f'Worker already did task {consumer_info["demand"]}, t={consumer_info.get("t")}',
-    #             f=self._worker_management
-    #         )
 
     def _group_management(self, consumer_info):
 
@@ -232,36 +189,4 @@ class GameWebSocketConsumer(JsonWebsocketConsumer):
             group,
             self.channel_name
         )
-
-
-class WSDialog:
-
-    @staticmethod
-    def group_send(group, data, json=True):
-
-        channel_layer = get_channel_layer()
-
-        async_to_sync(channel_layer.group_send)(
-            group,
-            {
-                'type': 'group.message',
-                'data': data,
-                'group': group,
-                'json': json
-             }
-        )
-
-    @staticmethod
-    def group_add(group):
-
-        channel_layer = get_channel_layer()
-
-        async_to_sync(channel_layer.group_add)(
-            group,
-            channel_layer.channel_name
-        )
-
-
-
-
 

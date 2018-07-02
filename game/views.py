@@ -70,25 +70,6 @@ def client_request(request):
     return to_reply, consumer_info
 
 
-# def receipt_confirmation(args):
-#
-#     u = game.user.client.get_user(user_id=args.user_id)
-#     rm = game.room.client.get_room(room_id=u.room_id)
-#
-#     game.user.client.set_all_precedent_receipt_confirmation_to_received(
-#         u=u, t=args.t, demand=args.concerned_demand
-#     )
-#
-#     game.user.client.receipt_confirmation(
-#         rm=rm,
-#         u=u,
-#         t=args.t,
-#         demand=args.concerned_demand
-#     )
-#
-#     return None, None
-
-
 def init(args):
 
     to_reply, u, rm = game.user.client.connect(

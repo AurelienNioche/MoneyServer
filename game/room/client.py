@@ -3,7 +3,7 @@ import itertools
 
 import numpy as np
 
-from game.models import User, Room, Choice, TutorialChoice #Receipt, ConsumerTask
+from game.models import User, Room, Choice, TutorialChoice
 import game.user.client
 import game.room.state
 import game.room.dashboard
@@ -21,14 +21,6 @@ def get_room(room_id):
         raise Exception("Room not found.")
 
     return rm
-
-
-# def get_all_users_that_did_not_receive(room_id, demand, t=None):
-#
-#     players_that_did_not_receive = Receipt.objects.filter(
-#             room_id=room_id, demand=demand.__name__, t=t, received=False).values_list('player_id')
-#
-#     return User.objects.filter(room_id=room_id, player_id__in=players_that_did_not_receive)
 
 
 def get_all_users(room_id):
@@ -50,14 +42,6 @@ def get_results_for_all_users(room_id, t):
         u.success = c.success
 
     return users
-
-
-# def all_client_received(demand, room_id, t=None):
-#
-#     rm = Room.objects.get(id=room_id)
-#
-#     return Receipt.objects.filter(
-#         room_id=room_id, demand=demand.__name__, t=t, received=True).count() == rm.n_user
 
 
 def create_room():
@@ -127,41 +111,6 @@ def create(data):
     ])
 
     return rm
-
-    # for demand in ('init', 'survey', 'training_done'):
-    #
-    #     Receipt.objects.bulk_create([
-    #         Receipt(
-    #             room_id=rm.id,
-    #             player_id=n,
-    #             demand=demand,
-    #             t=None
-    #         )
-    #         for n in range(n_user)
-    #     ])
-    #
-    #     c = ConsumerTask(room_id=rm.id, demand=demand, t=None)
-    #     c.save()
-    #
-    # for demand, t_maximum in zip(['training_choice', 'choice'], [training_t_max, t_max]):
-    #
-    #     Receipt.objects.bulk_create([
-    #         Receipt(
-    #             room_id=rm.id,
-    #             player_id=n,
-    #             demand=demand,
-    #             t=t
-    #         )
-    #         for n in range(n_user) for t in range(t_maximum)
-    #     ])
-    #
-    # ConsumerTask.objects.bulk_create([
-    #     ConsumerTask(
-    #         room_id=rm.id,
-    #         demand='choice',
-    #         t=t
-    #     ) for t in range(t_max)
-    # ])
 
 
 def get_progression(demand, rm, t, tuto=False):
@@ -363,6 +312,8 @@ def _compute_score_and_final_good(c):
 
     if u:
 
+        # Get the next choice entry
+        # in order to set the good in hand at t + 1
         next_choice = Choice.objects.select_for_update().filter(
             player_id=u.player_id,
             t=c.t+1,
@@ -405,10 +356,15 @@ def _is_someone_in_the_current_state(state, rm):
 
     users = User.objects.filter(room_id=rm.id)
 
+    # If all players are there
+    # return True if at least one player is not at the
+    # asked state
     if len(users) == rm.n_user:
 
         return state in [u.state for u in users]
 
+    # If all players aren't still connected return True anyway
+    # because the player needs to wait for the others
     else:
 
         return True

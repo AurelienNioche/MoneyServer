@@ -178,7 +178,7 @@ def submit_training_choice(u, rm, desired_good, t):
         choice.user_id = u.id
         choice.desired_good = desired_good
 
-        choice.success = make_exchange_during_training(
+        choice.success = _make_exchange_during_training(
             u=u,
             rm=rm,
             good_in_hand=choice.good_in_hand,
@@ -215,7 +215,10 @@ def submit_training_choice(u, rm, desired_good, t):
     return choice.success, u.training_score
 
 
-def make_exchange_during_training(u, rm, good_in_hand, desired_good):
+# ------------------------------  Private functions (called by views) ----------------------------------- #
+
+
+def _make_exchange_during_training(u, rm, good_in_hand, desired_good):
 
     relative_good_in_hand = _get_relative_good(u=u, rm=rm, good=good_in_hand)
     relative_desired_good = _get_relative_good(u=u, rm=rm, good=desired_good)
@@ -304,7 +307,7 @@ def _create_new_user(rm, device_id):
                 u.production_good = _get_user_production_good(rm, u)
 
                 # prod i - 1 rule
-                u.consumption_good = (u.production_good - 1) % rm.n_type
+                u.consumption_good = (u.production_good + 1) % rm.n_type
 
                 u.save(update_fields=["production_good", "consumption_good"])
 
