@@ -31,10 +31,16 @@ class GameWebSocketConsumer(JsonWebsocketConsumer):
 
     def receive_json(self, content, **kwargs):
 
-        dashboard.tablets.client.set_time_last_request(
-            user_id=content.get('userId'),
-            device_id=content.get('deviceId')
-        )
+        try:
+            dashboard.tablets.client.set_time_last_request(
+                user_id=content.get('userId'),
+                device_id=content.get('deviceId')
+            )
+
+        except Exception:
+            print('*' * 10)
+            print('EXCEPTION WHEN TRYING TO SET TIME LAST REQUEST')
+            print('*' * 10)
 
         if content.get('demand') == 'ping':
 

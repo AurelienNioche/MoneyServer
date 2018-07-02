@@ -90,8 +90,8 @@ def convert_data_to_sqlite():
 
     subprocess.call("pg_dump -U dasein {} > {}".format(db_source, sql_file.file_path), shell=True)
 
-    subprocess.call("rm {}".format(db_path), shell=True)
-    subprocess.call("java -jar pg2sqlite.jar -d {} -o {}".format(sql_file.file_path, db_path), shell=True)
+    # subprocess.call("rm {}".format(db_path), shell=True)
+    subprocess.call("java -jar pg2sqlite.jar -f true -d {} -o {}".format(sql_file.file_path, db_path), shell=True)
 
     return to_return
 

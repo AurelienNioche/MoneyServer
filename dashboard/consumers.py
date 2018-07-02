@@ -128,7 +128,7 @@ class DashboardWebSocketConsumer(AbstractWebsocketConsumer):
 class ConnectionConsumer(AbstractWebsocketConsumer):
 
     # Delay in seconds
-    delay = 1.5
+    delay = 2
 
     def check_connection(self, message):
 
@@ -136,10 +136,17 @@ class ConnectionConsumer(AbstractWebsocketConsumer):
 
             threading.Event().wait(self.delay)
 
-            connection_table = dashboard.tablets.client.get_connection_table()
+            try:
+                connection_table = dashboard.tablets.client.get_connection_table()
 
-            self._group_send(
-                group='connection',
-                data={'html': connection_table}
-            )
+                self._group_send(
+                    group='connection',
+                    data={'html': connection_table}
+                )
+
+            except Exception:
+                print('*' * 10)
+                print('EXCEPTION in CheckConnection worker')
+                print('*' * 10)
+
 
