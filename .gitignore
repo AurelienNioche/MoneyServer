@@ -108,9 +108,9 @@ venv.bak/
 credentials/
 
 game/migrations/*
-!game/migrations/__init__
+!game/migrations/__init__.py
 dashboard/migrations/*
-!dashboard/migrations/__init__
+!dashboard/migrations/__init__.py
 
 static/game_data/
 game/round/bots/data/
