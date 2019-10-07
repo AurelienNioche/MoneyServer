@@ -21,7 +21,7 @@ import game.user.state
 def get_user(user_id):
     u = User.objects.select_for_update().filter(id=user_id).first()
     if not u:
-        raise Exception("Error: User not found.", f=get_user)
+        raise Exception("Error: User not found.")
     return u
 
 

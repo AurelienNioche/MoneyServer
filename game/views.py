@@ -25,7 +25,8 @@ def client_request(request):
     """
 
     # Log
-    utils.log("Websocket request: {}".format(list(request.items())), f=client_request)
+    utils.log("Websocket request: {}".format(list(request.items())),
+              f=client_request)
 
     demand = request.get('demand')
 

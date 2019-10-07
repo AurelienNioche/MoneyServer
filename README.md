@@ -221,4 +221,45 @@ the content of the response dictionary
 * channels_redis (in settings.py): 
     expiry: 4  # Time before a msg expires
     capacity: 200  # Message capacity
+    
+# How to run a Demo
 
+## Server
+
+Assuming that python3, posgresql, redis are installed:
+
+* create user and db
+
+
+    createuser dasein
+    createdb MoneyServer --owner dasein
+    
+* Make migrations
+
+
+    python3 manage.py makemigrations
+    python3 manage.py migrate
+    
+* Launch redis
+
+    
+    bash launch_redis.sh
+
+* Launch the server
+
+        python3 manage.py runserver
+        
+* Go to http://127.0.0.1:8000/
+
+* Create a room
+
+* Go to settings and turn on 'trial'
+
+## Unity
+
+
+* Tablet pixel size: 1024 x 600
+
+* Development: address is: ws://127.0.0.1:8000/ws/
+
+* Production: address is: ws://192.168.1.204/ws/

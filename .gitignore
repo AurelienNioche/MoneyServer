@@ -107,10 +107,10 @@ venv.bak/
 
 credentials/
 
-game/migrations/
-messenger/migrations/
-dashboard/migrations/
+game/migrations/*
+!game/migrations/__init__
+dashboard/migrations/*
+!dashboard/migrations/__init__
 
 static/game_data/
-
 game/round/bots/data/

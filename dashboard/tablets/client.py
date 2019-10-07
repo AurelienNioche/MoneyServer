@@ -2,6 +2,7 @@ from django.utils import timezone
 import datetime
 from dashboard.models import ConnectedTablet, IntParameter
 from game.models import User, Room, Choice, TutorialChoice
+import game.params.client
 
 import dashboard.views
 
@@ -150,7 +151,7 @@ def _is_disconnected(reference_time):
     return timeout
 
 
-def register_tablet(device_id, tablet_id):
+def register_tablet(device_id, tablet_id=-1):
 
     t = ConnectedTablet.objects.filter(device_id=device_id).first()
 
@@ -167,19 +168,31 @@ def register_tablet(device_id, tablet_id):
 
     t.save()
 
+    if tablet_id == -1:
+        t = ConnectedTablet.objects.filter(device_id=device_id).first()
+        t.tablet_id = t.id
+        t.save()
+
 
 def set_time_last_request(user_id, device_id):
 
+    trial, skip_survey, skip_training = game.params.client.is_trial()
+    if trial:
+        return
+
     if device_id:
 
-        device = ConnectedTablet.objects.get(device_id=device_id)
+        try:
+            device = ConnectedTablet.objects.get(device_id=device_id)
+        except ConnectedTablet.DoesNotExist:
+            register_tablet(device_id=device_id)
+            device = ConnectedTablet.objects.get(device_id=device_id)
 
-    elif user_id:
+    elif user_id >= 0:
 
         device = ConnectedTablet.objects.get(
             tablet_id=User.objects.get(id=user_id).tablet_id
         )
-
     else:
         raise Exception('Arguments user_id or device_id are needed.')
 

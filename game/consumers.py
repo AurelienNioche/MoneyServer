@@ -43,7 +43,8 @@ class GameWebSocketConsumer(JsonWebsocketConsumer):
             self.send_json(to_reply)
 
             try:
-                utils.log(f'Sending to current channel: {to_reply}', f=self.receive_json)
+                utils.log(f'Sending to current channel: {to_reply}',
+                          f=self.receive_json)
             except UnicodeEncodeError:
                 print('Error printing request.')
 
@@ -73,7 +74,9 @@ class GameWebSocketConsumer(JsonWebsocketConsumer):
             utils.log(f'Adding group {id_group}', f=self._group_management)
             self._group_add(group=id_group)
 
-        if demand_func == game.views.choice:
+        trial, skip_survey, skip_training = game.params.client.is_trial()
+
+        if demand_func == game.views.choice and not trial:
 
             t = consumer_info.get('t')
 
