@@ -59,9 +59,9 @@ def training_choice(request):
 
 def choice(request):
     return {
-        "wait": False,
-        "progress": 100,
-        "success": True,
+        "wait": True,
+        "progress": 55,
+        "success": False,
         "end": False,
         "score": 0,
         "t": request.t,
